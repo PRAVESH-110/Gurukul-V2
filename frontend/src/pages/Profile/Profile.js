@@ -15,6 +15,9 @@ const Profile = () => {
     enabled: !!user?.id
   });
 
+  // const 
+  //handle the editing case (use the userAPI.updateUser to connect to the api endpoints)
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -58,7 +61,9 @@ const Profile = () => {
               className="btn-outline"
             >
               <Edit className="h-4 w-4 mr-2" />
-              {isEditing ? 'Cancel' : 'Edit Profile'}
+              {isEditing ? 'Cancel' 
+              
+              : 'Edit Profile'}
             </button>
           </div>
         </div>
