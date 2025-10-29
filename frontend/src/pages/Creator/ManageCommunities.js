@@ -265,9 +265,10 @@ const ManageCommunities = () => {
                           )}
                         </div>
                         <div className="ml-4">
-                          <div className="text-sm font-medium text-gray-900">
-                            {community.name}
-                          </div>
+                          <Link to={`/communities/${community._id}`} // or community.slug, depending on your app
+                          className="text-sm font-medium text-gray-900 hover:text-primary-600 hover:underline">
+                                {community.name}
+                          </Link>
                           <div className="text-sm text-gray-500">
                             {community.category} • {community.privacy}
                           </div>
@@ -324,13 +325,8 @@ const ManageCommunities = () => {
                         >
                           <Settings className="h-4 w-4" />
                         </Link>
-                        <button
-                          onClick={() => handleToggleStatus(community._id, community.isActive ? 'active' : 'inactive')}
-                          className="text-orange-600 hover:text-orange-900"
-                          title={community.isActive ? 'Deactivate' : 'Activate'}
-                        >
-                          {community.isActive ? '⏸️' : '▶️'}
-                        </button>
+
+
                         <button
                           onClick={() => handleDeleteCommunity(community._id, community.name)}
                           className="text-red-600 hover:text-red-900"

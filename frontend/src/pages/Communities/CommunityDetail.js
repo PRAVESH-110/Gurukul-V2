@@ -76,7 +76,7 @@ const CommunityDetail = () => {
           <div className="flex items-start justify-between">
             <div className="flex-1">
               <div className="flex items-center mb-4">
-                <h1 className="text-3xl font-bold text-gray-900 mr-3">
+                <h1 className="text-3xl font-bold text-gray-900 mr-3 ">
                   {community?.name}
                 </h1>
                 {community?.type === 'private' ? (

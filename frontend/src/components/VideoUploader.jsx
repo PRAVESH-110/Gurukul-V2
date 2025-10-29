@@ -13,7 +13,7 @@ export default function VideoUploader() {
   }
 
   async function onFileChange(e) {
-    const file = e.target.files?.[0];
+    const file = e.target.files?.[0]; 
     if (!file) return;
     if (file.size > 104857600) {
       alert('Max 100MB');

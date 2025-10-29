@@ -28,7 +28,7 @@ const videoSchema = new mongoose.Schema({
   },
   fileId: { 
     type: String, 
-    required: [true, 'File ID is required'] 
+    required: [true, 'File ID is required']
   },
   thumbnailUrl: { 
     type: String, 

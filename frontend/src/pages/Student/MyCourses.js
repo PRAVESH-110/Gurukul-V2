@@ -53,7 +53,8 @@ const MyCourses = () => {
   });
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div className="min-h-screen w-full bg-gray-50 overflow-x-hidden">
+      <div className=" mx-auto w-full p-4 sm:p-6 overflow-x-hidden">
       {/* Header */}
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-gray-900 mb-4">My Courses</h1>
@@ -215,6 +216,7 @@ const MyCourses = () => {
           )}
         </div>
       )}
+      </div>
     </div>
   );
 };
