@@ -51,11 +51,12 @@ const ManageCourses = () => {
   const handleToggleStatus = async (courseId, currentStatus) => {
     try {
       const newStatus = currentStatus === 'published' ? 'draft' : 'published';
-      await courseAPI.updateCourseStatus(courseId, newStatus);
+      await courseAPI.updateCourse(courseId, { status: newStatus });
       toast.success(`Course ${newStatus === 'published' ? 'published' : 'unpublished'} successfully`);
-      refetch();
+      refetch(); // Uncomment this to refresh the course list
     } catch (error) {
-      toast.error('Failed to update course status');
+      console.error('Error toggling course status:', error);
+      toast.error(error.response?.data?.message || 'Failed to update course status');
     }
   };
 
@@ -284,14 +285,14 @@ const ManageCourses = () => {
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
                         course.status === 'published' 
                           ? 'bg-green-100 text-green-800'
                           : course.status === 'draft'
                           ? 'bg-yellow-100 text-yellow-800'
                           : 'bg-gray-100 text-gray-800'
                       }`}>
-                        {course.status}
+                        {course.status.charAt(0).toUpperCase() + course.status.slice(1)}
                       </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
@@ -320,12 +321,15 @@ const ManageCourses = () => {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                       <div className="flex items-center justify-end space-x-2">
-                        <Link
-                          to={`/courses/${course._id}`}
-                          className="text-primary-600 hover:text-primary-900"
-                        >
-                          <Eye className="h-4 w-4" />
-                        </Link>
+                        {course.status !== 'published' && (
+                          <Link
+                            to={`/courses/${course._id}`}
+                            className="text-primary-600 hover:text-primary-900"
+                            title="Preview course"
+                          >
+                            <Eye className="h-4 w-4" />
+                          </Link>
+                        )}
                         <div className="flex items-center space-x-1">
                           <Link
                             to={`/creator/courses/${course._id}/videos`}

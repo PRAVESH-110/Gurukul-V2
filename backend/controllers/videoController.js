@@ -1,6 +1,6 @@
 const Video = require('../models/Video');
 const Course = require('../models/Course');
-const imagekit = require('../config/imagekit');
+const { uploadVideo, deleteVideo } = require('../config/cloudinary');
 const { v4: uuidv4 } = require('uuid');
 const path = require('path');
 const fs = require('fs');
@@ -51,50 +51,43 @@ exports.uploadVideo = async (req, res, next) => {
       });
     }
 
-    // Generate a unique filename
-    const fileExt = path.extname(videoFile.name);
-    const fileName = `videos/${course._id}/${uuidv4()}${fileExt}`;
-
-    // Upload to ImageKit
-    const uploadResponse = await new Promise((resolve, reject) => {
-      imagekit.upload({
-        file: videoFile.data,
-        fileName: fileName,
-        folder: `courses/${course._id}/videos`,
-        useUniqueFileName: true,
-        tags: ['video', `course-${course._id}`],
-        isPrivateFile: false
-      }, (error, result) => {
-        if (error) reject(error);
-        else resolve(result);
-      });
-    });
+    // Upload video to Cloudinary
+    const uploadResult = await uploadVideo(
+      videoFile.data,
+      `${uuidv4()}${path.extname(videoFile.name)}`,
+      process.env.CLOUDINARY_VIDEO_FOLDER
+    );
+    
+    if (!uploadResult || !uploadResult.secure_url) {
+      throw new Error('Failed to upload video to Cloudinary');
+    }
 
     // Create video record with qualities support
     // For now, set the uploaded video as the auto quality and fallback for all qualities
     const qualities = {
-      'auto': uploadResponse.url,
-      '1080p': uploadResponse.url,
-      '720p': uploadResponse.url,
-      '480p': uploadResponse.url,
-      '360p': uploadResponse.url
+      'auto': uploadResult.secure_url,
+      '1080p': uploadResult.secure_url,
+      '720p': uploadResult.secure_url,
+      '480p': uploadResult.secure_url,
+      '360p': uploadResult.secure_url
     };
 
     const video = await Video.create({
       title: title || videoFile.name.replace(/\.[^/.]+$/, ''),
       description: description || '',
-      url: uploadResponse.url,
-      qualities: qualities,
-      fileId: uploadResponse.fileId,
-      size: videoFile.size,
-      mimeType: videoFile.mimetype,
+      videoUrl: uploadResult.secure_url,
+      thumbnailUrl: uploadResult.thumbnailUrl || '',
+      publicId: uploadResult.public_id,
+      duration: uploadResult.duration || 0,
+      width: uploadResult.width || 0,
+      height: uploadResult.height || 0,
       course: courseId,
       creator: req.user.id,
       section: sectionId || 'main',
       status: 'processing',
-      resolution: uploadResponse.height ? {
-        width: uploadResponse.width,
-        height: uploadResponse.height
+      resolution: uploadResult.height ? {
+        width: uploadResult.width,
+        height: uploadResult.height
       } : undefined
     });
 
@@ -180,14 +173,14 @@ exports.getVideo = async (req, res, next) => {
           ...video.toObject(),
           // Ensure qualities field is included and has fallbacks
           qualities: video.qualities || {
-            'auto': video.url,
-            '1080p': video.url,
-            '720p': video.url,
-            '480p': video.url,
-            '360p': video.url
+            'auto': video.videoUrl,
+            '1080p': video.videoUrl,
+            '720p': video.videoUrl,
+            '480p': video.videoUrl,
+            '360p': video.videoUrl
           },
           // Add videoUrl field for compatibility
-          videoUrl: video.url
+          videoUrl: video.videoUrl
         }
       }
     });
@@ -323,12 +316,14 @@ exports.deleteVideo = async (req, res, next) => {
       await course.save();
     }
 
-    // Delete from ImageKit
-    try {
-      await imagekit.deleteFile(video.fileId);
-    } catch (error) {
-      console.error('Error deleting video from storage:', error);
-      // Continue with database deletion even if storage deletion fails
+    // Delete from Cloudinary if video exists there
+    if (video.publicId) {
+      try {
+        await deleteVideo(video.publicId);
+      } catch (error) {
+        console.error('Error deleting video from Cloudinary:', error);
+        // Continue with deletion even if Cloudinary deletion fails
+      }
     }
 
     // Delete from database

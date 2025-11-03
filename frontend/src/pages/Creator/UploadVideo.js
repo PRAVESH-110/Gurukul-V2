@@ -17,11 +17,59 @@ const UploadVideo = () => {
 
   const { register, handleSubmit, formState: { errors } } = useForm();
 
-  // Fetch creator's courses
-  const { data: coursesData, isLoading: coursesLoading, error: coursesError } = useQuery({
+  // Fetch creator's courses with error handling
+  const { data: coursesResponse, isLoading: coursesLoading, error: coursesError } = useQuery({
     queryKey: ['creatorCourses'],
-    queryFn: () => courseAPI.getCreatorCourses()
+    queryFn: async () => {
+      try {
+        const response = await courseAPI.getCreatorCourses();
+        console.log('Courses API Response:', response);
+        return response.data; // Return the full response
+      } catch (error) {
+        console.error('Error fetching courses:', error);
+        throw error; // Re-throw to be caught by React Query
+      }
+    },
+    onError: (error) => {
+      console.error('Courses query error:', error);
+      toast.error(`Failed to load courses: ${error.response?.data?.message || error.message || 'Unknown error'}`);
+    }
   });
+
+  // Extract courses from the response
+  const courses = React.useMemo(() => {
+    // If we have a direct array, use it
+    if (Array.isArray(coursesResponse)) {
+      return coursesResponse;
+    }
+    
+    // Handle nested data structure
+    if (coursesResponse?.data) {
+      // If data is an array, use it directly
+      if (Array.isArray(coursesResponse.data)) {
+        return coursesResponse.data;
+      }
+      // If data has a nested data array, use that
+      if (Array.isArray(coursesResponse.data?.data)) {
+        return coursesResponse.data.data;
+      }
+    }
+    
+    // Default to empty array if no valid data structure found
+    return [];
+  }, [coursesResponse]);
+  
+  // Log the final courses for debugging
+  React.useEffect(() => {
+    console.log('Processed courses:', {
+      count: courses.length,
+      firstCourse: courses[0],
+      allCourses: courses,
+      rawResponse: coursesResponse,
+      isLoading: coursesLoading,
+      error: coursesError
+    });
+  }, [courses, coursesResponse, coursesLoading, coursesError]);
 
   // Debug logging
   React.useEffect(() => {
@@ -31,23 +79,14 @@ const UploadVideo = () => {
     }
   }, [coursesError]);
 
-  // Safely extract courses array
-  const courses = React.useMemo(() => {
-    // Handle axios response structure: coursesData.data.data
-    if (coursesData?.data?.data && Array.isArray(coursesData.data.data)) {
-      return coursesData.data.data;
-    }
-    // Fallback: direct data array
-    if (coursesData?.data && Array.isArray(coursesData.data)) {
-      return coursesData.data;
-    }
-    // Fallback: coursesData is array
-    if (Array.isArray(coursesData)) {
-      return coursesData;
-    }
-    
-    return [];
-  }, [coursesData]);
+  // Debug logging for courses data
+  React.useEffect(() => {
+    console.log('Courses Data:', {
+      rawData: coursesResponse,
+      loading: coursesLoading,
+      error: coursesError
+    });
+  }, [coursesResponse, coursesLoading, coursesError]);
 
   const handleVideoUploadComplete = (uploadResponse) => {
     console.log('Video upload completed:', uploadResponse);
@@ -230,28 +269,7 @@ const UploadVideo = () => {
             </div>
           )}
           
-          {/* Alternative upload options */}
-          <div className="mt-4 space-y-2">
-            <div className="text-sm text-gray-600">
-              If the ImageKit upload above isn't working, you can use these alternatives:
-            </div>
-            <div className="space-x-2">
-              <button
-                type="button"
-                onClick={handleSimpleUpload}
-                className="btn-primary btn-sm"
-              >
-                📤 Use Mock Upload (Working Solution)
-              </button>
-              <button
-                type="button"
-                onClick={handleTestVideoData}
-                className="btn-outline btn-sm"
-              >
-                🔧 Set Test Data (Debug)
-              </button>
-            </div>
-          </div>
+          
         </div>
 
         {/* Course Selection */}
@@ -283,22 +301,70 @@ const UploadVideo = () => {
             </div>
           ) : (
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Choose Course *
-              </label>
-              <select
-                value={selectedCourse}
-                onChange={(e) => setSelectedCourse(e.target.value)}
-                className="input w-full"
-                required
-              >
-                <option value="">Select a course for this video</option>
-                {courses.map((course) => (
-                  <option key={course._id} value={course._id}>
-                    {course.title} {!course.isPublished && '(Draft)'}
-                  </option>
-                ))}
-              </select>
+              <div className="space-y-2">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Choose Course *
+                  {coursesLoading && (
+                    <span className="ml-2 text-xs text-gray-500">(Loading...)</span>
+                  )}
+                </label>
+                
+                {/* Error State */}
+                {coursesError ? (
+                  <div className="p-3 text-sm text-red-700 bg-red-50 rounded-md border border-red-100">
+                    <p className="font-medium">Error loading courses</p>
+                    <p className="mt-1">{coursesError.response?.data?.message || coursesError.message || 'Please try again later'}</p>
+                    <button 
+                      onClick={() => window.location.reload()}
+                      className="mt-2 text-sm text-red-700 hover:underline"
+                    >
+                      Retry
+                    </button>
+                  </div>
+                ) : (
+                  /* Courses Dropdown */
+                  <div className="relative">
+                    <select
+                      value={selectedCourse}
+                      onChange={(e) => setSelectedCourse(e.target.value)}
+                      className="input w-full pr-8"
+                      disabled={coursesLoading || courses.length === 0}
+                      required
+                    >
+                      <option value="">
+                        {coursesLoading ? 'Loading your courses...' : 'Select a course for this video'}
+                        {!coursesLoading && courses.length === 0 && ' (No courses found)'}
+                      </option>
+                      {courses.map((course) => (
+                        <option key={course._id} value={course._id}>
+                          {course.title} {!course.isPublished && '(Draft)'}
+                        </option>
+                      ))}
+                    </select>
+                    
+                    {/* Loading indicator */}
+                    {coursesLoading && (
+                      <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                        <div className="animate-spin rounded-full h-4 w-4 border-2 border-gray-300 border-t-primary-500"></div>
+                      </div>
+                    )}
+                  </div>
+                )}
+                
+                {/* Empty State */}
+                {!coursesLoading && !coursesError && courses.length === 0 && (
+                  <div className="mt-3 p-3 text-sm text-amber-700 bg-amber-50 rounded-md border border-amber-100">
+                    <p className="font-medium">No courses found</p>
+                    <p className="mt-1">You need to create a course before uploading videos.</p>
+                    <Link 
+                      to="/creator/courses/new"
+                      className="mt-2 inline-flex items-center text-sm font-medium text-amber-700 hover:text-amber-800"
+                    >
+                      Create Your First Course →
+                    </Link>
+                  </div>
+                )}
+              </div>
               
               {courses.length === 0 && (
                 <div className="mt-4 p-4 bg-yellow-50 border border-yellow-200 rounded-md">
@@ -377,7 +443,7 @@ const UploadVideo = () => {
                 min="1"
                 {...register('order')}
                 className="input w-full"
-                placeholder="1"
+                placeholder="1"     
               />
             </div>
 

@@ -2,10 +2,10 @@ const express = require('express');
 const router = express.Router();
 const videoController = require('../controllers/videoController');
 const { protect, authorize } = require('../middleware/auth');
-const { upload, handleUploadErrors } = require('../middleware/upload');
+const { upload } = require('../middleware/upload');
 const Video = require('../models/Video');
 
-// Configure video upload
+// Configure video upload (using Cloudinary)
 const uploadVideo = upload.single('video');
 
 // Routes for video management
@@ -40,7 +40,7 @@ router.get('/course/:courseId', protect, async (req, res, next) => {
     
     const videos = await Video.find(query)
       .sort('order')
-      .select('title description url thumbnailUrl duration durationInMinutes isPublished order section');
+      .select('title description videoUrl thumbnailUrl duration isPublished order section format width height');
       
     res.status(200).json({
       success: true,
@@ -184,6 +184,53 @@ router.get('/:id/analytics', protect, authorize('creator', 'admin'), async (req,
     
   } catch (error) {
     next(error);
+  }
+});
+
+// @desc    Get video stream URL
+// @route   GET /api/videos/stream/:id
+// @access  Private
+router.get('/stream/:id', protect, async (req, res, next) => {
+  try {
+    const video = await Video.findById(req.params.id);
+    
+    if (!video) {
+      return res.status(404).json({
+        success: false,
+        message: 'Video not found'
+      });
+    }
+
+    // Check if user has access to this video
+    if (!videoController.checkVideoAccess(req.user, video)) {
+      return res.status(403).json({
+        success: false,
+        message: 'Not authorized to access this video'
+      });
+    }
+
+    // Return video details with Cloudinary URL
+    res.status(200).json({
+      success: true,
+      data: {
+        url: video.videoUrl,
+        publicId: video.publicId,
+        format: video.format,
+        duration: video.duration,
+        width: video.width,
+        height: video.height,
+        title: video.title,
+        description: video.description,
+        thumbnailUrl: video.thumbnailUrl
+      }
+    });
+  } catch (error) {
+    console.error('Error getting video stream:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error getting video stream',
+      error: error.message
+    });
   }
 });
 

@@ -1,13 +1,19 @@
 import React, { useState } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { userAPI } from '../../services/api';
 import LoadingSpinner from '../../components/UI/LoadingSpinner';
-import { User, Mail, Calendar, MapPin, Edit } from 'lucide-react';
+import { User, Mail, Calendar, MapPin, Edit, Phone, X } from 'lucide-react';
+import EditProfile from './EditProfileModal';
 
 const Profile = () => {
   const { user } = useAuth();
-  const [isEditing, setIsEditing] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const queryClient = useQueryClient();
+
+  const handleProfileUpdate = () => {
+    setIsModalOpen(false);
+  };
 
   const { data: profileData, isLoading, error } = useQuery({
     queryKey: ['userProfile', user?.id],
@@ -15,8 +21,15 @@ const Profile = () => {
     enabled: !!user?.id
   });
 
-  // const 
-  //handle the editing case (use the userAPI.updateUser to connect to the api endpoints)
+  const handleEditProfile = async (updatedData) => {
+    try {
+      await userAPI.updateUser(user.id, updatedData);
+      setIsEditing(false);
+      queryClient.invalidateQueries(['userProfile', user.id]);
+    } catch (error) {
+      console.error('Error updating profile:', error);
+    }
+  }
 
   if (isLoading) {
     return (
@@ -57,13 +70,11 @@ const Profile = () => {
               </div>
             </div>
             <button
-              onClick={() => setIsEditing(!isEditing)}
-              className="btn-outline"
+              onClick={() => setIsModalOpen(true)}
+              className="btn-outline flex items-center"
             >
               <Edit className="h-4 w-4 mr-2" />
-              {isEditing ? 'Cancel' 
-              
-              : 'Edit Profile'}
+              Edit Profile
             </button>
           </div>
         </div>
@@ -166,6 +177,8 @@ const Profile = () => {
           </p>
         </div>
       </div>
+
+      {/* Edit Profile Form */}
     </div>
   );
 };

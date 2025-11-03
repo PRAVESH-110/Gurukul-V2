@@ -160,7 +160,7 @@ const CreatorDashboard = () => {
                       ) : (
                         <div className="h-12 w-12 bg-primary-100 rounded-lg flex items-center justify-center">
                           <BookOpen className="h-6 w-6 text-primary-600" />
-                        </div>
+                        </div> 
                       )}
                     </div>
                     <div className="flex-1 min-w-0">

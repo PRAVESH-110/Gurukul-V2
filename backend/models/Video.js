@@ -12,35 +12,43 @@ const videoSchema = new mongoose.Schema({
     default: '',
     maxlength: [1000, 'Description cannot exceed 1000 characters']
   },
-  url: { 
+  // Video information from Cloudinary
+  videoUrl: { 
     type: String, 
     required: [true, 'Video URL is required'] 
   },
-  qualities: {
-    type: {
-      '1080p': String,
-      '720p': String,
-      '480p': String,
-      '360p': String,
-      'auto': String
-    },
-    default: {}
+  publicId: {
+    type: String,
+    required: [true, 'Cloudinary public ID is required']
   },
-  fileId: { 
-    type: String, 
-    required: [true, 'File ID is required']
+  format: {
+    type: String,
+    required: true
+  },
+  width: {
+    type: Number,
+    required: true
+  },
+  height: {
+    type: Number,
+    required: true
+  },
+  duration: { 
+    type: Number, 
+    min: [1, 'Duration must be at least 1 second']
+  },
+  bytes: {
+    type: Number,
+    required: true
   },
   thumbnailUrl: { 
     type: String, 
     default: '' 
   },
+  // Size in bytes
   size: { 
     type: Number, 
     max: [104857600, 'File size cannot exceed 100MB']
-  },
-  duration: { 
-    type: Number, 
-    min: [1, 'Duration must be at least 1 second']
   },
   course: { 
     type: mongoose.Schema.Types.ObjectId, 
@@ -94,6 +102,11 @@ const videoSchema = new mongoose.Schema({
   views: {
     type: Number,
     default: 0
+  },
+  // Additional Cloudinary metadata
+  metadata: {
+    type: Object,
+    select: false // Don't include this field by default in queries
   },
   status: {
     type: String,
