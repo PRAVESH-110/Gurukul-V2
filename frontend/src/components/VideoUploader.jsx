@@ -1,5 +1,4 @@
 // Example React component to upload up to 100MB directly to ImageKit
-// npm i imagekitio-react imagekitio-js
 import { useState } from 'react';
 import ImageKit from 'imagekitio-js';
 

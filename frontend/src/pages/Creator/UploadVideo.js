@@ -106,7 +106,10 @@ const UploadVideo = () => {
       url: 'https://example.com/test-video.mp4',
       fileId: 'test-file-id-123',
       name: 'test-video.mp4',
-      size: 1048576
+      size: 1048576,
+      width: 1920,
+      height: 1080,
+      bytes: 1048576
     };
     setVideoData(testData);
     toast.success('Test video data set (for debugging)');
@@ -120,7 +123,10 @@ const UploadVideo = () => {
       url: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4', // Sample video URL
       fileId: `mock-${Date.now()}`,
       name: 'uploaded-video.mp4',
-      size: 5242880
+      size: 5242880,
+      width: 1920,
+      height: 1080,
+      bytes: 5242880
     };
     setVideoData(mockData);
     toast.success('Video uploaded successfully (mock)');
@@ -153,17 +159,25 @@ const UploadVideo = () => {
       const videoRecord = {
         title: data.title.trim(),
         description: data.description?.trim() || '',
-        url: videoData.url,
+        videoUrl: videoData.url, // Changed from url to videoUrl to match model
         fileId: videoData.fileId,
         course: selectedCourse,
-        duration: data.duration ? parseInt(data.duration) : undefined,
+        duration: data.duration ? parseInt(data.duration) : 0, // Default to 0 instead of undefined
         order: data.order ? parseInt(data.order) : 1,
         isPreview: data.isPreview || false,
         isPublished: data.isPublished !== false, // Default to true
         allowDownload: data.allowDownload || false,
         enableComments: data.enableComments !== false, // Default to true
         objectives: data.objectives?.trim() || '',
-        resources: data.resources?.trim() || ''
+        resources: data.resources?.trim() || '',
+        // Add required fields
+        width: videoData.width || 1920, // Default to 1920 if not provided
+        height: videoData.height || 1080, // Default to 1080 if not provided
+        bytes: videoData.bytes || videoData.size || 0, // Fallback to size if bytes not available
+        // Add other required fields with defaults
+        mimeType: videoData.mimeType || 'video/mp4',
+        status: 'processing',
+        isActive: true
       };
 
       console.log('Sending video record to API:', videoRecord);

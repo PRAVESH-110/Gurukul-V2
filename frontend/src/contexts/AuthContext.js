@@ -12,6 +12,13 @@ export const useAuth = () => {
   return context;
 };
 
+const updateUser = (userData) => {
+  setCurrentUser(prev => ({
+    ...prev,
+    ...userData
+  }));
+};
+
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -30,21 +37,29 @@ export const AuthProvider = ({ children }) => {
 
   // Login function
   const login = async (email, password) => {
-    try {
-      const response = await authAPI.login(email, password);
+  try {
+    const response = await authAPI.login(email, password);
+    
+    // Check if the response indicates success
+    if (response.data && response.data.success) {
       const { token, user } = response.data;
-      
       setAuthToken(token);
       setUser(user);
-      
       toast.success('Login successful!');
       return { success: true };
-    } catch (error) {
-      const message = error.response?.data?.message || 'Login failed';
+    } else {
+      // Handle API-level errors (e.g., invalid credentials)
+      const message = response.data?.message || 'Login failed';
       toast.error(message);
       return { success: false, message };
     }
-  };
+  } catch (error) {
+    // Handle network errors or other exceptions
+    const message = error.response?.data?.message || 'An error occurred during login';
+    toast.error(message);
+    return { success: false, message };
+  }
+};
 
   // Register function
   const register = async (userData) => {
@@ -117,6 +132,7 @@ export const AuthProvider = ({ children }) => {
     register,
     logout,
     updateProfile,
+    updateUser,
     setUser
   };
 

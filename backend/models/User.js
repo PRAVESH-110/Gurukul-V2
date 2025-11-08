@@ -120,7 +120,7 @@ userSchema.methods.comparePassword = async function(candidatePassword) {
   
   // Reset login attempts on successful login
   if (isMatch) {
-    if (this.loginAttempts > 0 || this.lockUntil) {
+    if (this.loginAttempts > 0) {
       this.loginAttempts = 0;
       this.lockUntil = undefined;
       await this.save({ validateBeforeSave: false });
@@ -135,7 +135,7 @@ userSchema.methods.comparePassword = async function(candidatePassword) {
   
   // Lock account after 5 failed attempts for 30 minutes
   if (this.loginAttempts >= 5) {
-    this.lockUntil = Date.now() + 30 * 60 * 1000; // 30 minutes
+    this.lockUntil = Date.now() + 5 * 60 * 1000; // 30 minutes
   }
   
   await this.save({ validateBeforeSave: false });

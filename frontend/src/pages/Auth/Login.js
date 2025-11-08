@@ -22,20 +22,22 @@ const Login = () => {
   const from = location.state?.from?.pathname || '/dashboard';
 
   const onSubmit = async (data) => {
-    setIsLoading(true);
-    try {
-      const result = await login(data.email, data.password);
-      if (result.success) {
-        navigate(from, { replace: true });
-      } else {
-        setError('root', { message: result.message });
-      }
-    } catch (error) {
-      setError('root', { message: 'An unexpected error occurred' });
-    } finally {
-      setIsLoading(false);
+  setIsLoading(true);
+  try {
+    const result = await login(data.email, data.password);
+    if (result.success) {
+      navigate(from, { replace: true });
+    } else {
+      setError('root', { message: result.message || 'Invalid credentials' });
     }
-  };
+  } catch (error) {
+    setError('root', { 
+      message: error.message || 'An unexpected error occurred' 
+    });
+  } finally {
+    setIsLoading(false);
+  }
+};
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
@@ -80,7 +82,7 @@ const Login = () => {
                 placeholder="Enter your email"
               />
               {errors.email && (
-                <p className="mt-1 text-sm text-red-600">{errors.email.message}</p>
+                <p className="mt-1 text-sm text-red-600">{errors.root.message}</p>
               )}
             </div>
 

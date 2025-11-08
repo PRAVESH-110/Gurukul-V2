@@ -165,7 +165,7 @@ GET    /api/search/posts           - Search posts
 // Response
 {
   "success": true,
-  "message": "Video uploaded successfully",
+  "message": "Video uploaded successfully", 
   "video": {
     "_id": "...",
     "title": "Introduction to React",

@@ -170,7 +170,11 @@ function App() {
 
           {/* Common Protected Routes */}
           <Route path="profile" element={<Profile />} />
-          <Route path="settings" element={<Settings />} />
+          <Route path="settings" element={
+            <ProtectedRoute>
+              <Settings />
+            </ProtectedRoute>
+          } />
         </Route>
 
         {/* 404 Route */}

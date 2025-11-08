@@ -3,23 +3,24 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { userAPI } from '../../services/api';
 import { User, Mail, MapPin, Phone, Calendar } from 'lucide-react';
 
-
-const EditProfile = ({ user, onCancel, onSuccess }) => {
+const EditProfile = ({ user, onCancel, onSuccess, setIsModalOpen }) => {
   const [formData, setFormData] = useState({
-    name: '',
+    firstName: '',
+    lastName: '',
     email: '',
-    phone: '',
+    phone: '', // Add other fields if they exist in your User model
     address: '',
     dateOfBirth: ''
   });
 
-  const queryClient = useQueryClient();
+  const queryClient = useQueryClient(); 
 
   // Initialize form data when user data is available
   useEffect(() => {
     if (user) {
       setFormData({
-        name: user.name || '',
+        firstName: user.firstName || '',
+        lastName: user.lastName || '',
         email: user.email || '',
         phone: user.phone || '',
         address: user.address || '',
@@ -29,12 +30,21 @@ const EditProfile = ({ user, onCancel, onSuccess }) => {
   }, [user]);
 
   const updateProfileMutation = useMutation({
-    mutationFn: (updatedData) => userAPI.updateUser(user.id, updatedData),
-    onSuccess: () => {
-      queryClient.invalidateQueries(['userProfile', user.id]);
-      onSuccess();
-    },
-  });
+  mutationFn: (updatedData) => userAPI.updateUser(user._id, updatedData),
+
+  onSuccess: async(updatedData) => {
+
+    // Invalidate and refetch the user profile data
+    queryClient.invalidateQueries(['userProfile', user._id]);
+    
+    // Close the modal and notify parent component
+    onSuccess(updatedData);
+  },
+
+  onError: (error) => {
+    console.error("Error updating profile:", error);
+  }
+});
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -47,34 +57,71 @@ const EditProfile = ({ user, onCancel, onSuccess }) => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      await updateProfileMutation.mutateAsync(formData);
+      const response = await updateProfileMutation.mutateAsync(formData);
+      if (response && response.user) {
+        onSuccess(response.user); // Pass the user data from the response
+        onCancel(); // Close the modal after successful update
+      } else {
+        console.error('Unexpected response format:', response);
+      }
     } catch (error) {
       console.error('Error updating profile:', error);
+      // Optionally show error to user
+      toast.error('Failed to update profile');
     }
   };
 
+
   return (
-    <div className="bg-white rounded-lg shadow-sm border p-6 mt-6">
-      <h2 className="text-xl font-semibold text-gray-900 mb-6">Edit Profile</h2>
+    <div className="bg-white rounded-sm h-shadow-sm border border-rounded p-6 relative">
+      <div className="flex items-center justify-between mb-6">
+        <h2 className="text-xl font-semibold text-gray-900">Edit Profile</h2>
+        <button
+          onClick={onCancel}  // Use onCancel prop instead of setIsModalOpen
+          className="text-gray-500 hover:text-gray-700 focus:outline-none"
+          type="button"
+        >
+          <span className="sr-only">Close</span>
+          <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
       
       <form onSubmit={handleSubmit} className="space-y-6">
         <div className="space-y-4">
           {/* Name Field */}
-          <div className="flex items-center space-x-3">
+          <div className="flex items-start space-x-3">
             <User className="h-5 w-5 text-gray-400 flex-shrink-0" />
-            <div className="flex-1">
-              <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">
-                Full Name
-              </label>
-              <input
-                type="text"
-                id="name"
-                name="name"
-                value={formData.name}
-                onChange={handleChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500"
-                required
-              />
+            <div className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label htmlFor="firstName" className="block text-sm font-medium text-gray-700 mb-1">
+                  First Name
+                </label>
+                <input
+                  type="text"
+                  id="firstName"
+                  name="firstName"
+                  value={formData.firstName}
+                  onChange={handleChange}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500"
+                  required
+                />
+              </div>
+              <div>
+                <label htmlFor="lastName" className="block text-sm font-medium text-gray-700 mb-1">
+                  Last Name
+                </label>
+                <input
+                  type="text"
+                  id="lastName"
+                  name="lastName"
+                  value={formData.lastName}
+                  onChange={handleChange}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500"
+                  required
+                />
+              </div>
             </div>
           </div>
 
@@ -83,20 +130,18 @@ const EditProfile = ({ user, onCancel, onSuccess }) => {
             <Mail className="h-5 w-5 text-gray-400 flex-shrink-0" />
             <div className="flex-1">
               <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
-                Email
+                Email (cannot be changed)
               </label>
               <input
                 type="email"
                 id="email"
                 name="email"
                 value={formData.email}
-                onChange={handleChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500"
-                required
+                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm bg-gray-100 cursor-not-allowed"
+                readOnly
               />
             </div>
           </div>
-
           {/* Phone Field */}
           <div className="flex items-center space-x-3">
             <Phone className="h-5 w-5 text-gray-400 flex-shrink-0" />
@@ -153,16 +198,17 @@ const EditProfile = ({ user, onCancel, onSuccess }) => {
         </div>
 
         {/* Action Buttons */}
-        <div className="flex justify-end space-x-3 pt-4">
-          <button
+        <div className="flex">
+          {/* <button
             type="button"
             onClick={onCancel}
             className="px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
           >
             Cancel
-          </button>
+          </button> */}
           <button
             type="submit"
+            // onClick={()=> setIsModalOpen(false)}   //closed on onsuccess in mutation
             disabled={updateProfileMutation.isLoading}
             className="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 disabled:opacity-50 disabled:cursor-not-allowed"
           >

@@ -1,9 +1,15 @@
 const Video = require('../models/Video');
 const Course = require('../models/Course');
-const { uploadVideo, deleteVideo } = require('../config/cloudinary');
+const ImageKit = require('imagekit');
 const { v4: uuidv4 } = require('uuid');
 const path = require('path');
-const fs = require('fs');
+
+// Initialize ImageKit
+const imagekit = new ImageKit({
+  publicKey: process.env.IMAGEKIT_PUBLIC_KEY,
+  privateKey: process.env.IMAGEKIT_PRIVATE_KEY,
+  urlEndpoint: process.env.IMAGEKIT_URL_ENDPOINT
+});
 
 // @desc    Upload a video
 // @route   POST /api/videos/upload
@@ -51,37 +57,39 @@ exports.uploadVideo = async (req, res, next) => {
       });
     }
 
-    // Upload video to Cloudinary
-    const uploadResult = await uploadVideo(
-      videoFile.data,
-      `${uuidv4()}${path.extname(videoFile.name)}`,
-      process.env.CLOUDINARY_VIDEO_FOLDER
-    );
+    // Upload video to ImageKit
+    const uploadResult = await new Promise((resolve, reject) => {
+      const fileName = `${uuidv4()}${path.extname(videoFile.name)}`;
+      
+      imagekit.upload({
+        file: videoFile.data.toString('base64'),
+        fileName: fileName,
+        folder: 'gurukul/videos',
+        useUniqueFileName: true,
+        tags: ['video', 'gurukul'],
+        responseFields: ['url', 'fileId', 'name', 'size', 'thumbnailUrl', 'width', 'height']
+      }, (error, result) => {
+        if (error) return reject(error);
+        resolve(result);
+      });
+    });
     
-    if (!uploadResult || !uploadResult.secure_url) {
-      throw new Error('Failed to upload video to Cloudinary');
+    if (!uploadResult || !uploadResult.url) {
+      throw new Error('Failed to upload video to ImageKit');
     }
 
-    // Create video record with qualities support
-    // For now, set the uploaded video as the auto quality and fallback for all qualities
-    const qualities = {
-      'auto': uploadResult.secure_url,
-      '1080p': uploadResult.secure_url,
-      '720p': uploadResult.secure_url,
-      '480p': uploadResult.secure_url,
-      '360p': uploadResult.secure_url
-    };
-
+    // Create video record
     const video = await Video.create({
       title: title || videoFile.name.replace(/\.[^/.]+$/, ''),
       description: description || '',
-      videoUrl: uploadResult.secure_url,
+      videoUrl: uploadResult.url,
       thumbnailUrl: uploadResult.thumbnailUrl || '',
-      publicId: uploadResult.public_id,
-      duration: uploadResult.duration || 0,
+      fileId: uploadResult.fileId,
+      duration: 0, // Will be updated by webhook
       width: uploadResult.width || 0,
       height: uploadResult.height || 0,
       course: courseId,
+      bytes: videoFile.size || 0,
       creator: req.user.id,
       section: sectionId || 'main',
       status: 'processing',
@@ -316,24 +324,28 @@ exports.deleteVideo = async (req, res, next) => {
       await course.save();
     }
 
-    // Delete from Cloudinary if video exists there
-    if (video.publicId) {
+    // Delete from ImageKit if fileId exists
+    if (video.fileId) {
       try {
-        await deleteVideo(video.publicId);
+        await new Promise((resolve, reject) => {
+          imagekit.deleteFile(video.fileId, (error, result) => {
+            if (error) return reject(error);
+            resolve(result);
+          });
+        });
       } catch (error) {
-        console.error('Error deleting video from Cloudinary:', error);
-        // Continue with deletion even if Cloudinary deletion fails
+        console.error('Error deleting video from ImageKit:', error);
+        // Continue with deletion even if ImageKit deletion fails
       }
     }
 
-    // Delete from database
-    await video.remove();
+    // Delete the video document
+    await Video.findByIdAndDelete(video._id);
 
     res.status(200).json({
       success: true,
-      message: 'Video deleted successfully'
+      data: {}
     });
-
   } catch (error) {
     console.error('Error deleting video:', error);
     res.status(500).json({

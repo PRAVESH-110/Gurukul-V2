@@ -138,15 +138,18 @@ const updateUser = async (req, res, next) => {
       });
     }
 
-    const { firstName, lastName, bio, avatar } = req.body;
+    const { firstName, lastName, bio, avatar, phone, address, dateOfBirth } = req.body;
 
     const updatedUser = await User.findByIdAndUpdate(
       req.params.id,
       {
         firstName: firstName || user.firstName,
         lastName: lastName || user.lastName,
-        bio: bio !== undefined ? bio : user.bio,
-        avatar: avatar || user.avatar
+        bio,
+        avatar: avatar || user.avatar,
+        phone,
+        address,
+        dateOfBirth
       },
       {
         new: true,

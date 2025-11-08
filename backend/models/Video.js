@@ -12,18 +12,18 @@ const videoSchema = new mongoose.Schema({
     default: '',
     maxlength: [1000, 'Description cannot exceed 1000 characters']
   },
-  // Video information from Cloudinary
+  // Video information from ImageKit
   videoUrl: { 
     type: String, 
     required: [true, 'Video URL is required'] 
   },
-  publicId: {
+  fileId: {
     type: String,
-    required: [true, 'Cloudinary public ID is required']
+    required: [true, 'ImageKit file ID is required']
   },
-  format: {
+  mimeType: {
     type: String,
-    required: true
+    default: 'video/mp4'
   },
   width: {
     type: Number,

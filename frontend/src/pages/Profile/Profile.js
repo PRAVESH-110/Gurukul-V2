@@ -1,35 +1,62 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useQueryClient,useMutation } from '@tanstack/react-query';
 import { userAPI } from '../../services/api';
 import LoadingSpinner from '../../components/UI/LoadingSpinner';
-import { User, Mail, Calendar, MapPin, Edit, Phone, X } from 'lucide-react';
+import { User, Mail, Calendar, MapPin, Edit } from 'lucide-react';
 import EditProfile from './EditProfileModal';
 
+
 const Profile = () => {
-  const { user } = useAuth();
+  const { user, updateUser } = useAuth();
   const [isModalOpen, setIsModalOpen] = useState(false);
+
   const queryClient = useQueryClient();
 
-  const handleProfileUpdate = () => {
+  // Handle ESC key to close modal
+  useEffect(() => {
+    const handleKeyDown = (event) => {
+      if (event.key === 'Escape' && isModalOpen || event.click === 'Escape' && isModalOpen) {
+        setIsModalOpen(false);
+      }
+    }; 
+
+   
+
+    if (isModalOpen) {
+      document.addEventListener('keydown', handleKeyDown);
+    }
+
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [isModalOpen]);
+
+  const handleProfileUpdate = (updatedUser) => {
+    if (!updatedUser) {
+      console.error('No user data received');
+      return;
+    }
+    
+    // Update the auth context with the new user data
+    updateUser(updatedUser);
+    
+    // Update the query cache with the new data
+    queryClient.setQueryData(['userProfile', user?.id], { user: updatedUser });
+    
+    // Close the modal
     setIsModalOpen(false);
+    
+    // Optional: Show a success message
+    toast.success('Profile updated successfully');
   };
+
 
   const { data: profileData, isLoading, error } = useQuery({
     queryKey: ['userProfile', user?.id],
-    queryFn: () => userAPI.getUser(user?.id),
-    enabled: !!user?.id
+    queryFn: () => userAPI.getUser(user?.id), 
+    enabled: !!user?.id,
   });
-
-  const handleEditProfile = async (updatedData) => {
-    try {
-      await userAPI.updateUser(user.id, updatedData);
-      setIsEditing(false);
-      queryClient.invalidateQueries(['userProfile', user.id]);
-    } catch (error) {
-      console.error('Error updating profile:', error);
-    }
-  }
 
   if (isLoading) {
     return (
@@ -47,10 +74,12 @@ const Profile = () => {
     );
   }
 
-  const profile = profileData?.data || user;
+  // The API returns { success: true, user: {...} }, so we need profileData.user
+  // We also combine firstName and lastName for display.
+  const profile = profileData?.user || user;
 
   return (
-    <div className="max-w-4xl mx-auto space-y-6">
+    <div className=" space-y-6">
       {/* Header */}
       <div className="bg-white rounded-lg shadow-sm border">
         <div className="p-6">
@@ -61,7 +90,7 @@ const Profile = () => {
               </div>
               <div>
                 <h1 className="text-2xl font-bold text-gray-900">
-                  {profile?.name || 'User Name'}
+                  {`${profile?.firstName || ''} ${profile?.lastName || ''}`.trim() || 'User Name'}
                 </h1>
                 <p className="text-gray-600">{profile?.email}</p>
                 <p className="text-sm text-gray-500 capitalize">
@@ -71,7 +100,7 @@ const Profile = () => {
             </div>
             <button
               onClick={() => setIsModalOpen(true)}
-              className="btn-outline flex items-center"
+              className="btn-outline "
             >
               <Edit className="h-4 w-4 mr-2" />
               Edit Profile
@@ -95,7 +124,7 @@ const Profile = () => {
               <div>
                 <p className="text-sm font-medium text-gray-900">Full Name</p>
                 <p className="text-sm text-gray-600">
-                  {profile?.name || 'Not provided'}
+                  {`${profile?.firstName || ''} ${profile?.lastName || ''}`.trim() || 'Not provided'}
                 </p>
               </div>
             </div>
@@ -111,10 +140,9 @@ const Profile = () => {
               <div>
                 <p className="text-sm font-medium text-gray-900">Joined</p>
                 <p className="text-sm text-gray-600">
-                  {profile?.createdAt ?
-                    new Date(profile.createdAt).toLocaleDateString() :
-                    'Not available'
-                  }
+                  {profile?.createdAt
+                    ? new Date(profile.createdAt).toLocaleDateString()
+                    : 'Not available'}
                 </p>
               </div>
             </div>
@@ -157,7 +185,9 @@ const Profile = () => {
               </span>
             </div>
             <div className="flex justify-between">
-              <span className="text-sm text-gray-600">Communities Created</span>
+              <span className="text-sm text-gray-600">
+                Communities Created
+              </span>
               <span className="text-sm font-medium">
                 {profile?.createdCommunities?.length || 0}
               </span>
@@ -178,7 +208,20 @@ const Profile = () => {
         </div>
       </div>
 
-      {/* Edit Profile Form */}
+      {/* Edit Profile Modal */}
+      {isModalOpen && (
+        <div className="fixed inset-0 z-50 bg-black bg-opacity-40 flex items-center justify-center p-4">
+          <div className="bg-white rounded-lg shadow-lg w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+            <EditProfile 
+              user={profile} 
+              onCancel={() => setIsModalOpen(false)}
+              onSuccess={handleProfileUpdate}
+              setIsModalOpen={setIsModalOpen}
+              
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 };

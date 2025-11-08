@@ -2,11 +2,15 @@ const express = require('express');
 const router = express.Router();
 const videoController = require('../controllers/videoController');
 const { protect, authorize } = require('../middleware/auth');
-const { upload } = require('../middleware/upload');
 const Video = require('../models/Video');
+const ImageKit = require('imagekit');
 
-// Configure video upload (using Cloudinary)
-const uploadVideo = upload.single('video');
+// Initialize ImageKit
+const imagekit = new ImageKit({
+  publicKey: process.env.IMAGEKIT_PUBLIC_KEY,
+  privateKey: process.env.IMAGEKIT_PRIVATE_KEY,
+  urlEndpoint: process.env.IMAGEKIT_URL_ENDPOINT
+});
 
 // Routes for video management
 router.route('/')
@@ -17,7 +21,7 @@ router.route('/')
 router.route('/:id')
   // @desc    Get video details
   // @access  Private
-  .get(protect, videoController.getVideo)
+  .get(protect, videoController.getVideo) 
   // @desc    Update video details
   // @access  Private/Creator
   .put(protect, authorize('creator', 'admin'), videoController.updateVideo)
@@ -71,28 +75,23 @@ router.get('/upload-url', protect, authorize('creator', 'admin'), (req, res) => 
       fileId,
       fileName: filename,
       mimeType,
-      folder: 'videos',
-      isPrivateFile: false,
-      tags: ['video-upload']
+      folder: 'gurukul/videos',
+      useUniqueFileName: true,
+      tags: ['video', 'gurukul'],
+      responseFields: ['url', 'fileId', 'name', 'size', 'thumbnailUrl', 'width', 'height']
     };
     
-    imagekit.getAuthenticationParameters(uploadOptions, (error, result) => {
-      if (error) {
-        console.error('Error generating upload URL:', error);
-        return res.status(500).json({
-          success: false,
-          message: 'Error generating upload URL',
-          error: error.message
-        });
+    // Get authentication parameters for client-side upload
+    const authParams = imagekit.getAuthenticationParameters(uploadOptions);
+    
+    res.status(200).json({
+      success: true,
+      data: {
+        ...authParams,
+        fileId,
+        url: `${process.env.IMAGEKIT_URL_ENDPOINT}/${fileId}`,
+        uploadUrl: `${process.env.IMAGEKIT_UPLOAD_URL || 'https://upload.imagekit.io/api/v1/files/upload'}`
       }
-      
-      res.status(200).json({
-        success: true,
-        data: {
-          ...result,
-          fileId
-        }
-      });
     });
   } catch (error) {
     console.error('Error generating upload URL:', error);
@@ -104,45 +103,52 @@ router.get('/upload-url', protect, authorize('creator', 'admin'), (req, res) => 
   }
 });
 
-// @desc    Handle webhook from ImageKit for upload completion
+// @desc    Handle webhook from ImageKit for upload/encoding completion
 // @route   POST /api/videos/webhook
 // @access  Public (called by ImageKit)
 router.post('/webhook', (req, res) => {
   try {
     const { event, data } = req.body;
     
-    if (event === 'video.encoded') {
-      // Handle video encoding completion
-      // Update video status and metadata in the database
-      Video.findOneAndUpdate(
-        { fileId: data.fileId },
-        {
-          $set: {
-            'status': 'ready',
-            'url': data.url,
-            'thumbnailUrl': data.thumbnailUrl,
-            'duration': data.duration,
-            'resolution': {
-              width: data.width,
-              height: data.height
-            },
-            'mimeType': data.mimeType
-          }
+    if (event === 'video.encoded' || event === 'file.uploaded') {
+      // Handle video upload/encoding completion
+      const updateData = {
+        status: 'ready',
+        url: data.url,
+        thumbnailUrl: data.thumbnailUrl || '',
+        duration: data.duration || 0,
+        resolution: {
+          width: data.width || 0,
+          height: data.height || 0
         },
+        mimeType: data.mimeType || 'video/mp4',
+        size: data.size || 0
+      };
+      
+      // For uploaded videos, we might need to update by URL since fileId might not be set
+      const query = data.fileId ? { fileId: data.fileId } : { url: data.url };
+      
+      Video.findOneAndUpdate(
+        query,
+        { $set: updateData },
         { new: true }
       ).then(updatedVideo => {
         if (updatedVideo) {
-          console.log(`Video ${data.fileId} processed successfully`);
+          console.log(`Video ${data.fileId || data.url} processed successfully`);
         }
       }).catch(error => {
-        console.error('Error updating video after encoding:', error);
+        console.error('Error updating video after processing:', error);
       });
     }
     
-    res.status(200).json({ received: true });
+    res.status(200).json({ success: true });
   } catch (error) {
     console.error('Error processing webhook:', error);
-    res.status(500).json({ error: 'Error processing webhook' });
+    res.status(500).json({ 
+      success: false,
+      error: 'Error processing webhook',
+      details: error.message 
+    });
   }
 });
 
@@ -209,19 +215,21 @@ router.get('/stream/:id', protect, async (req, res, next) => {
       });
     }
 
-    // Return video details with Cloudinary URL
+    // Return video details with ImageKit URL
     res.status(200).json({
       success: true,
       data: {
         url: video.videoUrl,
-        publicId: video.publicId,
-        format: video.format,
-        duration: video.duration,
-        width: video.width,
-        height: video.height,
+        fileId: video.fileId,
+        name: video.title,
+        size: video.size || 0,
+        duration: video.duration || 0,
+        width: video.width || 0,
+        height: video.height || 0,
         title: video.title,
         description: video.description,
-        thumbnailUrl: video.thumbnailUrl
+        thumbnailUrl: video.thumbnailUrl,
+        mimeType: video.mimeType || 'video/mp4'
       }
     });
   } catch (error) {

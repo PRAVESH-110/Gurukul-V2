@@ -4,37 +4,44 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { userAPI } from '../../services/api';
 import { toast } from 'react-hot-toast';
 import { User, Bell, Shield, Palette, Save } from 'lucide-react';
+import {useNavigate} from 'react-router-dom';
 
 const Settings = () => {
   const { user } = useAuth();
   const queryClient = useQueryClient();
+  const navigate = useNavigate();                // ✅ hook at top-level
+
   const [settings, setSettings] = useState({
     name: user?.name || '',
     email: user?.email || '',
     bio: user?.bio || '',
     location: user?.location || '',
-    notifications: {
+    notifications: user?.notifications || {
       email: true,
-      push: true,
-      courseUpdates: true,
-      communityUpdates: true
+      push: false,
+      courseUpdates: true
     },
-    privacy: {
+    privacy: user?.privacy || {
       profileVisibility: 'public',
-      showEmail: false,
-      showActivity: true
-    },
-    theme: 'light'
+      emailVisibility: 'private',
+      activityStatus: 'public'
+    }
   });
 
+  // ✅ useMutation is defined at top level, NOT inside a function
   const updateProfileMutation = useMutation({
     mutationFn: (data) => userAPI.updateUser(user?.id, data),
+
     onSuccess: () => {
-      toast.success('Settings updated successfully');
-      queryClient.invalidateQueries(['userProfile']);
+      toast.success("Settings updated successfully");
+
+      queryClient.invalidateQueries(["userProfile"]); // ✅ refresh react-query cache
+
+      navigate("/profile");   // ✅ navigate works here
     },
+
     onError: () => {
-      toast.error('Failed to update settings');
+      toast.error("Failed to update settings");
     }
   });
 
@@ -42,7 +49,7 @@ const Settings = () => {
     updateProfileMutation.mutate({
       name: settings.name,
       bio: settings.bio,
-      location: settings.location
+      location: settings.location,
     });
   };
 
