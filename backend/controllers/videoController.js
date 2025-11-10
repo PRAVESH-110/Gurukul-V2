@@ -203,6 +203,32 @@ exports.getVideo = async (req, res, next) => {
   }
 };
 
+
+// @desc    Get course videos
+// @route   GET /api/videos/course/:courseId
+// @access  Private 
+exports.getCourseVideos = async (req, res) => {
+  try {
+    const { courseId } = req.params;
+
+    // Use the correct field name — your DB stores it as "course"
+    const videos = await Video.find({ course: courseId })
+      .sort({ order: 1 })  // optional: sort by order
+      .select('-__v');     // optional: remove __v field
+
+    res.status(200).json({
+      success: true,
+      count: videos.length,
+      data: videos
+    });
+  } catch (error) {
+    console.error("Error fetching course videos:", error);
+    res.status(500).json({
+      success: false,
+      message: "Server error fetching course videos"
+    });
+  }
+};
 // @desc    Update video details
 // @route   PUT /api/videos/:id
 // @access  Private/Creator

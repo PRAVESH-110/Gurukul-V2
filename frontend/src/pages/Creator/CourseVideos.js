@@ -26,14 +26,19 @@ const CourseVideos = () => {
       try {
         setIsLoading(true);
         
-        // Fetch course details
+        // Fetch course details and videos
         const [courseRes, videosRes] = await Promise.all([
           courseAPI.getCourse(courseId),
           videoAPI.getCourseVideos(courseId)
         ]);
         
-        setCourse(courseRes.data?.course || courseRes.data);
-        setVideos(videosRes.data?.data || []);
+        // Handle course data (which might be in courseRes.data.course or courseRes.data)
+        const courseData = courseRes.data?.course || courseRes.data;
+        setCourse(courseData);
+        
+        // Handle videos data (which might be in videosRes.data.data or just videosRes.data)
+        const videosData = videosRes.data?.data || videosRes.data || [];
+        setVideos(Array.isArray(videosData) ? videosData : []);
         setError(null);
       } catch (err) {
         console.error('Error fetching data:', err);
@@ -139,7 +144,7 @@ const CourseVideos = () => {
               {course?.title || 'Course Videos'}
             </h1>
             <p className="text-gray-600 mt-1">
-              Manage your course videos and sections
+              
             </p>
           </div>
           

@@ -12,7 +12,7 @@ const UploadVideo = () => {
   const navigate = useNavigate();
   const { courseId } = useParams();
   const [videoData, setVideoData] = useState(null);
-  const [selectedCourse, setSelectedCourse] = useState(courseId || '');
+  const [selectedCourse, setSelectedCourse] = useState(courseId);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const { register, handleSubmit, formState: { errors } } = useForm();

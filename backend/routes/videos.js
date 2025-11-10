@@ -4,6 +4,7 @@ const videoController = require('../controllers/videoController');
 const { protect, authorize } = require('../middleware/auth');
 const Video = require('../models/Video');
 const ImageKit = require('imagekit');
+const { getCourseVideos } = require('../controllers/videoController');
 
 // Initialize ImageKit
 const imagekit = new ImageKit({
@@ -44,7 +45,7 @@ router.get('/course/:courseId', protect, async (req, res, next) => {
     
     const videos = await Video.find(query)
       .sort('order')
-      .select('title description videoUrl thumbnailUrl duration isPublished order section format width height');
+      .select('title description url thumbnailUrl duration isPublished order section format width height');
       
     res.status(200).json({
       success: true,
