@@ -67,7 +67,7 @@ exports.uploadVideo = async (req, res, next) => {
         folder: 'gurukul/videos',
         useUniqueFileName: true,
         tags: ['video', 'gurukul'],
-        responseFields: ['url', 'fileId', 'name', 'size', 'thumbnailUrl', 'width', 'height']
+        responseFields: ['url', 'fileId', 'name', 'size', 'thumbnailUrl']
       }, (error, result) => {
         if (error) return reject(error);
         resolve(result);
@@ -391,6 +391,7 @@ exports.createVideo = async (req, res, next) => {
       title,
       description,
       url,
+      videoUrl, // Accept both url and videoUrl for compatibility
       qualities,
       fileId,
       course: courseId,
@@ -401,8 +402,16 @@ exports.createVideo = async (req, res, next) => {
       allowDownload,
       enableComments,
       objectives,
-      resources
+      resources,
+      size,
+      mimeType,
+      thumbnailUrl
     } = req.body;
+
+    // Debug logging - log the entire request body to see what we're receiving
+    console.log('📥 Received video creation request:');
+    console.log('Request body keys:', Object.keys(req.body));
+    console.log('Request body:', JSON.stringify(req.body, null, 2));
 
     // Validate required fields
     if (!title) {
@@ -412,10 +421,22 @@ exports.createVideo = async (req, res, next) => {
       });
     }
 
-    if (!url || !fileId) {
+    // Accept both url and videoUrl, use whichever is provided
+    const videoUrlValue = videoUrl || url;
+    
+    if (!videoUrlValue || !fileId) {
+      console.error('❌ Missing required fields:');
+      console.error('  videoUrl:', videoUrl);
+      console.error('  url:', url);
+      console.error('  fileId:', fileId);
       return res.status(400).json({
         success: false,
-        message: 'Video URL and fileId are required'
+        message: 'Video URL and fileId are required',
+        received: {
+          hasUrl: !!url,
+          hasVideoUrl: !!videoUrl,
+          hasFileId: !!fileId
+        }
       });
     }
 
@@ -430,6 +451,8 @@ exports.createVideo = async (req, res, next) => {
     console.log('Creating video with data:', {
       title,
       courseId,
+      videoUrl: videoUrlValue,
+      fileId,
       userId: req.user.id,
       userIdAlt: req.user._id
     });
@@ -452,22 +475,23 @@ exports.createVideo = async (req, res, next) => {
     // Create video record with qualities support
     console.log('Creating video record...');
     const videoQualities = qualities || {
-      'auto': url,
-      '1080p': url,
-      '720p': url,
-      '480p': url,
-      '360p': url
+      'auto': videoUrlValue,
+      '1080p': videoUrlValue,
+      '720p': videoUrlValue,
+      '480p': videoUrlValue,
+      '360p': videoUrlValue
     };
 
-    const video = await Video.create({
+    // Prepare video data - use videoUrl (model field) not url
+    const videoData = {
       title,
       description: description || '',
-      url,
-      qualities: videoQualities,
+      videoUrl: videoUrlValue, // Use videoUrl (model field name)
+      thumbnailUrl: thumbnailUrl || '',
       fileId,
       course: courseId,
       creator: req.user.id || req.user._id,
-      duration: duration || 1,
+      duration: duration || 1, // Set to minimum valid value (1 second) if not provided
       order: order || 1,
       isPreview: isPreview || false,
       isPublished: isPublished !== false, // Default to true
@@ -477,7 +501,13 @@ exports.createVideo = async (req, res, next) => {
       resources: resources || '',
       status: 'ready', // Assuming file is already uploaded and ready
       isActive: true
-    });
+    };
+
+    if (mimeType) videoData.mimeType = mimeType;
+
+    console.log('Video data to create:', videoData);
+
+    const video = await Video.create(videoData);
 
     await video.populate('creator', 'firstName lastName avatar');
 

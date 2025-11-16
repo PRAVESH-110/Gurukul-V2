@@ -27,11 +27,9 @@ const videoSchema = new mongoose.Schema({
   },
   width: {
     type: Number,
-    required: true
   },
   height: {
     type: Number,
-    required: true
   },
   duration: { 
     type: Number, 
@@ -39,7 +37,6 @@ const videoSchema = new mongoose.Schema({
   },
   bytes: {
     type: Number,
-    required: true
   },
   thumbnailUrl: { 
     type: String, 

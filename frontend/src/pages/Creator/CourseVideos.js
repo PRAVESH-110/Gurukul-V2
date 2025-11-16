@@ -23,8 +23,15 @@ const CourseVideos = () => {
   // Fetch course and videos data
   useEffect(() => {
     const fetchData = async () => {
+      if (!courseId) {
+        console.error('No courseId provided');
+        setIsLoading(false);
+        return;
+      }
+
       try {
         setIsLoading(true);
+        console.log('Fetching videos for courseId:', courseId);
         
         // Fetch course details and videos
         const [courseRes, videosRes] = await Promise.all([
@@ -32,45 +39,128 @@ const CourseVideos = () => {
           videoAPI.getCourseVideos(courseId)
         ]);
         
+        console.log('Full videosRes object:', videosRes);
+        console.log('videosRes.data:', videosRes?.data);
+        console.log('videosRes.status:', videosRes?.status);
+        
         // Handle course data (which might be in courseRes.data.course or courseRes.data)
         const courseData = courseRes.data?.course || courseRes.data;
         setCourse(courseData);
         
-        // Handle videos data (which might be in videosRes.data.data or just videosRes.data)
-        const videosData = videosRes.data?.data || videosRes.data || [];
-        setVideos(Array.isArray(videosData) ? videosData : []);
+        // Handle videos data - API returns { success: true, count: X, data: videos }
+        // videosRes is the axios response, so videosRes.data is the API response object
+        let videosData = [];
+        
+        // Check if API returned an error
+        if (videosRes?.data && videosRes.data.success === false) {
+          console.error('❌ API returned error:', videosRes.data.message || 'Unknown error');
+          toast.error(videosRes.data.message || 'Failed to load videos');
+          setVideos([]);
+          setError(videosRes.data.message || 'Failed to load videos');
+          setIsLoading(false);
+          return;
+        }
+        
+        if (videosRes?.data) {
+          console.log('videosRes.data structure:', {
+            success: videosRes.data.success,
+            count: videosRes.data.count,
+            hasData: !!videosRes.data.data,
+            dataIsArray: Array.isArray(videosRes.data.data),
+            dataLength: Array.isArray(videosRes.data.data) ? videosRes.data.data.length : 'not array',
+            allKeys: Object.keys(videosRes.data)
+          });
+          
+          // Check if response has a data property (the videos array)
+          if (Array.isArray(videosRes.data.data)) {
+            videosData = videosRes.data.data;
+            console.log('✅ Found videos in videosRes.data.data:', videosData.length);
+          } else if (Array.isArray(videosRes.data)) {
+            // If the response itself is an array
+            videosData = videosRes.data;
+            console.log('✅ Found videos in videosRes.data (array):', videosData.length);
+          } else if (videosRes.data.videos && Array.isArray(videosRes.data.videos)) {
+            // Alternative response structure
+            videosData = videosRes.data.videos;
+            console.log('✅ Found videos in videosRes.data.videos:', videosData.length);
+          } else {
+            console.warn('⚠️ No videos array found in response. Response structure:', videosRes.data);
+            // Try to log the full response to understand the structure
+            console.warn('Full response:', JSON.stringify(videosRes.data, null, 2));
+          }
+        } else {
+          console.error('❌ videosRes.data is undefined or null');
+          console.error('Full videosRes:', videosRes);
+        }
+        
+        console.log('Final videosData:', videosData);
+        console.log('Videos count:', videosData.length);
+        
+        setVideos(videosData);
         setError(null);
       } catch (err) {
-        console.error('Error fetching data:', err);
+        console.error('❌ Error fetching data:', err);
+        console.error('Error response:', err.response);
+        console.error('Error details:', err.response?.data || err.message);
         setError('Failed to load course data. Please try again.');
         toast.error('Failed to load course data');
+        setVideos([]); // Ensure videos is set to empty array on error
       } finally {
         setIsLoading(false);
       }
     };
 
-    if (courseId) {
-      fetchData();
-    }
+    fetchData();
   }, [courseId]);
 
+  // Refetch videos from API
+  const refetchVideos = async () => {
+    if (!courseId) {
+      console.error('No courseId for refetch');
+      return;
+    }
+    
+    try {
+      console.log('Refetching videos for courseId:', courseId);
+      const videosRes = await videoAPI.getCourseVideos(courseId);
+      let videosData = [];
+      
+      if (videosRes?.data) {
+        if (Array.isArray(videosRes.data.data)) {
+          videosData = videosRes.data.data;
+        } else if (Array.isArray(videosRes.data)) {
+          videosData = videosRes.data;
+        } else if (videosRes.data.videos && Array.isArray(videosRes.data.videos)) {
+          videosData = videosRes.data.videos;
+        }
+      }
+      
+      console.log('Refetched videos:', videosData.length);
+      setVideos(videosData);
+    } catch (err) {
+      console.error('Error refetching videos:', err);
+      toast.error('Failed to refresh videos');
+    }
+  };
+
   // Handle successful video upload
-  const handleVideoUploaded = (newVideo) => {
-    setVideos([...videos, newVideo]);
+  const handleVideoUploaded = async (newVideo) => {
     setShowUploadForm(false);
     toast.success('Video uploaded successfully!');
+    // Refetch videos to ensure we have the latest data
+    await refetchVideos();
   };
 
   // Handle video deletion
-  const handleVideoDeleted = (videoId) => {
-    setVideos(videos.filter(video => video._id !== videoId));
+  const handleVideoDeleted = async (videoId) => {
+    // Refetch videos to ensure we have the latest data
+    await refetchVideos();
   };
 
   // Handle video update
-  const handleVideoUpdated = (updatedVideo) => {
-    setVideos(videos.map(video => 
-      video._id === updatedVideo._id ? updatedVideo : video
-    ));
+  const handleVideoUpdated = async (updatedVideo) => {
+    // Refetch videos to ensure we have the latest data
+    await refetchVideos();
   };
 
   // Handle edit video
@@ -89,7 +179,8 @@ const CourseVideos = () => {
       try {
         await videoAPI.deleteVideo(videoId);
         toast.success('Video deleted successfully', { id: deleteToast });
-        setVideos(videos.filter(video => video._id !== videoId));
+        // Refetch videos to ensure we have the latest data
+        await refetchVideos();
       } catch (error) {
         const errorMessage = error.response?.data?.message || 'Failed to delete video';
         toast.error(errorMessage, { id: deleteToast });

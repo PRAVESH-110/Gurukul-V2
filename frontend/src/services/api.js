@@ -182,7 +182,7 @@ export const userAPI = {
   deleteUser: (id) => api.delete(`/users/${id}`),
   getUserCommunities: (id) => api.get(`/users/${id}/communities`),
   getUserCourses: (id) => api.get(`/users/${id}/courses`),
-};``
+};
 
 // Community API
 export const communityAPI = {

@@ -155,14 +155,24 @@ const UploadVideo = () => {
     setIsSubmitting(true);
     
     try {
+      // Validate videoData has required fields
+      if (!videoData || !videoData.url || !videoData.fileId) {
+        console.error('❌ Invalid videoData:', videoData);
+        toast.error('Video data is incomplete. Please upload the video again.');
+        setIsSubmitting(false);
+        return;
+      }
+
       // Create video record with metadata
+      // Send both url and videoUrl for compatibility with backend
       const videoRecord = {
         title: data.title.trim(),
         description: data.description?.trim() || '',
-        videoUrl: videoData.url, // Changed from url to videoUrl to match model
+        url: videoData.url, // Send as url
+        videoUrl: videoData.url, // Also send as videoUrl for compatibility
         fileId: videoData.fileId,
         course: selectedCourse,
-        duration: data.duration ? parseInt(data.duration) : 0, // Default to 0 instead of undefined
+        duration: data.duration ? parseInt(data.duration) : 1, // Set to minimum valid value (1 second) if not provided
         order: data.order ? parseInt(data.order) : 1,
         isPreview: data.isPreview || false,
         isPublished: data.isPublished !== false, // Default to true
@@ -176,11 +186,18 @@ const UploadVideo = () => {
         bytes: videoData.bytes || videoData.size || 0, // Fallback to size if bytes not available
         // Add other required fields with defaults
         mimeType: videoData.mimeType || 'video/mp4',
+        thumbnailUrl: videoData.thumbnailUrl || '',
         status: 'processing',
         isActive: true
       };
 
-      console.log('Sending video record to API:', videoRecord);
+      console.log('📤 Sending video record to API:');
+      console.log('  Title:', videoRecord.title);
+      console.log('  URL:', videoRecord.url);
+      console.log('  VideoURL:', videoRecord.videoUrl);
+      console.log('  FileID:', videoRecord.fileId);
+      console.log('  Course:', videoRecord.course);
+      console.log('  Full record:', videoRecord);
       
       toast.loading('Creating video lesson...', { id: 'create-lesson' });
       

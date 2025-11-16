@@ -1,4 +1,5 @@
 const express = require('express');
+const mongoose = require('mongoose');
 const router = express.Router();
 const videoController = require('../controllers/videoController');
 const { protect, authorize } = require('../middleware/auth');
@@ -38,21 +39,50 @@ router.get('/course/:courseId', protect, async (req, res, next) => {
     const { courseId } = req.params;
     const { section } = req.query;
     
-    const query = { course: courseId };
+    // Convert courseId to ObjectId if it's a valid ObjectId string
+    let courseObjectId;
+    try {
+      courseObjectId = mongoose.Types.ObjectId.isValid(courseId) 
+        ? new mongoose.Types.ObjectId(courseId) 
+        : courseId;
+    } catch (err) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid course ID format'
+      });
+    }
+    
+    console.log('Fetching videos for courseId:', courseId);
+    console.log('Converted to ObjectId:', courseObjectId);
+    
+    const query = { course: courseObjectId };
     if (section) {
       query.section = section;
     }
     
+    console.log('Query:', query);
+    
+    // Find all videos for this course (including inactive ones for creator view)
     const videos = await Video.find(query)
       .sort('order')
-      .select('title description url thumbnailUrl duration isPublished order section format width height');
+      .select('_id title description videoUrl url thumbnailUrl duration isPublished order section format width height size status isPreview isActive createdAt updatedAt');
+    
+    console.log(`Found ${videos.length} videos for course ${courseId}`);
+    
+    // Map videos to include both videoUrl and url for compatibility
+    const mappedVideos = videos.map(video => ({
+      ...video.toObject(),
+      url: video.videoUrl || video.url, // Use videoUrl if available, fallback to url
+      thumbnailUrl: video.thumbnailUrl || ''
+    }));
       
     res.status(200).json({
       success: true,
-      count: videos.length,
-      data: videos
+      count: mappedVideos.length,
+      data: mappedVideos
     });
   } catch (error) {
+    console.error('Error fetching course videos:', error);
     next(error);
   }
 });

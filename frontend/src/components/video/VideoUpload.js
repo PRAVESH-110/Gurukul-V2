@@ -73,25 +73,44 @@ const VideoUpload = ({ courseId, onUploadComplete, existingVideos = [] }) => {
     setUploadProgress(0);
 
     try {
-      const formData = new FormData();
-      formData.append('video', selectedFile);
-      formData.append('title', data.title);
-      formData.append('description', data.description || '');
-      formData.append('courseId', courseId);
-      formData.append('sectionId', selectedSection);
-      formData.append('isPublished', data.isPublished || false);
-
-      const config = {
-        onUploadProgress: (progressEvent) => {
-          const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
-          setUploadProgress(percentCompleted);
-        }
+      // Step 1: Upload video to ImageKit first
+      const progressHandler = (progress) => {
+        setUploadProgress(progress);
       };
 
-      const response = await videoAPI.uploadVideo(formData, config);
+      console.log('📤 Uploading video to ImageKit...');
+      const uploadResponse = await videoAPI.uploadVideoToImageKit(selectedFile, progressHandler);
+      
+      console.log('✅ Video uploaded to ImageKit:', uploadResponse);
+      console.log('📝 Creating video record...');
+
+      // Step 2: Create video record with the uploaded video data
+      const videoRecord = {
+        title: data.title,
+        description: data.description || '',
+        url: uploadResponse.url,
+        videoUrl: uploadResponse.url, // Send both for compatibility
+        fileId: uploadResponse.fileId,
+        course: courseId,
+        section: selectedSection,
+        isPublished: data.isPublished || false,
+        thumbnailUrl: uploadResponse.thumbnailUrl || '',
+        size: uploadResponse.size || selectedFile.size,
+        bytes: uploadResponse.size || selectedFile.size,
+        duration: 1, // Set to minimum valid value (1 second), will be updated by webhook with actual duration
+        order: videos.length + 1,
+        status: 'processing',
+        isActive: true
+      };
+
+      console.log('📤 Creating video record:', videoRecord);
+      const response = await videoAPI.createVideoRecord(videoRecord);
+      
+      console.log('✅ Video record created:', response);
       
       // Add the new video to the list
-      setVideos([...videos, response.data]);
+      const newVideo = response.data?.data || response.data;
+      setVideos([...videos, newVideo]);
       
       toast.success('Video uploaded successfully!');
       reset();
@@ -100,11 +119,12 @@ const VideoUpload = ({ courseId, onUploadComplete, existingVideos = [] }) => {
       
       // Notify parent component
       if (onUploadComplete) {
-        onUploadComplete(response.data);
+        onUploadComplete(newVideo);
       }
     } catch (error) {
-      console.error('Error uploading video:', error);
-      toast.error(error.response?.data?.message || 'Failed to upload video');
+      console.error('❌ Error uploading video:', error);
+      const errorMessage = error.response?.data?.message || error.message || 'Failed to upload video';
+      toast.error(errorMessage);
     } finally {
       setIsUploading(false);
       setUploadProgress(0);
