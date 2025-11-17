@@ -32,13 +32,40 @@ const EditProfile = ({ user, onCancel, onSuccess, setIsModalOpen }) => {
   const updateProfileMutation = useMutation({
   mutationFn: (updatedData) => userAPI.updateUser(user._id, updatedData),
 
-  onSuccess: async(updatedData) => {
-
-    // Invalidate and refetch the user profile data
-    queryClient.invalidateQueries(['userProfile', user._id]);
+  onSuccess: (response) => {
+    console.log('Mutation onSuccess called with response:', response);
     
-    // Close the modal and notify parent component
-    onSuccess(updatedData);
+    // Extract user data from axios response (response.data contains the API response)
+    // Axios wraps the API response in response.data
+    const responseData = response?.data || response;
+    const updatedUser = responseData?.user;
+    
+    console.log('Extracted updatedUser:', updatedUser);
+    
+    if (!updatedUser) {
+      console.error('No user data in response. Full response:', response);
+      // Close modal even if no user data
+      if (onCancel) {
+        onCancel();
+      }
+      if (setIsModalOpen) {
+        setIsModalOpen(false);
+      }
+      return;
+    }
+
+    // Close the modal immediately
+    if (setIsModalOpen) {
+      setIsModalOpen(false);
+    } else if (onCancel) {
+      onCancel();
+    }
+    
+    // Notify parent component with updated user data
+    // handleProfileUpdate will update the cache directly, so we don't need to invalidate
+    if (onSuccess) {
+      onSuccess(updatedUser);
+    }
   },
 
   onError: (error) => {
@@ -58,16 +85,12 @@ const EditProfile = ({ user, onCancel, onSuccess, setIsModalOpen }) => {
     e.preventDefault();
     try {
       const response = await updateProfileMutation.mutateAsync(formData);
-      if (response && response.user) {
-        onSuccess(response.user); // Pass the user data from the response
-        onCancel(); // Close the modal after successful update
-      } else {
-        console.error('Unexpected response format:', response);
-      }
+      // The mutation's onSuccess will handle closing the modal
+      // But if for some reason it doesn't, we'll close it here as a fallback
+      console.log('Update successful, response:', response);
     } catch (error) {
       console.error('Error updating profile:', error);
-      // Optionally show error to user
-      toast.error('Failed to update profile');
+      // Don't close modal on error - let user see the error
     }
   };
 
@@ -212,7 +235,10 @@ const EditProfile = ({ user, onCancel, onSuccess, setIsModalOpen }) => {
             disabled={updateProfileMutation.isLoading}
             className="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {updateProfileMutation.isLoading ? 'Saving...' : 'Save Changes'}
+            {updateProfileMutation.isLoading ? 'Saving...' 
+            
+            
+            : 'Save Changes'}
           </button>
         </div>
       </form>

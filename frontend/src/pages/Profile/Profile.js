@@ -5,6 +5,7 @@ import { userAPI } from '../../services/api';
 import LoadingSpinner from '../../components/UI/LoadingSpinner';
 import { User, Mail, Calendar, MapPin, Edit } from 'lucide-react';
 import EditProfile from './EditProfileModal';
+import toast from 'react-hot-toast';
 
 
 const Profile = () => {
@@ -38,24 +39,57 @@ const Profile = () => {
       return;
     }
     
+    // Get the user ID first (handle both _id and id)
+    const userId = user?._id || user?.id || updatedUser?._id || updatedUser?.id;
+    
+    if (!userId) {
+      console.error('No user ID found');
+      return;
+    }
+    
+    // Update the query cache with the new data IMMEDIATELY
+    // The API returns { success: true, user: {...} }, so we need to match that structure
+    queryClient.setQueryData(['userProfile', userId], (oldData) => {
+      console.log('Updating cache with userId:', userId);
+      console.log('Old data:', oldData);
+      console.log('New user data:', updatedUser);
+      
+      // Create a completely new object to ensure React Query detects the change
+      const newData = { 
+        success: true, 
+        user: { ...updatedUser } // Create a new user object reference
+      };
+      // If oldData exists, merge it but ensure we create new object references
+      if (oldData) {
+        const updated = {
+          ...oldData,
+          user: { ...updatedUser } // Force new reference
+        };
+        console.log('Updated cache data:', updated);
+        return updated;
+      }
+      console.log('New cache data:', newData);
+      return newData;
+    });
+    
     // Update the auth context with the new user data
     updateUser(updatedUser);
-    
-    // Update the query cache with the new data
-    queryClient.setQueryData(['userProfile', user?.id], { user: updatedUser });
     
     // Close the modal
     setIsModalOpen(false);
     
-    // Optional: Show a success message
+    // Show success message
     toast.success('Profile updated successfully');
   };
 
 
+  // Get user ID (handle both _id and id)
+  const userId = user?._id || user?.id;
+
   const { data: profileData, isLoading, error } = useQuery({
-    queryKey: ['userProfile', user?.id],
-    queryFn: () => userAPI.getUser(user?.id), 
-    enabled: !!user?.id,
+    queryKey: ['userProfile', userId],
+    queryFn: () => userAPI.getUser(userId), 
+    enabled: !!userId,
   });
 
   if (isLoading) {
@@ -217,7 +251,6 @@ const Profile = () => {
               onCancel={() => setIsModalOpen(false)}
               onSuccess={handleProfileUpdate}
               setIsModalOpen={setIsModalOpen}
-              
             />
           </div>
         </div>

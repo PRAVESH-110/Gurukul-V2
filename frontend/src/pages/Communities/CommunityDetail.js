@@ -37,11 +37,15 @@ const CommunityDetail = () => {
       queryClient.invalidateQueries(['community', id]);
       queryClient.invalidateQueries(['communityMembers', id]);
       setJoining(false);
+
     },
     onError: () => {
       setJoining(false);
+      // return res.message;
     }
   });
+
+
 
   const handleJoin = () => {
     setJoining(true);
@@ -67,6 +71,19 @@ const CommunityDetail = () => {
   const community = communityData?.data?.community;
   const posts = postsData?.data?.posts || [];
   const events = eventsData?.data?.events || [];
+
+  const isMember = community?.members?.some(
+    (m) => m?.user?._id?.toString() === user?._id?.toString()
+  );
+
+  //testinf if the user has joined-- logic in frontend
+  console.log('user._id:', user?._id);
+console.log('community members raw:',
+  JSON.stringify(community?.members, null, 2));
+console.log(
+  'isMember:',
+  community?.members?.some(m => m?.user === user?._id)
+);
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -105,11 +122,15 @@ const CommunityDetail = () => {
             </div>
 
             <div className="flex items-center space-x-3">
+
+
+
               {user && !community?.members?.some(m => m.user === user._id) && community?.type === 'public' && (
-                <button className="btn-primary" onClick={handleJoin} disabled={joining}>
+                <button className="btn-primary" onClick={handleJoin} disabled={isMember}>
                   {joining ? 'Joining...' : 'Join Community'}
                 </button>
               )}
+                
               {user?._id === community?.creator?._id && (
                 <button 
                   className="btn-outline"
@@ -120,6 +141,7 @@ const CommunityDetail = () => {
                   Manage
                 </button>
               )}
+             
             </div>
           </div>
         </div>

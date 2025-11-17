@@ -13,6 +13,7 @@ const CourseDetail = () => {
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const [isEnrolling, setIsEnrolling] = useState(false);
+  // const[enrolled, setIsEnrolled]= usestate(false);
 
   const { data: courseData, isLoading, error } = useQuery({
     queryKey: ['course', id],
@@ -27,11 +28,15 @@ const CourseDetail = () => {
 
   const enrollMutation = useMutation({
     mutationFn: () => courseAPI.enrollInCourse(id),
-    onSuccess: () => {
-      toast.success('Successfully enrolled in course!');
+    onSuccess: (response) => {
+      // Use the message from the backend response
+      const message = response?.data?.message || 'Successfully enrolled in course!';
+      toast.success(message);
       queryClient.invalidateQueries(['course', id]);
       queryClient.invalidateQueries(['myCourses', user?._id]);
       setIsEnrolling(false);
+
+      // onSuccess && ()
     },
     onError: (error) => {
       toast.error(error.response?.data?.message || 'Failed to enroll in course');
@@ -209,7 +214,10 @@ const CourseDetail = () => {
 
             {user ? (
               <div className="space-y-4">
-                {course?.enrolledStudents?.includes(user._id) ? (
+                {course?.enrolledStudents?.some(student => 
+                  student?.user?.toString() === user._id?.toString() || 
+                  student?.user?.toString() === user.id?.toString()
+                ) ? (
                   <div className="w-full bg-green-100 text-green-800 text-center py-3 px-4 rounded-lg font-medium">
                     ✓ Enrolled
                   </div>

@@ -165,7 +165,9 @@ const getCommunity = async (req, res, next) => {
 
     // Check if private community and user is not a member
     if (community.type === 'private' && req.user) {
-      const isMember = community.isMember(req.user._id);
+      const isMember = community.members.some(member => 
+        member.user && member.user.toString() === req.user._id.toString()
+      );
       const isCreator = community.creator._id.toString() === req.user._id.toString();
       
       if (!isMember && !isCreator) {
@@ -285,7 +287,10 @@ const joinCommunity = async (req, res, next) => {
     }
 
     // Check if already a member
-    if (community.isMember(req.user._id)) {
+    const isMember = community.members.some(member => 
+      member.user && member.user.toString() === req.user._id.toString()
+    );
+    if (isMember) {
       return res.status(400).json({
         success: false,
         message: 'You are already a member of this community'
@@ -333,7 +338,10 @@ const leaveCommunity = async (req, res, next) => {
     }
 
     // Check if user is a member
-    if (!community.isMember(req.user._id)) {
+    const isMember = community.members.some(member => 
+      member.user && member.user.toString() === req.user._id.toString()
+    );
+    if (!isMember) {
       return res.status(400).json({
         success: false,
         message: 'You are not a member of this community'
@@ -382,7 +390,9 @@ const getCommunityMembers = async (req, res, next) => {
     }
 
     // Check if user is a member or creator
-    const isMember = community.isMember(req.user._id);
+    const isMember = community.members.some(member => 
+      member.user && member.user.toString() === req.user._id.toString()
+    );
     const isCreator = community.creator.toString() === req.user._id.toString();
 
     if (!isMember && !isCreator) {

@@ -340,7 +340,12 @@ const enrollInCourse = async (req, res, next) => {
     }
 
     // Enroll student
-    course.enrollStudent(req.user._id);
+    course.enrolledStudents.push({
+      user: req.user._id,
+      enrolledAt: new Date(),
+      completedVideos: [],
+      progress: 0
+    });
     await course.save();
 
     // Add course to user's enrolled courses
