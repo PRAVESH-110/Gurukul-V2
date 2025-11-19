@@ -200,3 +200,20 @@ GET    /api/search/posts           - Search posts
 - Images: 10MB max
 - Videos: 1000MB max
 - Supported formats: Images (jpg, png, gif, webp), Videos (mp4, avi, mov)
+
+
+
+//new only admin created
+{
+    "success": true,
+    "message": "Registration successful! Please check your email to verify your account.",
+    "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY5MWQ1ZDc3Yzk3NGUyNDhmYWJmMTQ1NSIsImlhdCI6MTc2MzUzMjE1MSwiZXhwIjoxNzYzNjE4NTUxfQ.-BObiO56J-gEFRbYJoIZtcL70J4cq0vT363_Rn2Ki94",
+    "user": {
+        "_id": "691d5d77c974e248fabf1455",
+        "firstName": "pravesh",
+        "lastName": "dhakal",
+        "email": "pravdhakal111@gmail.com",
+        "role": "admin",
+        "avatar": null
+    }
+}

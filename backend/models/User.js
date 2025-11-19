@@ -48,6 +48,7 @@ const userSchema = new mongoose.Schema({
   resetPasswordExpire: Date,
   passwordChangedAt: Date,
   lastLogin: Date,
+  
   loginAttempts: {
     type: Number,
     default: 0
