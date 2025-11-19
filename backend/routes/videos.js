@@ -55,14 +55,14 @@ router.get('/course/:courseId', protect, async (req, res, next) => {
     console.log('Fetching videos for courseId:', courseId);
     console.log('Converted to ObjectId:', courseObjectId);
     
-    const query = { course: courseObjectId };
+    const query = { course: courseObjectId, isActive: true };
     if (section) {
       query.section = section;
     }
     
     console.log('Query:', query);
     
-    // Find all videos for this course (including inactive ones for creator view)
+    // Find all active videos for this course
     const videos = await Video.find(query)
       .sort('order')
       .select('_id title description videoUrl url thumbnailUrl duration isPublished order section format width height size status isPreview isActive createdAt updatedAt');

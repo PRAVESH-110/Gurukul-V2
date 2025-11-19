@@ -23,7 +23,7 @@ const CourseDetail = () => {
   const { data: videosData } = useQuery({
     queryKey: ['courseVideos', id],
     queryFn: () => courseAPI.getCourseVideos(id),
-    enabled: !!courseData
+    enabled: !!courseData?.data?.course
   });
 
   const enrollMutation = useMutation({
@@ -44,10 +44,31 @@ const CourseDetail = () => {
     }
   });
 
+  const unenrollMutation= useMutation({
+    mutationFn: ()=>courseAPI.unenrollfromcourse(id),
+    onSuccess: (response) => {
+      // Use the message from the backend response
+      const message = response?.data?.message || 'Successfully unenrolled from course!';
+      toast.success(message);
+      queryClient.invalidateQueries(['course', id]);
+      queryClient.invalidateQueries(['myCourses', user?._id]);
+      setIsEnrolling(false);
+    },
+    onError: (error) => {
+      toast.error(error.response?.data?.message || 'Failed to unenroll from course');
+      setIsEnrolling(false);
+    }
+  })
+
   const handleEnroll = () => {
     setIsEnrolling(true);
     enrollMutation.mutate();
   };
+
+  const handleUnenroll = () => {
+    setIsEnrolling(true);
+    unenrollMutation.mutate();
+  }
 
   if (isLoading) {
     return (
@@ -66,7 +87,11 @@ const CourseDetail = () => {
   }
 
   const course = courseData?.data?.course;
-  const videos = videosData?.data?.videos || [];
+  const videos = videosData?.data?.data || [];
+  
+  // Debug: Log videos to see what we're getting
+  console.log('Videos data:', videosData);
+  console.log('Videos array:', videos);
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -155,11 +180,18 @@ const CourseDetail = () => {
                       </span>
                     </div>
                     <div className="flex-1">
-                      <h3 className="font-medium text-gray-900">{video.title}</h3>
+                      <h3 className="font-medium text-gray-900">
+                        <button onClick={()=>window.open(video.url, '_blank')}>
+                          {video.title}
+                          </button>
+                          </h3>
                       <p className="text-sm text-gray-600">{video.description}</p>
+                      {/* <a href={video.url} className="text-sm text-gray-600">Click here to watch the video</a> */}
                     </div>
                     <div className="flex items-center text-sm text-gray-500">
-                      <Play className="h-4 w-4 mr-1" />
+                      <Play 
+                      onClick={() => window.open(video.url, '_blank')}
+                      className="h-4 w-4 mr-1 text-blue-600 cursor-pointer" />
                       {video.duration || '0:00'}
                     </div>
                   </div>
@@ -218,9 +250,15 @@ const CourseDetail = () => {
                   student?.user?.toString() === user._id?.toString() || 
                   student?.user?.toString() === user.id?.toString()
                 ) ? (
-                  <div className="w-full bg-green-100 text-green-800 text-center py-3 px-4 rounded-lg font-medium">
-                    ✓ Enrolled
-                  </div>
+                  
+                  <button 
+                className='bg-red-400 text-gray-50 w-full py-2  px-3 text-center rounded-lg hover:text-white hover:bg-red-500 transition-colors duration-200'
+                onClick={handleUnenroll}
+                disabled={isEnrolling}
+              >
+                  Unenroll
+                </button>
+                  
                 ) : (
                   <button 
                     className="w-full btn-primary" 
@@ -230,9 +268,14 @@ const CourseDetail = () => {
                     {isEnrolling ? 'Enrolling...' : 'Enroll Now'}
                   </button>
                 )}
+
+                {/* unenroll */}
+                
                 <button className="w-full btn-outline">
                   Add to Wishlist
                 </button>
+
+                
               </div>
             ) : (
               <div className="space-y-4">
@@ -250,7 +293,7 @@ const CourseDetail = () => {
               <ul className="space-y-2 text-sm text-gray-600">
                 <li className="flex items-center">
                   <Play className="h-4 w-4 mr-2 text-primary-600" />
-                  {videos.length} video lessons
+                  {videosData?.data?.count || course?.totalVideos || 0} video lessons
                 </li>
                 <li className="flex items-center">
                   <BookOpen className="h-4 w-4 mr-2 text-primary-600" />

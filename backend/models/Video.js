@@ -165,19 +165,29 @@ videoSchema.virtual('durationInMinutes').get(function() {
 // Update course's video count when video is saved
 videoSchema.post('save', async function(doc) {
   const Course = mongoose.model('Course');
-  await Course.findByIdAndUpdate(doc.course, {
-    $inc: { videoCount: 1 },
-    $set: { updatedAt: new Date() }
-  });
+  const course = await Course.findById(doc.course);
+  if (course) {
+    // Recalculate totalVideos from sections
+    course.totalVideos = course.sections.reduce(
+      (total, section) => total + (section.lectures?.length || 0),
+      0
+    );
+    await course.save();
+  }
 });
 
 // Update course's video count when video is removed
 videoSchema.post('remove', async function(doc) {
   const Course = mongoose.model('Course');
-  await Course.findByIdAndUpdate(doc.course, {
-    $inc: { videoCount: -1 },
-    $set: { updatedAt: new Date() }
-  });
+  const course = await Course.findById(doc.course);
+  if (course) {
+    // Recalculate totalVideos from sections
+    course.totalVideos = course.sections.reduce(
+      (total, section) => total + (section.lectures?.length || 0),
+      0
+    );
+    await course.save();
+  }
 });
 
 // Method to mark video as watched by a student

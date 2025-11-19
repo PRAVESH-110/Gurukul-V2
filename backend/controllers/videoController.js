@@ -131,6 +131,12 @@ exports.uploadVideo = async (req, res, next) => {
       }
     }
 
+    // Recalculate totalVideos after adding video
+    course.totalVideos = course.sections.reduce(
+      (total, section) => total + (section.lectures?.length || 0),
+      0
+    );
+
     await course.save();
 
     res.status(201).json({
@@ -289,10 +295,16 @@ exports.updateVideo = async (req, res, next) => {
         };
         course.sections.push(targetSection);
       }
-      
+
       targetSection.lectures.push(video._id);
       video.section = sectionId;
-      
+
+      // Recalculate totalVideos after updating section
+      course.totalVideos = course.sections.reduce(
+        (total, section) => total + (section.lectures?.length || 0),
+        0
+      );
+
       await course.save();
     }
 
@@ -338,7 +350,7 @@ exports.deleteVideo = async (req, res, next) => {
 
     // Get the course to update sections
     const course = await Course.findOne({ _id: video.course, creator: req.user.id });
-    
+
     if (course) {
       // Remove video from all sections
       for (const section of course.sections) {
@@ -347,6 +359,13 @@ exports.deleteVideo = async (req, res, next) => {
           section.lectures.splice(index, 1);
         }
       }
+
+      // Recalculate totalVideos after removing video
+      course.totalVideos = course.sections.reduce(
+        (total, section) => total + (section.lectures?.length || 0),
+        0
+      );
+
       await course.save();
     }
 

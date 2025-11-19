@@ -232,6 +232,7 @@ export const courseAPI = {
   updateCourse: (id, data) => api.put(`/courses/${id}`, data),
   deleteCourse: (id) => api.delete(`/courses/${id}`),
   enrollInCourse: (id) => api.post(`/courses/${id}/enroll`),
+  unenrollfromcourse: (id) => api.delete(`/courses/${id}/unenroll`),
   getCourseVideos: (id) => api.get(`/videos/course/${id}`),
   getEnrolledStudents: (id) => api.get(`/courses/${id}/students`),
   addCourseReview: (id, data) => api.post(`/courses/${id}/review`, data),

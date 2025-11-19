@@ -9,6 +9,8 @@ const { upload, handleUploadErrors } = require('../middleware/upload');
 
 const router = express.Router();
 
+console.log('COURSES ROUTES LOADED - Registering routes...');
+
 // @desc    Get all published courses
 // @route   GET /api/courses
 // @access  Public
@@ -362,6 +364,49 @@ const enrollInCourse = async (req, res, next) => {
   }
 };
 
+// @desc    Unenroll from course
+// @route   DELETE /api/courses/:id/unenroll
+// @access  Private
+const unenrollFromCourse = async (req, res, next) => {
+  console.log('UNENROLL ROUTE HIT!', req.params.id, req.user?._id);
+  try {
+    const course = await Course.findById(req.params.id);
+
+    if (!course) {
+      return res.status(404).json({
+        success: false,
+        message: 'Course not found'
+      });
+    }
+
+    // Check if user is enrolled
+    if (!course.isEnrolled(req.user._id)) {
+      return res.status(400).json({
+        success: false,
+        message: 'You are not enrolled in this course'
+      });
+    }
+
+    // Remove student from course
+    course.enrolledStudents = course.enrolledStudents.filter(
+      student => student.user.toString() !== req.user._id.toString()
+    );
+    await course.save();
+
+    // Remove course from user's enrolled courses
+    await User.findByIdAndUpdate(req.user._id, {
+      $pull: { enrolledCourses: course._id }
+    });
+
+    res.status(200).json({
+      success: true,
+      message: 'Successfully unenrolled from the course'
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 // @desc    Get course videos
 // @route   GET /api/courses/:id/videos
 // @access  Private (Enrolled students or creator)
@@ -377,7 +422,7 @@ const getCourseVideos = async (req, res, next) => {
     }
 
     // Check if user is enrolled or is the creator
-    const isEnrolled = course.isEnrolled(req.user._id);
+    const isEnrolled = course.isEnrolled(req.user._id || req.user.id) ;
     const isCreator = course.creator.toString() === req.user._id.toString();
 
     if (!isEnrolled && !isCreator) {
@@ -565,14 +610,38 @@ const getCreatorCourses = async (req, res, next) => {
 const uploadThumbnail = upload.single('thumbnail');
 
 router.get('/', getCourses);
+router.get('/test', (req, res) => {
+  console.log('TEST GET ROUTE HIT!');
+  res.json({ message: 'GET test works' });
+});
 router.get('/creator/me', protect, authorize('creator'), getCreatorCourses);
 router.post('/', protect, authorize('creator'), uploadThumbnail, handleUploadErrors, createCourse);
-router.get('/:id', validateObjectId('id'), getCourse);
-router.put('/:id', protect, validateObjectId('id'), updateCourse);
-router.delete('/:id', protect, validateObjectId('id'), deleteCourse);
+
+// Specific routes that come before the generic :id route
 router.post('/:id/enroll', protect, validateObjectId('id'), enrollInCourse);
+router.delete('/:id/unenroll', protect, validateObjectId('id'), (req, res, next) => {
+  console.log('UNENROLL ROUTE MIDDLEWARE HIT!', {
+    method: req.method,
+    url: req.url,
+    params: req.params,
+    user: req.user?._id
+  });
+  unenrollFromCourse(req, res, next);
+});
+
+// Test route to verify DELETE is working
+router.delete('/:id/test-delete', (req, res) => {
+  console.log('TEST DELETE ROUTE HIT!', req.params.id);
+  res.json({ message: 'DELETE test works', id: req.params.id });
+});
+
 router.get('/:id/videos', protect, validateObjectId('id'), getCourseVideos);
 router.get('/:id/students', protect, validateObjectId('id'), getEnrolledStudents);
 router.post('/:id/review', protect, validateObjectId('id'), addCourseReview);
+
+// Generic routes that should come last
+router.get('/:id', validateObjectId('id'), getCourse);
+router.put('/:id', protect, validateObjectId('id'), updateCourse);
+router.delete('/:id', protect, validateObjectId('id'), deleteCourse);
 
 module.exports = router;
