@@ -1,13 +1,21 @@
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import toast from 'react-hot-toast';
+import { useQuery } from '@tanstack/react-query';
 import { useNavigate, useParams } from 'react-router-dom';
 import { communityAPI } from '../../services/api';
+import LoadingSpinner from '../../components/UI/LoadingSpinner';
 
 const CreateEvent = () => {
   const { id: communityId } = useParams();
   const navigate = useNavigate();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [selectedCommunityId, setSelectedCommunityId] = useState(communityId || '');
+
+  const { data: communitiesData, isLoading: communitiesLoading } = useQuery({
+      queryKey: ['creatorCommunities'],
+      queryFn: () => communityAPI.getCreatorCommunities()
+    });
 
   const { register, handleSubmit, formState: { errors }, watch } = useForm();
 
@@ -16,10 +24,18 @@ const CreateEvent = () => {
     try {
       const start = new Date(data.startDate);
       const end = new Date(data.endDate);
-
+      const targetCommunityId = selectedCommunityId || communityId;
+      
       if (isNaN(start.getTime()) || isNaN(end.getTime())) {
         throw new Error('Please provide valid start and end date/time');
       }
+
+      if (!targetCommunityId) {
+              toast.error('Please select a community');
+              return;
+            }
+      
+            console.log('Community ID:', targetCommunityId); // Debug log
 
       const now = new Date();
       if (start <= now) {
@@ -35,10 +51,10 @@ const CreateEvent = () => {
         endDate: end.toISOString(),
       };
 
-      const response = await communityAPI.createEvent(communityId, payload);
+      const response = await communityAPI.createEvent(targetCommunityId, payload);
       if (response.data && response.data.success) {
         toast.success('Event created successfully!');
-        navigate(`/communities/${communityId}`);
+        navigate(`/communities/${targetCommunityId}`);
       } else {
         throw new Error(response.data?.message || 'Failed to create event');
       }
@@ -56,6 +72,17 @@ const CreateEvent = () => {
   };
   const minStart = toLocalDateTime(new Date());
 
+
+  const communities = communitiesData?.data?.data?.data || [];
+
+  if (communitiesLoading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <LoadingSpinner size="lg" />
+      </div>
+    );
+  }
+  
   return (
     <div className="max-w-2xl mx-auto px-4 py-8">
       <h1 className="text-2xl font-bold mb-4">Create New Event</h1>
@@ -70,6 +97,25 @@ const CreateEvent = () => {
           />
           {errors.title && <p className="text-red-600 text-sm mt-1">{errors.title.message}</p>}
         </div>
+
+        <div>
+          <label className="block text-sm font-medium mb-2">Select Community *</label>
+          <select
+            value={selectedCommunityId}
+            onChange={(e) => setSelectedCommunityId(e.target.value)}
+            className="input w-full"
+            required
+          >
+            <option value="">Choose a community...</option>
+            {communities.map((community) => (
+              <option key={community._id} value={community._id}>
+                {community.name}
+              </option>
+            ))}
+          </select>
+          {errors.community && <p className="text-red-600 text-sm mt-1">{errors.community.message}</p>}
+        </div>
+
         <div>
           <label className="block text-sm font-medium mb-2">Description *</label>
           <textarea

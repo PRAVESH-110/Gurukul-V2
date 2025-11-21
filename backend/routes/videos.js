@@ -33,7 +33,7 @@ router.route('/:id')
 
 // @desc    Get videos by course
 // @route   GET /api/videos/course/:courseId
-// @access  Private
+// @access  Private (Enrolled students, creators, or admins only)
 router.get('/course/:courseId', protect, async (req, res, next) => {
   try {
     const { courseId } = req.params;
@@ -54,6 +54,31 @@ router.get('/course/:courseId', protect, async (req, res, next) => {
     
     console.log('Fetching videos for courseId:', courseId);
     console.log('Converted to ObjectId:', courseObjectId);
+    
+    // Check if user has access to this course
+    const Course = require('../models/Course');
+    const course = await Course.findById(courseObjectId);
+    
+    if (!course || !course.isPublished) {
+      return res.status(404).json({
+        success: false,
+        message: 'Course not found or not published'
+      });
+    }
+    
+    // Check if user is enrolled, creator, or admin
+    const isEnrolled = course.enrolledStudents.some(student => 
+      student.user && student.user.toString() === req.user._id.toString()
+    );
+    const isCreator = course.creator.toString() === req.user._id.toString();
+    const isAdmin = req.user.role === 'admin';
+    
+    if (!isEnrolled && !isCreator && !isAdmin) {
+      return res.status(403).json({
+        success: false,
+        message: 'Not authorized to view videos for this course'
+      });
+    }
     
     const query = { course: courseObjectId, isActive: true };
     if (section) {

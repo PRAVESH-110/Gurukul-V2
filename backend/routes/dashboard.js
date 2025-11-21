@@ -11,10 +11,11 @@ const router = express.Router();
 
 // @desc    Get student dashboard data
 // @route   GET /api/dashboard/student
-// @access  Private (Student only)
+// @access  Private (Student or Admin only)
 const getStudentDashboard = async (req, res, next) => {
   try {
-    const userId = req.user._id;
+    // Allow admin to view any student's dashboard or their own
+    const userId = req.query.userId ? req.query.userId : req.user._id;
 
     // Get user's enrolled courses with progress
     const enrolledCourses = await Course.find({ 
@@ -119,10 +120,11 @@ const getStudentDashboard = async (req, res, next) => {
 
 // @desc    Get creator dashboard data
 // @route   GET /api/dashboard/creator
-// @access  Private (Creator only)
+// @access  Private (Creator or Admin only)
 const getCreatorDashboard = async (req, res, next) => {
   try {
-    const userId = req.user._id;
+    // Allow admin to view any creator's dashboard or their own
+    const userId = req.user.role === 'admin' && req.query.userId ? req.query.userId : req.user._id;
 
     // Get creator's courses
     const createdCourses = await Course.find({ creator: userId })
@@ -268,10 +270,11 @@ const getCreatorDashboard = async (req, res, next) => {
 
 // @desc    Get analytics data
 // @route   GET /api/dashboard/analytics
-// @access  Private (Creator only)
+// @access  Private (Creator or Admin only)
 const getAnalytics = async (req, res, next) => {
   try {
-    const userId = req.user._id;
+    // Allow admin to view any creator's analytics or their own
+    const userId = req.user.role === 'admin' && req.query.userId ? req.query.userId : req.user._id;
     const { period = '30' } = req.query; // days
 
     const daysAgo = new Date();
@@ -365,8 +368,8 @@ const getAnalytics = async (req, res, next) => {
 };
 
 // Routes
-router.get('/student', protect, authorize('student'), getStudentDashboard);
-router.get('/creator', protect, authorize('creator'), getCreatorDashboard);
-router.get('/analytics', protect, authorize('creator'), getAnalytics);
+router.get('/student', protect, authorize('student', 'admin'), getStudentDashboard);
+router.get('/creator', protect, authorize('creator', 'admin'), getCreatorDashboard);
+router.get('/analytics', protect, authorize('creator', 'admin'), getAnalytics);
 
 module.exports = router;

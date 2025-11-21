@@ -133,7 +133,7 @@ const checkOwnership = (Model, resourceParam = 'id') => {
       }
 
       // Check if user is the creator/owner
-      if (resource.creator && resource.creator.toString() !== req.user._id.toString()) {
+      if (resource.creator && resource.creator.toString() !== req.user._id.toString() || req.user.role === 'admin') {
         return res.status(403).json({
           success: false,
           message: 'Not authorized to access this resource'
@@ -164,10 +164,11 @@ const checkCommunityMembership = async (req, res, next) => {
     }
 
     // Check if user is a member or creator
-    const isMember = community.isMember(req.user._id);
+    const isMember = community.members.includes(req.user._id);
     const isCreator = community.creator.toString() === req.user._id.toString();
+    const isAdmin=  req.user.role === 'admin';
     
-    if (!isMember && !isCreator) {
+    if (!isMember && !isCreator && !isAdmin) {
       return res.status(403).json({
         success: false,
         message: 'You must be a member to access this community'
@@ -199,8 +200,8 @@ const checkCourseEnrollment = async (req, res, next) => {
     // Check if user is enrolled or is the creator
     const isEnrolled = course.isEnrolled(req.user._id);
     const isCreator = course.creator.toString() === req.user._id.toString();
-    
-    if (!isEnrolled && !isCreator) {
+    const isAdmin=  req.user.role === 'admin';    
+    if (!isEnrolled && !isCreator && !isAdmin) {
       return res.status(403).json({
         success: false,
         message: 'You must be enrolled to access this course'

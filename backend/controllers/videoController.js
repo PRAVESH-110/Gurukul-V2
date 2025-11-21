@@ -47,7 +47,8 @@ exports.uploadVideo = async (req, res, next) => {
     // Check if course exists and user is the creator
     const course = await Course.findOne({
       _id: courseId,
-      creator: req.user.id
+      creator: req.user.id || req.user._id 
+      
     });
 
     if (!course) {
@@ -341,7 +342,7 @@ exports.deleteVideo = async (req, res, next) => {
     }
 
     // Check if user is the creator of the video
-    if (video.creator.toString() !== req.user.id) {
+    if (video.creator.toString() !== req.user.id || req.user.role !== 'admin') {
       return res.status(403).json({
         success: false,
         message: 'Not authorized to delete this video'
@@ -479,7 +480,7 @@ exports.createVideo = async (req, res, next) => {
     // Check if course exists and user is the creator
     const course = await Course.findOne({
       _id: courseId,
-      creator: req.user.id || req.user._id
+      creator: req.user.id || req.user._id || req.user.role === 'admin'
     });
 
     console.log('Course found:', course ? 'Yes' : 'No');
@@ -559,7 +560,7 @@ exports.createVideo = async (req, res, next) => {
 // Helper function to check if user has access to a video
 async function checkVideoAccess(user, video) {
   // Creator always has access
-  if (video.creator.toString() === user.id) {
+  if (video.creator.toString() === user.id || user.role === 'admin') {
     return true;
   }
 

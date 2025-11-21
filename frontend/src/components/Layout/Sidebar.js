@@ -39,7 +39,7 @@ const Sidebar = () => {
     { path: '/analytics', icon: BarChart3, label: 'Analytics' },
   ];
 
-  const navItems = user?.role === 'creator' ? creatorNavItems : studentNavItems;
+  const navItems = (user?.role === 'creator' || user?.role === 'admin') ? creatorNavItems : studentNavItems;
 
   return (
     <div className="fixed left-0 top-16 h-[calc(100vh-4rem)] w-64 bg-white border-r border-gray-200 overflow-y-auto">

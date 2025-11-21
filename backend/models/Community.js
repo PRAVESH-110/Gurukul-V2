@@ -39,7 +39,7 @@ const communitySchema = new mongoose.Schema({
     },
     role: {
       type: String,
-      enum: ['admin', 'member'],
+      enum: ['admin', 'member','creator'],
       default: 'member'
     }
   }],

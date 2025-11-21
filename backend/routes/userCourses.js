@@ -5,11 +5,16 @@ const { protect, authorize } = require('../middleware/auth');
 
 // @desc    Get user's enrolled courses
 // @route   GET /api/courses/me/enrolled
-// @access  Private
+// @access  Private (Self or Admin)
 router.get('/me/enrolled', protect, async (req, res, next) => {
   try {
+    // Allow admins to specify a userId to view other users' enrolled courses
+    const userId = req.user.role === 'admin' && req.query.userId 
+      ? req.query.userId 
+      : req.user.id;
+    
     const courses = await Course.find({
-      'students.user': req.user.id,
+      'students.user': userId,
       isPublished: true
     })
     .select('title description thumbnail price instructor studentsCount')

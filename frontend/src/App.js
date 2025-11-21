@@ -83,7 +83,7 @@ function App() {
           <Route 
             path="dashboard" 
             element={
-              user?.role === 'creator' ? 
+              user?.role === 'creator' || user?.role === 'admin' ? 
                 <CreatorDashboard /> : 
                 <StudentDashboard />
             } 

@@ -156,7 +156,7 @@ const ManageCourses = () => {
             <div className="ml-4">
               <p className="text-sm font-medium text-gray-600">Total Courses</p>
               <p className="text-2xl font-bold text-gray-900">
-                {coursesData?.data?.stats?.totalCourses || 0}
+                {coursesData?.data?.data?.stats?.totalCourses || 0}
               </p>
             </div>
           </div>
@@ -170,7 +170,7 @@ const ManageCourses = () => {
             <div className="ml-4">
               <p className="text-sm font-medium text-gray-600">Total Students</p>
               <p className="text-2xl font-bold text-gray-900">
-                {coursesData?.data?.stats?.totalStudents || 0}
+                {coursesData?.data?.data?.stats?.totalStudents || 0}
               </p>
             </div>
           </div>
@@ -184,7 +184,7 @@ const ManageCourses = () => {
             <div className="ml-4">
               <p className="text-sm font-medium text-gray-600">Total Revenue</p>
               <p className="text-2xl font-bold text-gray-900">
-                ${coursesData?.data?.stats?.totalRevenue || 0}
+                ${coursesData?.data?.data?.stats?.totalRevenue || 0}
               </p>
             </div>
           </div>
@@ -198,8 +198,8 @@ const ManageCourses = () => {
             <div className="ml-4">
               <p className="text-sm font-medium text-gray-600">Avg Rating</p>
               <p className="text-2xl font-bold text-gray-900">
-                {typeof coursesData?.data?.stats?.averageRating === 'number' 
-                  ? coursesData.data.stats.averageRating.toFixed(1) 
+                {typeof coursesData?.data?.data?.stats?.averageRating === 'number' 
+                  ? coursesData.data.data.stats.averageRating.toFixed(1) 
                   : '0.0'
                 }
               </p>

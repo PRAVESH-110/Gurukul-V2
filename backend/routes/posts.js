@@ -1,7 +1,7 @@
 const express = require('express');
 const Post = require('../models/Post');
 const Community = require('../models/Community');
-const { protect, checkCommunityMembership } = require('../middleware/auth');
+const { protect, checkCommunityMembership, authorize } = require('../middleware/auth');
 const { validatePost, validateComment, validateObjectId } = require('../middleware/validation');
 const { upload } = require('../middleware/upload');
 const path = require('path');
@@ -11,7 +11,7 @@ const router = express.Router();
 
 // @desc    Get community posts
 // @route   GET /api/communities/:communityId/posts
-// @access  Private (Community members only)
+// @access  Private (Community members only or Admin)
 const getCommunityPosts = async (req, res, next) => {
   try {
     const { page = 1, limit = 10 } = req.query;
@@ -50,7 +50,7 @@ const getCommunityPosts = async (req, res, next) => {
 
 // @desc    Create new post
 // @route   POST /api/communities/:communityId/posts
-// @access  Private (Community members, or admin only for private communities)
+// @access  Private (Community members, or admin only for private communities or System Admin)
 const createPost = async (req, res, next) => {
   try {
     console.log('Request body:', req.body);
@@ -68,8 +68,8 @@ const createPost = async (req, res, next) => {
       });
     }
 
-    // For private communities, only admins can post
-    if (community.type === 'private' && !community.isAdmin(req.user._id)) {
+    // For private communities, only admins can post (or system admin)
+    if (community.type === 'private' && !community.isAdmin(req.user._id) && req.user.role !== 'admin') {
       return res.status(403).json({
         success: false,
         message: 'Only admins can post in private communities'
@@ -144,7 +144,7 @@ const createPost = async (req, res, next) => {
 
 // @desc    Get post by ID
 // @route   GET /api/posts/:id
-// @access  Private (Community members only)
+// @access  Private (Community members only or Admin)
 const getPost = async (req, res, next) => {
   try {
     const post = await Post.findById(req.params.id)
@@ -159,12 +159,13 @@ const getPost = async (req, res, next) => {
       });
     }
 
-    // Check if user is member of the community
+    // Check if user is member of the community or admin
     const community = await Community.findById(post.community._id);
     const isMember = community.isMember(req.user._id);
     const isCreator = community.creator.toString() === req.user._id.toString();
+    const isAdmin = req.user.role === 'admin';
 
-    if (!isMember && !isCreator) {
+    if (!isMember && !isCreator && !isAdmin) {
       return res.status(403).json({
         success: false,
         message: 'You must be a member to view this post'
@@ -182,7 +183,7 @@ const getPost = async (req, res, next) => {
 
 // @desc    Update post
 // @route   PUT /api/posts/:id
-// @access  Private (Author or community admin only)
+// @access  Private (Author or community admin only or System Admin)
 const updatePost = async (req, res, next) => {
   try {
     const { title, content, images } = req.body;
@@ -195,12 +196,13 @@ const updatePost = async (req, res, next) => {
       });
     }
 
-    // Check if user is author or community admin
+    // Check if user is author or community admin or system admin
     const community = await Community.findById(post.community);
     const isAuthor = post.author.toString() === req.user._id.toString();
     const isAdmin = community.isAdmin(req.user._id);
+    const isSystemAdmin = req.user.role === 'admin';
 
-    if (!isAuthor && !isAdmin) {
+    if (!isAuthor && !isAdmin && !isSystemAdmin) {
       return res.status(403).json({
         success: false,
         message: 'Not authorized to update this post'
@@ -232,7 +234,7 @@ const updatePost = async (req, res, next) => {
 
 // @desc    Delete post
 // @route   DELETE /api/posts/:id
-// @access  Private (Author or community admin only)
+// @access  Private (Author or community admin only or System Admin)
 const deletePost = async (req, res, next) => {
   try {
     const post = await Post.findById(req.params.id);
@@ -244,12 +246,13 @@ const deletePost = async (req, res, next) => {
       });
     }
 
-    // Check if user is author or community admin
+    // Check if user is author or community admin or system admin
     const community = await Community.findById(post.community);
     const isAuthor = post.author.toString() === req.user._id.toString();
     const isAdmin = community.isAdmin(req.user._id);
+    const isSystemAdmin = req.user.role === 'admin';
 
-    if (!isAuthor && !isAdmin) {
+    if (!isAuthor && !isAdmin && !isSystemAdmin) {
       return res.status(403).json({
         success: false,
         message: 'Not authorized to delete this post'
@@ -271,7 +274,7 @@ const deletePost = async (req, res, next) => {
 
 // @desc    Like/unlike post
 // @route   POST /api/posts/:id/like
-// @access  Private (Community members only)
+// @access  Private (Community members only or Admin)
 const toggleLike = async (req, res, next) => {
   try {
     const post = await Post.findById(req.params.id);
@@ -283,12 +286,13 @@ const toggleLike = async (req, res, next) => {
       });
     }
 
-    // Check if user is member of the community
+    // Check if user is member of the community or admin
     const community = await Community.findById(post.community);
     const isMember = community.isMember(req.user._id);
     const isCreator = community.creator.toString() === req.user._id.toString();
+    const isAdmin = req.user.role === 'admin';
 
-    if (!isMember && !isCreator) {
+    if (!isMember && !isCreator && !isAdmin) {
       return res.status(403).json({
         success: false,
         message: 'You must be a member to like this post'
@@ -311,7 +315,7 @@ const toggleLike = async (req, res, next) => {
 
 // @desc    Add comment to post
 // @route   POST /api/posts/:id/comments
-// @access  Private (Community members only)
+// @access  Private (Community members only or Admin)
 const addComment = async (req, res, next) => {
   try {
     const { content } = req.body;
@@ -324,12 +328,13 @@ const addComment = async (req, res, next) => {
       });
     }
 
-    // Check if user is member of the community
+    // Check if user is member of the community or admin
     const community = await Community.findById(post.community);
     const isMember = community.isMember(req.user._id);
     const isCreator = community.creator.toString() === req.user._id.toString();
+    const isAdmin = req.user.role === 'admin';
 
-    if (!isMember && !isCreator) {
+    if (!isMember && !isCreator && !isAdmin) {
       return res.status(403).json({
         success: false,
         message: 'You must be a member to comment on this post'
@@ -353,7 +358,7 @@ const addComment = async (req, res, next) => {
 
 // @desc    Update comment
 // @route   PUT /api/posts/:id/comments/:commentId
-// @access  Private (Comment author only)
+// @access  Private (Comment author only or System Admin)
 const updateComment = async (req, res, next) => {
   try {
     const { content } = req.body;
@@ -377,8 +382,8 @@ const updateComment = async (req, res, next) => {
       });
     }
 
-    // Check if user is comment author
-    if (comment.author.toString() !== req.user._id.toString()) {
+    // Check if user is comment author or system admin
+    if (comment.author.toString() !== req.user._id.toString() && req.user.role !== 'admin') {
       return res.status(403).json({
         success: false,
         message: 'Not authorized to update this comment'
@@ -400,7 +405,7 @@ const updateComment = async (req, res, next) => {
 
 // @desc    Delete comment
 // @route   DELETE /api/posts/:id/comments/:commentId
-// @access  Private (Comment author or community admin only)
+// @access  Private (Comment author or community admin only or System Admin)
 const deleteComment = async (req, res, next) => {
   try {
     const { id: postId, commentId } = req.params;
@@ -423,12 +428,13 @@ const deleteComment = async (req, res, next) => {
       });
     }
 
-    // Check if user is comment author or community admin
+    // Check if user is comment author or community admin or system admin
     const community = await Community.findById(post.community);
     const isAuthor = comment.author.toString() === req.user._id.toString();
     const isAdmin = community.isAdmin(req.user._id);
+    const isSystemAdmin = req.user.role === 'admin';
 
-    if (!isAuthor && !isAdmin) {
+    if (!isAuthor && !isAdmin && !isSystemAdmin) {
       return res.status(403).json({
         success: false,
         message: 'Not authorized to delete this comment'

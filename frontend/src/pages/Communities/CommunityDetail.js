@@ -244,7 +244,7 @@ console.log(
 
           {activeTab === 'events' && (
             <div className="space-y-6">
-              {user?.role === 'creator' && (
+              {(user?.role === 'creator' || user?.role === 'admin') && (
                 <div className="bg-white rounded-lg shadow-sm border p-4 mb-4">
                   <button
                     onClick={() => navigate(`/communities/${id}/create-event`)}

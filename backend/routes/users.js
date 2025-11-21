@@ -240,7 +240,7 @@ const getUserCommunities = async (req, res, next) => {
 
 // @desc    Get user's enrolled courses
 // @route   GET /api/users/:id/courses
-// @access  Private (Self only)
+// @access  Private (Self only or Admin)
 const getUserCourses = async (req, res, next) => {
   try {
     const user = await User.findById(req.params.id);
@@ -252,8 +252,8 @@ const getUserCourses = async (req, res, next) => {
       });
     }
 
-    // Only allow users to view their own enrolled courses
-    if (req.user._id.toString() !== user._id.toString()) {
+    // Only allow users to view their own enrolled courses or admins to view any user's courses
+    if (req.user._id.toString() !== user._id.toString() && req.user.role !== 'admin') {
       return res.status(403).json({
         success: false,
         message: 'Not authorized to view enrolled courses'

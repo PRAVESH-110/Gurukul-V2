@@ -19,6 +19,7 @@ const CreatorDashboard = () => {
   });
 
   if (isLoading) {
+    console.log('Still loading...');
     return (
       <div className="flex items-center justify-center h-64">
         <LoadingSpinner size="lg" />
@@ -27,9 +28,11 @@ const CreatorDashboard = () => {
   }
 
   if (error) {
+    console.log('Error loading dashboard:', error);
     return (
       <div className="text-center py-12">
         <p className="text-red-600">Failed to load dashboard data</p>
+        <p className="text-sm text-gray-500 mt-2">{error.message}</p>
       </div>
     );
   }
@@ -39,6 +42,16 @@ const CreatorDashboard = () => {
   return (
     <div className="space-y-6">
       {/* Welcome Section */}
+      {dashboard?.user?.role === 'admin' ? 
+      <div className="bg-gradient-to-r from-red-600 to-red-700 rounded-lg p-6 text-white">
+        <h1 className="text-2xl font-bold mb-2">
+          Welcome back, SUPERADMIN
+        </h1>
+        <p className="text-red-100">
+          Manage your courses and communities, track your success
+        </p>
+      </div>
+      : 
       <div className="bg-gradient-to-r from-primary-600 to-primary-700 rounded-lg p-6 text-white">
         <h1 className="text-2xl font-bold mb-2">
           Welcome back, {dashboard?.user?.firstName}!
@@ -47,6 +60,8 @@ const CreatorDashboard = () => {
           Manage your courses and communities, track your success
         </p>
       </div>
+      }
+
 
       {/* Quick Actions */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
@@ -58,10 +73,13 @@ const CreatorDashboard = () => {
           <Plus className="h-5 w-5 mx-auto mb-2" />
           Create Community
         </Link>
+
+        {dashboard?.user?.role !== 'admin' && (
         <Link to="/upload-video" className="btn-primary text-center bg-green-600 hover:bg-green-700">
           <Video className="h-5 w-5 mx-auto mb-2" />
           Upload Video
         </Link>
+        )}
         <Link to="/manage-courses" className="btn-outline text-center">
           <BookOpen className="h-5 w-5 mx-auto mb-2" />
           Manage Courses

@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { useParams, useNavigate } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
 import { communityAPI } from '../../services/api';
 import { toast } from 'react-hot-toast';
 import { FiImage, FiX } from 'react-icons/fi';
+import LoadingSpinner from '../../components/UI/LoadingSpinner';
 
 const CreatePost = () => {
   const { id: communityId } = useParams();
@@ -11,6 +13,13 @@ const CreatePost = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedImage, setSelectedImage] = useState(null);
   const [imagePreview, setImagePreview] = useState('');
+  const [selectedCommunityId, setSelectedCommunityId] = useState(communityId || '');
+
+  // Fetch user's communities
+  const { data: communitiesData, isLoading: communitiesLoading } = useQuery({
+    queryKey: ['creatorCommunities'],
+    queryFn: () => communityAPI.getCreatorCommunities()
+  });
 
   const { register, handleSubmit, formState: { errors } } = useForm();
 
@@ -50,8 +59,15 @@ const CreatePost = () => {
   const onSubmit = async (data) => {
     setIsSubmitting(true);
     try {
-      console.log('Community ID:', communityId); // Debug log
-      
+      const targetCommunityId = selectedCommunityId || communityId;
+
+      if (!targetCommunityId) {
+        toast.error('Please select a community');
+        return;
+      }
+
+      console.log('Community ID:', targetCommunityId); // Debug log
+
       const formData = new FormData();
       formData.append('title', data.title);
       formData.append('content', data.content);
@@ -63,14 +79,14 @@ const CreatePost = () => {
         title: data.title,
         content: data.content,
         hasImage: !!selectedImage,
-        communityId: communityId
+        communityId: targetCommunityId
       });
 
-      const response = await communityAPI.createPost(communityId, formData);
+      const response = await communityAPI.createPost(targetCommunityId, formData);
 
       if (response.data && response.data.success) {
         toast.success('Post created successfully!');
-        navigate(`/communities/${communityId}`);
+        navigate(`/communities/${targetCommunityId}`);
       } else {
         throw new Error(response.data?.message || 'Failed to create post');
       }
@@ -82,10 +98,38 @@ const CreatePost = () => {
     }
   };
 
+  const communities = communitiesData?.data?.data?.data || [];
+
+  if (communitiesLoading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <LoadingSpinner size="lg" />
+      </div>
+    );
+  }
+
   return (
     <div className="max-w-2xl mx-auto px-4 py-8">
       <h1 className="text-2xl font-bold mb-6">Create New Post</h1>
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+        {/* Community Selection */}
+        <div>
+          <label className="block text-sm font-medium mb-2">Select Community *</label>
+          <select
+            value={selectedCommunityId}
+            onChange={(e) => setSelectedCommunityId(e.target.value)}
+            className="input w-full"
+            required
+          >
+            <option value="">Choose a community...</option>
+            {communities.map((community) => (
+              <option key={community._id} value={community._id}>
+                {community.name}
+              </option>
+            ))}
+          </select>
+          {errors.community && <p className="text-red-600 text-sm mt-1">{errors.community.message}</p>}
+        </div>
         <div>
           <label className="block text-sm font-medium mb-2">Title *</label>
           <input

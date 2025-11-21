@@ -209,12 +209,20 @@ const searchPosts = async (req, res, next) => {
       query.$and.push({ community: communityId });
     }
 
-    // Get user's joined communities to filter posts
-    const user = await User.findById(req.user._id).populate('joinedCommunities');
-    const joinedCommunityIds = user.joinedCommunities.map(c => c._id);
+    // Get user's joined communities to filter posts (unless admin)
+    let joinedCommunityIds;
+    if (req.user.role === 'admin') {
+      // Admins can see all posts, so don't filter by community
+      joinedCommunityIds = null;
+    } else {
+      const user = await User.findById(req.user._id).populate('joinedCommunities');
+      joinedCommunityIds = user.joinedCommunities.map(c => c._id);
+    }
 
-    // Only show posts from communities user is a member of
-    query.$and.push({ community: { $in: joinedCommunityIds } });
+    // Only show posts from communities user is a member of (unless admin)
+    if (joinedCommunityIds) {
+      query.$and.push({ community: { $in: joinedCommunityIds } });
+    }
 
     const posts = await Post.find(query)
       .populate('author', 'firstName lastName avatar')
@@ -304,14 +312,19 @@ const globalSearch = async (req, res, next) => {
       .select('firstName lastName avatar role')
       .limit(searchLimit);
 
-    // Search posts (only from user's communities)
-    const user = await User.findById(req.user._id).populate('joinedCommunities');
-    const joinedCommunityIds = user.joinedCommunities.map(c => c._id);
+    // Search posts (only from user's communities, unless admin)
+    let joinedCommunityIds;
+    if (req.user.role === 'admin') {
+      // Admins can see all posts, so don't filter by community
+      joinedCommunityIds = null;
+    } else {
+      const user = await User.findById(req.user._id).populate('joinedCommunities');
+      joinedCommunityIds = user.joinedCommunities.map(c => c._id);
+    }
 
-    const posts = await Post.find({
+    const postQuery = {
       $and: [
         { isActive: true },
-        { community: { $in: joinedCommunityIds } },
         {
           $or: [
             { title: { $regex: q, $options: 'i' } },
@@ -319,7 +332,14 @@ const globalSearch = async (req, res, next) => {
           ]
         }
       ]
-    })
+    };
+
+    // Only filter by community if not admin
+    if (joinedCommunityIds) {
+      postQuery.$and.push({ community: { $in: joinedCommunityIds } });
+    }
+
+    const posts = await Post.find(postQuery)
       .populate('author', 'firstName lastName avatar')
       .populate('community', 'name')
       .limit(searchLimit);

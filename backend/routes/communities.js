@@ -1,6 +1,8 @@
 const express = require('express');
 const Community = require('../models/Community');
 const User = require('../models/User');
+const Post = require('../models/Post');
+const Event = require('../models/Event');
 const { protect, authorize, checkOwnership } = require('../middleware/auth');
 const { validateCommunity, validateObjectId } = require('../middleware/validation');
 const { upload, handleUploadErrors } = require('../middleware/upload');
@@ -120,7 +122,7 @@ const createCommunity = async (req, res, next) => {
       creator: req.user._id,
       members: [{
         user: req.user._id,
-        role: 'admin',
+        role: 'admin', 
         joinedAt: new Date()
       }]
     });
@@ -149,7 +151,7 @@ const createCommunity = async (req, res, next) => {
 
 // @desc    Get community by ID
 // @route   GET /api/communities/:id
-// @access  Public
+// @access  Private (Public communities, Private communities for members/creators/admins)
 const getCommunity = async (req, res, next) => {
   try {
     const community = await Community.findById(req.params.id)
@@ -168,7 +170,7 @@ const getCommunity = async (req, res, next) => {
       const isMember = community.members.some(member => 
         member.user && member.user.toString() === req.user._id.toString()
       );
-      const isCreator = community.creator._id.toString() === req.user._id.toString();
+      const isCreator = community.creator._id.toString() === req.user._id.toString() || req.user.role === 'admin';
       
       if (!isMember && !isCreator) {
         return res.status(403).json({
@@ -204,7 +206,7 @@ const updateCommunity = async (req, res, next) => {
     }
 
     // Check if user is creator
-    if (community.creator.toString() !== req.user._id.toString()) {
+    if (community.creator.toString() !== req.user._id.toString() || req.user.role !== 'admin') {
       return res.status(403).json({
         success: false,
         message: 'Not authorized to update this community'
@@ -252,7 +254,7 @@ const deleteCommunity = async (req, res, next) => {
     }
 
     // Check if user is creator
-    if (community.creator.toString() !== req.user._id.toString()) {
+    if (community.creator.toString() !== req.user._id.toString() || req.user.role !== 'admin') {
       return res.status(403).json({
         success: false,
         message: 'Not authorized to delete this community'
@@ -394,8 +396,9 @@ const getCommunityMembers = async (req, res, next) => {
       member.user && member.user.toString() === req.user._id.toString()
     );
     const isCreator = community.creator.toString() === req.user._id.toString();
+    const isAdmin=  req.user.role === 'admin';
 
-    if (!isMember && !isCreator) {
+    if (!isMember && !isCreator && !isAdmin) {
       return res.status(403).json({
         success: false,
         message: 'You must be a member to view members'
@@ -416,9 +419,13 @@ const getCommunityMembers = async (req, res, next) => {
 // @access  Private
 const getUserCommunities = async (req, res, next) => {
   try {
-    if (req.user.role === 'creator') {
+    if (req.user.role === 'creator' ) {
       return getCreatorCommunities(req, res, next);
-    } else {
+    }
+    else if(req.user.role === 'admin'){
+      return getAdminCommunities(req, res, next);
+    }
+    else {
       return getStudentCommunities(req, res, next);
     }
   } catch (error) {
@@ -475,8 +482,85 @@ const getStudentCommunities = async (req, res, next) => {
 const getCreatorCommunities = async (req, res, next) => {
   try {
     console.log('getCreatorCommunities called by user:', req.user._id);
-    
+
     const communities = await Community.find({ creator: req.user._id })
+      .populate('creator', 'firstName lastName avatar')
+      .sort({ createdAt: -1 });
+
+    console.log('Found communities:', communities.length);
+
+    // Get additional stats from other collections
+    const communityIds = communities.map(c => c._id);
+
+    // Get post counts for these communities
+    const postCounts = await Post.aggregate([
+      { $match: { community: { $in: communityIds }, isActive: true } },
+      { $group: { _id: '$community', count: { $sum: 1 } } }
+    ]);
+
+    console.log('Post counts aggregation result:', postCounts);
+
+    // Get event counts for these communities
+    const eventCounts = await Event.aggregate([
+      { $match: { community: { $in: communityIds }, isActive: true } },
+      { $group: { _id: '$community', count: { $sum: 1 } } }
+    ]);
+
+    console.log('Event counts aggregation result:', eventCounts);
+
+    // Create lookup maps
+    const postCountMap = {};
+    const eventCountMap = {};
+    
+    postCounts.forEach(item => {
+      postCountMap[item._id.toString()] = item.count;
+    });
+    
+    eventCounts.forEach(item => {
+      eventCountMap[item._id.toString()] = item.count;
+    });
+    
+    // Add stats for each community
+    const communitiesWithStats = communities.map(community => ({
+      ...community.toObject(),
+      memberCount: community.members?.length || 0,
+      postCount: postCountMap[community._id.toString()] || 0,
+      eventCount: eventCountMap[community._id.toString()] || 0
+    }));
+    
+    // Calculate overall stats
+    const totalCommunities = communities.length;
+    const totalMembers = communities.reduce((sum, community) => sum + (community.members?.length || 0), 0);
+    const totalPosts = Object.values(postCountMap).reduce((sum, count) => sum + count, 0);
+    const totalEvents = Object.values(eventCountMap).reduce((sum, count) => sum + count, 0);
+    
+    res.status(200).json({
+      success: true,
+      count: communities.length,
+      data: {
+        data: communitiesWithStats,
+        stats: {
+          totalCommunities,
+          totalMembers,
+          totalPosts,
+          totalEvents
+        }
+      }
+    });
+  } catch (error) {
+    console.error('getCreatorCommunities error:', error);
+    next(error);
+  }
+};
+
+// @desc    Get admin's communities (all communities)
+// @route   GET /api/communities/me
+// @access  Private (Admin only)
+const getAdminCommunities = async (req, res, next) => {
+  try {
+    console.log('getAdminCommunities called by user:', req.user._id);
+    
+    const communities = await Community.find({ isActive: true })
       .populate('creator', 'firstName lastName avatar')
       .sort({ createdAt: -1 });
 
@@ -484,16 +568,14 @@ const getCreatorCommunities = async (req, res, next) => {
     
     // Get additional stats from other collections
     const communityIds = communities.map(c => c._id);
-    
+
     // Get post counts for these communities
-    const Post = require('../models/Post');
     const postCounts = await Post.aggregate([
       { $match: { community: { $in: communityIds }, isActive: true } },
       { $group: { _id: '$community', count: { $sum: 1 } } }
     ]);
-    
+
     // Get event counts for these communities
-    const Event = require('../models/Event');
     const eventCounts = await Event.aggregate([
       { $match: { community: { $in: communityIds }, isActive: true } },
       { $group: { _id: '$community', count: { $sum: 1 } } }
@@ -555,18 +637,18 @@ router.post(
   validateCommunity,
   createCommunity
 );
-router.get('/:id', validateObjectId('id'), getCommunity);
+router.get('/:id', protect, validateObjectId('id'), getCommunity);
 router.put(
   '/:id',
   protect,
-  authorize('creator'),
+  authorize('creator', 'admin'),
   validateObjectId('id'),
   uploadBanner,
   handleUploadErrors,
   validateCommunity,
   updateCommunity
 );
-router.delete('/:id', protect, authorize('creator'), validateObjectId('id'), deleteCommunity);
+router.delete('/:id', protect, authorize('creator', 'admin'), validateObjectId('id'), deleteCommunity);
 router.post('/:id/join', protect, validateObjectId('id'), joinCommunity);
 router.post('/:id/leave', protect, validateObjectId('id'), leaveCommunity);
 router.get('/:id/members', protect, validateObjectId('id'), getCommunityMembers);

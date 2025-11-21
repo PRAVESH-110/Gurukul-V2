@@ -383,7 +383,7 @@ const UploadVideo = () => {
                 )}
                 
                 {/* Empty State */}
-                {!coursesLoading && !coursesError && courses.length === 0 && (
+                {!coursesLoading && !coursesError && courses.length === 0 && user?.role !== 'admin' && (
                   <div className="mt-3 p-3 text-sm text-amber-700 bg-amber-50 rounded-md border border-amber-100">
                     <p className="font-medium">No courses found</p>
                     <p className="mt-1">You need to create a course before uploading videos.</p>

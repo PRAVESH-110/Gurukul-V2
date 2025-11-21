@@ -20,7 +20,7 @@ const ProtectedRoute = ({ children, requiredRole = null }) => {
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
-  if (requiredRole && user.role !== requiredRole) {
+  if (requiredRole && user.role !== requiredRole && !(requiredRole === 'creator' && user.role === 'admin')) {
     // Redirect to dashboard if user doesn't have required role
     return <Navigate to="/dashboard" replace />;
   }

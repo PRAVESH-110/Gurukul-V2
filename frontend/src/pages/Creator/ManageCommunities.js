@@ -84,6 +84,8 @@ const ManageCommunities = () => {
   console.log('is array?', Array.isArray(communities));
 
   return (
+
+    
     <div className="space-y-6">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
@@ -142,6 +144,7 @@ const ManageCommunities = () => {
         </div>
       </div>
 
+
       {/* Community Stats */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
         <div className="bg-white p-6 rounded-lg shadow-sm border">
@@ -151,8 +154,10 @@ const ManageCommunities = () => {
             </div>
             <div className="ml-4">
               <p className="text-sm font-medium text-gray-600">Total Communities</p>
+
+              
               <p className="text-2xl font-bold text-gray-900">
-                {communitiesData?.data?.stats?.totalCommunities || 0}
+                {communitiesData?.data?.data?.stats?.totalCommunities || 0}
               </p>
             </div>
           </div>
@@ -166,7 +171,7 @@ const ManageCommunities = () => {
             <div className="ml-4">
               <p className="text-sm font-medium text-gray-600">Total Members</p>
               <p className="text-2xl font-bold text-gray-900">
-                {communitiesData?.data?.stats?.totalMembers || 0}
+                {communitiesData?.data?.data?.stats?.totalMembers || 0}
               </p>
             </div>
           </div>
@@ -180,7 +185,7 @@ const ManageCommunities = () => {
             <div className="ml-4">
               <p className="text-sm font-medium text-gray-600">Total Posts</p>
               <p className="text-2xl font-bold text-gray-900">
-                {communitiesData?.data?.stats?.totalPosts || 0}
+                {communitiesData?.data?.data?.stats?.totalPosts || 0}
               </p>
             </div>
           </div>
@@ -194,7 +199,7 @@ const ManageCommunities = () => {
             <div className="ml-4">
               <p className="text-sm font-medium text-gray-600">Total Events</p>
               <p className="text-2xl font-bold text-gray-900">
-                {communitiesData?.data?.stats?.totalEvents || 0}
+                {communitiesData?.data?.data?.stats?.totalEvents || 0}
               </p>
             </div>
           </div>

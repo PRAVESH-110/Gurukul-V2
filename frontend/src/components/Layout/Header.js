@@ -218,7 +218,7 @@ const Header = () => {
                   </Link>
                 </>
               )}
-              {user.role === 'creator' && (
+              {(user.role === 'creator' || user.role === 'admin') && (
                 <>
                   <Link
                     to="/manage-courses"

@@ -86,7 +86,7 @@ const CommunityList = () => {
               All Communities
             </button>
           </div>
-          {user?.role === 'creator' && (
+          {(user?.role === 'creator' || user?.role === 'admin') && (
             <Link to="/create-community" className="btn-primary">
               <Plus className="h-4 w-4 mr-2" />
               Create Community
@@ -188,7 +188,7 @@ const CommunityList = () => {
           <Users className="h-16 w-16 text-gray-400 mx-auto mb-4" />
           <h3 className="text-lg font-medium text-gray-900 mb-2">No communities found</h3>
           <p className="text-gray-600 mb-4">Try adjusting your search or filters</p>
-          {user?.role === 'creator' && (
+          {(user?.role === 'creator' || user?.role === 'admin') && (
             <Link to="/create-community" className="btn-primary">
               Create the First Community
             </Link>

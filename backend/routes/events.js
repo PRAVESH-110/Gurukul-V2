@@ -2,14 +2,14 @@
 const express = require('express');
 const Event = require('../models/Event');
 const Community = require('../models/Community');
-const { protect, checkCommunityMembership } = require('../middleware/auth');
+const { protect, checkCommunityMembership, authorize } = require('../middleware/auth');
 const { validateEvent, validateObjectId } = require('../middleware/validation');
 
 const router = express.Router({ mergeParams: true });
 
 // @desc    Get community events
 // @route   GET /api/communities/:communityId/events
-// @access  Private (Community members only)
+// @access  Private (Community members only or Admin)
 const getCommunityEvents = async (req, res, next) => {
   try {
     const { page = 1, limit = 10, upcoming = true } = req.query;
@@ -52,7 +52,7 @@ const getCommunityEvents = async (req, res, next) => {
 
 // @desc    Create new event
 // @route   POST /api/communities/:communityId/events
-// @access  Private (Community admin only)
+// @access  Private (Community admin only or Admin)
 const createEvent = async (req, res, next) => {
   try {
     const {
@@ -70,8 +70,8 @@ const createEvent = async (req, res, next) => {
 
     const community = req.community; // Set by checkCommunityMembership middleware
 
-    // Check if user is admin of the community
-    if (!community.isAdmin(req.user._id) && community.creator.toString() !== req.user._id.toString()) {
+    // Check if user is admin of the community or system admin
+    if (!community.isAdmin(req.user._id) && community.creator.toString() !== req.user._id.toString() && req.user.role !== 'admin') {
       return res.status(403).json({
         success: false,
         message: 'Only community admins can create events'
@@ -118,7 +118,7 @@ const createEvent = async (req, res, next) => {
 
 // @desc    Get event by ID
 // @route   GET /api/events/:id
-// @access  Private (Community members only)
+// @access  Private (Community members only or Admin)
 const getEvent = async (req, res, next) => {
   try {
     const event = await Event.findById(req.params.id)
@@ -133,12 +133,13 @@ const getEvent = async (req, res, next) => {
       });
     }
 
-    // Check if user is member of the community
+    // Check if user is member of the community or admin
     const community = await Community.findById(event.community._id);
     const isMember = community.isMember(req.user._id);
     const isCreator = community.creator.toString() === req.user._id.toString();
+    const isAdmin = req.user.role === 'admin';
 
-    if (!isMember && !isCreator) {
+    if (!isMember && !isCreator && !isAdmin) {
       return res.status(403).json({
         success: false,
         message: 'You must be a member to view this event'
@@ -159,7 +160,7 @@ const getEvent = async (req, res, next) => {
 
 // @desc    Update event
 // @route   PUT /api/events/:id
-// @access  Private (Creator only)
+// @access  Private (Creator only or Admin)
 const updateEvent = async (req, res, next) => {
   try {
     const event = await Event.findById(req.params.id);
@@ -171,8 +172,8 @@ const updateEvent = async (req, res, next) => {
       });
     }
 
-    // Check if user is creator
-    if (event.creator.toString() !== req.user._id.toString()) {
+    // Check if user is creator or admin
+    if (event.creator.toString() !== req.user._id.toString() && req.user.role !== 'admin') {
       return res.status(403).json({
         success: false,
         message: 'Not authorized to update this event'
@@ -222,7 +223,7 @@ const updateEvent = async (req, res, next) => {
 
 // @desc    Delete event
 // @route   DELETE /api/events/:id
-// @access  Private (Creator only)
+// @access  Private (Creator only or Admin)
 const deleteEvent = async (req, res, next) => {
   try {
     const event = await Event.findById(req.params.id);
@@ -234,8 +235,8 @@ const deleteEvent = async (req, res, next) => {
       });
     }
 
-    // Check if user is creator
-    if (event.creator.toString() !== req.user._id.toString()) {
+    // Check if user is creator or admin
+    if (event.creator.toString() !== req.user._id.toString() && req.user.role !== 'admin') {
       return res.status(403).json({
         success: false,
         message: 'Not authorized to delete this event'
@@ -257,7 +258,7 @@ const deleteEvent = async (req, res, next) => {
 
 // @desc    RSVP to event
 // @route   POST /api/events/:id/attend
-// @access  Private (Community members only)
+// @access  Private (Community members only or Admin)
 const rsvpToEvent = async (req, res, next) => {
   try {
     const { status } = req.body; // 'going', 'maybe', 'not_going'
@@ -270,12 +271,13 @@ const rsvpToEvent = async (req, res, next) => {
       });
     }
 
-    // Check if user is member of the community
+    // Check if user is member of the community or admin
     const community = await Community.findById(event.community);
     const isMember = community.isMember(req.user._id);
     const isCreator = community.creator.toString() === req.user._id.toString();
+    const isAdmin = req.user.role === 'admin';
 
-    if (!isMember && !isCreator) {
+    if (!isMember && !isCreator && !isAdmin) {
       return res.status(403).json({
         success: false,
         message: 'You must be a member to RSVP to this event'

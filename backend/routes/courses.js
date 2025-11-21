@@ -92,7 +92,7 @@ const getCourses = async (req, res, next) => {
 
 // @desc    Create new course
 // @route   POST /api/courses
-// @access  Private (Creator only)
+// @access  Private (Creator and Admin only)
 const createCourse = async (req, res, next) => {
   try {
     console.log('Course creation request body:', req.body);
@@ -169,7 +169,7 @@ const createCourse = async (req, res, next) => {
       title,
       description,
       thumbnail: thumbnailUrl,
-      creator: req.user._id,
+      creator: req.user._id  ,
       community: community || undefined,
       price: parseFloat(price) || 0,
       level,
@@ -217,7 +217,7 @@ const getCourse = async (req, res, next) => {
 
     // Get course videos (only preview videos for non-enrolled users)
     let videos = [];
-    if (req.user && (course.isEnrolled(req.user._id) || course.creator.toString() === req.user._id.toString())) {
+    if (req.user && (course.isEnrolled(req.user._id) || course.creator.toString() === req.user._id.toString() || req.user.role === 'admin')) {
       // User is enrolled or is the creator - show all videos
       videos = await Video.find({ course: course._id, isActive: true })
         .sort({ order: 1 })
@@ -244,7 +244,7 @@ const getCourse = async (req, res, next) => {
 
 // @desc    Update course
 // @route   PUT /api/courses/:id
-// @access  Private (Creator only)
+// @access  Private (Creator and Admin only)
 const updateCourse = async (req, res, next) => {
   try {
     const course = await Course.findById(req.params.id);
@@ -285,7 +285,7 @@ const updateCourse = async (req, res, next) => {
 
 // @desc    Delete course
 // @route   DELETE /api/courses/:id
-// @access  Private (Creator only)
+// @access  Private (Creator and Admin only)
 const deleteCourse = async (req, res, next) => {
   try {
     const course = await Course.findById(req.params.id);
@@ -298,7 +298,7 @@ const deleteCourse = async (req, res, next) => {
     }
 
     // Check if user is creator
-    if (course.creator.toString() !== req.user._id.toString()) {
+    if (course.creator.toString() !== req.user._id.toString() || req.user.role !== 'admin') {
       return res.status(403).json({
         success: false,
         message: 'Not authorized to delete this course'
@@ -409,7 +409,7 @@ const unenrollFromCourse = async (req, res, next) => {
 
 // @desc    Get course videos
 // @route   GET /api/courses/:id/videos
-// @access  Private (Enrolled students or creator)
+// @access  Private (Enrolled students or creator or admin)
 const getCourseVideos = async (req, res, next) => {
   try {
     const course = await Course.findById(req.params.id);
@@ -424,8 +424,9 @@ const getCourseVideos = async (req, res, next) => {
     // Check if user is enrolled or is the creator
     const isEnrolled = course.isEnrolled(req.user._id || req.user.id) ;
     const isCreator = course.creator.toString() === req.user._id.toString();
+    const isAdmin = req.user.role === 'admin';
 
-    if (!isEnrolled && !isCreator) {
+    if (!isEnrolled && !isCreator && !isAdmin) {
       return res.status(403).json({
         success: false,
         message: 'You must be enrolled to access course videos'
@@ -453,7 +454,7 @@ const getCourseVideos = async (req, res, next) => {
 
 // @desc    Get enrolled students
 // @route   GET /api/courses/:id/students
-// @access  Private (Creator only)
+// @access  Private (Creator or Admin only)
 const getEnrolledStudents = async (req, res, next) => {
   try {
     const course = await Course.findById(req.params.id)
@@ -466,8 +467,8 @@ const getEnrolledStudents = async (req, res, next) => {
       });
     }
 
-    // Check if user is creator
-    if (course.creator.toString() !== req.user._id.toString()) {
+    // Check if user is creator or admin
+    if (course.creator.toString() !== req.user._id.toString() || req.user.role !== 'admin') {
       return res.status(403).json({
         success: false,
         message: 'Not authorized to view students'
@@ -541,12 +542,15 @@ const addCourseReview = async (req, res, next) => {
 
 // @desc    Get creator's courses
 // @route   GET /api/courses/creator/me
-// @access  Private (Creator only)
+// @access  Private (Creator or Admin only)
 const getCreatorCourses = async (req, res, next) => {
   try {
-    console.log('getCreatorCourses called by user:', req.user._id);
+    console.log('getCreatorCourses called by user:', req.user._id, 'role:', req.user.role);
     
-    const courses = await Course.find({ creator: req.user._id })
+    // For admins, show all courses; for creators, show only their own
+    const courses = await Course.find(
+      req.user.role === 'admin' ? {} : { creator: req.user._id }
+    )
       .populate('creator', 'firstName lastName avatar')
       .sort({ createdAt: -1 });
 
@@ -614,7 +618,7 @@ router.get('/test', (req, res) => {
   console.log('TEST GET ROUTE HIT!');
   res.json({ message: 'GET test works' });
 });
-router.get('/creator/me', protect, authorize('creator'), getCreatorCourses);
+router.get('/creator/me', protect, authorize('creator', 'admin'), getCreatorCourses);
 router.post('/', protect, authorize('creator'), uploadThumbnail, handleUploadErrors, createCourse);
 
 // Specific routes that come before the generic :id route
