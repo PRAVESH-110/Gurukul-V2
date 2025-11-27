@@ -1,10 +1,10 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
-import { toast } from 'react-toastify';
+import { toast } from 'react-hot-toast';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { videoAPI } from '../../services/api';
-import { FiUpload, FiX, FiCheck, FiPlus, FiTrash2, FiEdit2 } from 'react-icons/fi';
+import { Upload, X, Check, Plus, Trash2, Edit2, FileVideo, AlertCircle, Film } from 'lucide-react';
 
 const VideoUpload = ({ courseId, onUploadComplete, existingVideos = [] }) => {
   const { register, handleSubmit, reset, setValue, watch, formState: { errors } } = useForm();
@@ -50,12 +50,12 @@ const VideoUpload = ({ courseId, onUploadComplete, existingVideos = [] }) => {
   const addSection = (e) => {
     e.preventDefault();
     if (!newSectionName.trim()) return;
-    
+
     const newSection = {
       id: `section-${Date.now()}`,
       name: newSectionName.trim()
     };
-    
+
     setSections([...sections, newSection]);
     setSelectedSection(newSection.id);
     setNewSectionName('');
@@ -64,7 +64,7 @@ const VideoUpload = ({ courseId, onUploadComplete, existingVideos = [] }) => {
 
   // Handle video upload
   const onSubmit = async (data) => {
-    if (!selectedFile) {
+    if (!selectedFile && !isEditing) {
       toast.error('Please select a video file');
       return;
     }
@@ -73,54 +73,85 @@ const VideoUpload = ({ courseId, onUploadComplete, existingVideos = [] }) => {
     setUploadProgress(0);
 
     try {
-      // Step 1: Upload video to ImageKit first
-      const progressHandler = (progress) => {
-        setUploadProgress(progress);
-      };
+      let uploadResponse = null;
 
-      console.log('📤 Uploading video to ImageKit...');
-      const uploadResponse = await videoAPI.uploadVideoToImageKit(selectedFile, progressHandler);
-      
-      console.log('✅ Video uploaded to ImageKit:', uploadResponse);
-      console.log('📝 Creating video record...');
+      // Step 1: Upload video to ImageKit first (only if new file selected)
+      if (selectedFile) {
+        const progressHandler = (progress) => {
+          setUploadProgress(progress);
+        };
 
-      // Step 2: Create video record with the uploaded video data
-      const videoRecord = {
-        title: data.title,
-        description: data.description || '',
-        url: uploadResponse.url,
-        videoUrl: uploadResponse.url, // Send both for compatibility
-        fileId: uploadResponse.fileId,
-        course: courseId,
-        section: selectedSection,
-        isPublished: data.isPublished || false,
-        thumbnailUrl: uploadResponse.thumbnailUrl || '',
-        size: uploadResponse.size || selectedFile.size,
-        bytes: uploadResponse.size || selectedFile.size,
-        duration: 1, // Set to minimum valid value (1 second), will be updated by webhook with actual duration
-        order: videos.length + 1,
-        status: 'processing',
-        isActive: true
-      };
+        console.log('📤 Uploading video to ImageKit...');
+        uploadResponse = await videoAPI.uploadVideoToImageKit(selectedFile, progressHandler);
+        console.log('✅ Video uploaded to ImageKit:', uploadResponse);
+      }
 
-      console.log('📤 Creating video record:', videoRecord);
-      const response = await videoAPI.createVideoRecord(videoRecord);
-      
-      console.log('✅ Video record created:', response);
-      
-      // Add the new video to the list
-      const newVideo = response.data?.data || response.data;
-      setVideos([...videos, newVideo]);
-      
-      toast.success('Video uploaded successfully!');
+      // Step 2: Create or update video record
+      if (isEditing) {
+        const updatedVideo = {
+          ...editingVideo,
+          title: data.title,
+          description: data.description,
+          section: selectedSection,
+          isPublished: data.isPublished || false
+        };
+
+        // If new file uploaded, update url and fileId
+        if (uploadResponse) {
+          updatedVideo.url = uploadResponse.url;
+          updatedVideo.videoUrl = uploadResponse.url;
+          updatedVideo.fileId = uploadResponse.fileId;
+          updatedVideo.thumbnailUrl = uploadResponse.thumbnailUrl || '';
+          updatedVideo.size = uploadResponse.size || selectedFile.size;
+        }
+
+        const response = await videoAPI.updateVideo(editingVideo._id, updatedVideo);
+
+        // Update the video in the list
+        setVideos(videos.map(video =>
+          video._id === editingVideo._id ? response.data : video
+        ));
+
+        toast.success('Video updated successfully!');
+        setIsEditing(false);
+        setEditingVideo(null);
+      } else {
+        const videoRecord = {
+          title: data.title,
+          description: data.description || '',
+          url: uploadResponse.url,
+          videoUrl: uploadResponse.url,
+          fileId: uploadResponse.fileId,
+          course: courseId,
+          section: selectedSection,
+          isPublished: data.isPublished || false,
+          thumbnailUrl: uploadResponse.thumbnailUrl || '',
+          size: uploadResponse.size || selectedFile.size,
+          bytes: uploadResponse.size || selectedFile.size,
+          duration: 1, // Will be updated by webhook
+          order: videos.length + 1,
+          status: 'processing',
+          isActive: true
+        };
+
+        console.log('📤 Creating video record:', videoRecord);
+        const response = await videoAPI.createVideoRecord(videoRecord);
+
+        const newVideo = response.data?.data || response.data;
+        setVideos([...videos, newVideo]);
+
+        toast.success('Video uploaded successfully!');
+
+        // Notify parent component
+        if (onUploadComplete) {
+          onUploadComplete(newVideo);
+        }
+      }
+
       reset();
       setSelectedFile(null);
       setPreviewUrl('');
-      
-      // Notify parent component
-      if (onUploadComplete) {
-        onUploadComplete(newVideo);
-      }
+
     } catch (error) {
       console.error('❌ Error uploading video:', error);
       const errorMessage = error.response?.data?.message || error.message || 'Failed to upload video';
@@ -151,35 +182,10 @@ const VideoUpload = ({ courseId, onUploadComplete, existingVideos = [] }) => {
     setEditingVideo(video);
     setValue('title', video.title);
     setValue('description', video.description);
+    setValue('isPublished', video.isPublished);
     setSelectedSection(video.section || 'main');
-  };
-
-  // Handle update video
-  const handleUpdateVideo = async (data) => {
-    try {
-      const updatedVideo = {
-        ...editingVideo,
-        title: data.title,
-        description: data.description,
-        section: selectedSection,
-        isPublished: data.isPublished || false
-      };
-
-      const response = await videoAPI.updateVideo(editingVideo._id, updatedVideo);
-      
-      // Update the video in the list
-      setVideos(videos.map(video => 
-        video._id === editingVideo._id ? response.data : video
-      ));
-      
-      toast.success('Video updated successfully!');
-      reset();
-      setIsEditing(false);
-      setEditingVideo(null);
-    } catch (error) {
-      console.error('Error updating video:', error);
-      toast.error(error.response?.data?.message || 'Failed to update video');
-    }
+    setPreviewUrl(video.url); // Show existing video
+    setSelectedFile(null); // Reset file selection
   };
 
   // Handle cancel edit
@@ -187,22 +193,24 @@ const VideoUpload = ({ courseId, onUploadComplete, existingVideos = [] }) => {
     setIsEditing(false);
     setEditingVideo(null);
     reset();
+    setSelectedFile(null);
+    setPreviewUrl('');
   };
 
   return (
-    <div className="bg-white rounded-lg shadow p-6">
-      <h2 className="text-2xl font-bold mb-6">
-        {isEditing ? 'Edit Video' : 'Upload New Video'}
-      </h2>
-      
-      <form onSubmit={handleSubmit(isEditing ? handleUpdateVideo : onSubmit)} className="space-y-4">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+    <div className="bg-white">
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           {/* Left column - Video upload/preview */}
           <div className="space-y-4">
-            <div 
-              className={`border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-colors ${
-                selectedFile ? 'border-green-500' : 'border-gray-300 hover:border-blue-500'
-              }`}
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Video File
+            </label>
+            <div
+              className={`border-2 border-dashed rounded-xl p-8 text-center cursor-pointer transition-all duration-200 ${selectedFile || (isEditing && previewUrl)
+                  ? 'border-primary-500 bg-primary-50/30'
+                  : 'border-gray-300 hover:border-primary-400 hover:bg-gray-50'
+                }`}
               onClick={() => fileInputRef.current.click()}
             >
               <input
@@ -211,105 +219,117 @@ const VideoUpload = ({ courseId, onUploadComplete, existingVideos = [] }) => {
                 className="hidden"
                 accept="video/*"
                 onChange={handleFileChange}
-                disabled={isUploading || isEditing}
+                disabled={isUploading}
               />
-              
-              {selectedFile || (editingVideo && editingVideo.thumbnailUrl) ? (
-                <div className="relative">
-                  {selectedFile ? (
-                    <video
-                      src={previewUrl}
-                      className="w-full h-48 object-cover rounded-md mb-4"
-                      controls
-                    />
-                  ) : (
-                    <img
-                      src={editingVideo.thumbnailUrl}
-                      alt={editingVideo.title}
-                      className="w-full h-48 object-cover rounded-md mb-4"
-                    />
+
+              {selectedFile || (isEditing && previewUrl) ? (
+                <div className="relative group">
+                  <video
+                    src={previewUrl}
+                    className="w-full h-48 object-cover rounded-lg shadow-sm"
+                    controls
+                  />
+                  {!isUploading && (
+                    <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center rounded-lg">
+                      <p className="text-white font-medium flex items-center">
+                        <Upload className="h-5 w-5 mr-2" />
+                        Change Video
+                      </p>
+                    </div>
                   )}
-                  {!isEditing && (
+                  {selectedFile && !isUploading && (
                     <button
                       type="button"
                       onClick={(e) => {
                         e.stopPropagation();
                         setSelectedFile(null);
-                        setPreviewUrl('');
+                        setPreviewUrl(isEditing ? editingVideo.url : '');
                       }}
-                      className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600"
+                      className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1.5 shadow-lg hover:bg-red-600 transition-colors z-10"
                     >
-                      <FiX size={16} />
+                      <X className="h-4 w-4" />
                     </button>
                   )}
                 </div>
               ) : (
-                <div className="space-y-2">
-                  <FiUpload className="mx-auto h-12 w-12 text-gray-400" />
-                  <p className="text-sm text-gray-600">
-                    {isUploading ? 'Uploading...' : 'Click to upload a video or drag and drop'}
+                <div className="py-8">
+                  <div className="w-16 h-16 bg-primary-50 text-primary-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <Upload className="h-8 w-8" />
+                  </div>
+                  <p className="text-base font-medium text-gray-900 mb-1">
+                    Click to upload video
                   </p>
-                  <p className="text-xs text-gray-500">MP4, WebM, OGG, or MOV (max. 100MB)</p>
+                  <p className="text-sm text-gray-500 mb-4">
+                    or drag and drop MP4, WebM, OGG, or MOV
+                  </p>
+                  <p className="text-xs text-gray-400 uppercase tracking-wide">
+                    Max size: 100MB
+                  </p>
                 </div>
               )}
-              
+
               {isUploading && (
-                <div className="mt-4">
-                  <div className="w-full bg-gray-200 rounded-full h-2.5">
+                <div className="mt-6">
+                  <div className="flex justify-between text-sm font-medium text-gray-900 mb-2">
+                    <span>Uploading...</span>
+                    <span>{Math.round(uploadProgress)}%</span>
+                  </div>
+                  <div className="w-full bg-gray-200 rounded-full h-2 overflow-hidden">
                     <div
-                      className="bg-blue-600 h-2.5 rounded-full"
+                      className="bg-primary-600 h-2 rounded-full transition-all duration-300"
                       style={{ width: `${uploadProgress}%` }}
                     ></div>
                   </div>
-                  <p className="text-sm text-gray-600 mt-2">
-                    Uploading: {uploadProgress}%
-                  </p>
                 </div>
               )}
             </div>
-            
+
             {selectedFile && (
-              <div className="text-sm text-gray-600">
-                <p><span className="font-medium">File:</span> {selectedFile.name}</p>
-                <p><span className="font-medium">Size:</span> {(selectedFile.size / (1024 * 1024)).toFixed(2)} MB</p>
+              <div className="flex items-center p-3 bg-gray-50 rounded-lg border border-gray-200">
+                <Film className="h-5 w-5 text-gray-400 mr-3" />
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium text-gray-900 truncate">{selectedFile.name}</p>
+                  <p className="text-xs text-gray-500">{(selectedFile.size / (1024 * 1024)).toFixed(2)} MB</p>
+                </div>
               </div>
             )}
           </div>
-          
+
           {/* Right column - Form fields */}
-          <div className="space-y-4">
+          <div className="space-y-5">
             <div>
-              <label htmlFor="title" className="block text-sm font-medium text-gray-700">
+              <label htmlFor="title" className="block text-sm font-medium text-gray-700 mb-1">
                 Video Title <span className="text-red-500">*</span>
               </label>
               <input
                 type="text"
                 id="title"
                 {...register('title', { required: 'Title is required' })}
-                className={`mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm ${
-                  errors.title ? 'border-red-500' : ''
-                }`}
-                placeholder="Enter video title"
+                className={`input w-full ${errors.title ? 'border-red-500 focus:ring-red-500' : ''}`}
+                placeholder="e.g. Introduction to React Hooks"
               />
               {errors.title && (
-                <p className="mt-1 text-sm text-red-600">{errors.title.message}</p>
+                <p className="mt-1 text-sm text-red-600 flex items-center">
+                  <AlertCircle className="h-4 w-4 mr-1" />
+                  {errors.title.message}
+                </p>
               )}
             </div>
-            
+
             <div>
-              <label htmlFor="description" className="block text-sm font-medium text-gray-700">
+              <label htmlFor="description" className="block text-sm font-medium text-gray-700 mb-1">
                 Description
               </label>
               <textarea
                 id="description"
                 {...register('description')}
-                rows="3"
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
-                placeholder="Enter video description (optional)"
+                rows="4"
+                className="textarea w-full"
+                placeholder="Briefly describe what this video covers..."
               />
             </div>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Section
@@ -318,7 +338,7 @@ const VideoUpload = ({ courseId, onUploadComplete, existingVideos = [] }) => {
                   <select
                     value={selectedSection}
                     onChange={(e) => setSelectedSection(e.target.value)}
-                    className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+                    className="input w-full"
                   >
                     {sections.map((section) => (
                       <option key={section.id} value={section.id}>
@@ -326,144 +346,93 @@ const VideoUpload = ({ courseId, onUploadComplete, existingVideos = [] }) => {
                       </option>
                     ))}
                   </select>
-                  
+
                   {!showNewSectionInput ? (
                     <button
                       type="button"
                       onClick={() => setShowNewSectionInput(true)}
-                      className="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-blue-700 bg-blue-100 hover:bg-blue-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                      className="p-2 text-primary-600 bg-primary-50 hover:bg-primary-100 rounded-lg transition-colors"
+                      title="Add new section"
                     >
-                      <FiPlus className="mr-1" /> New
+                      <Plus className="h-5 w-5" />
                     </button>
-                  ) : (
-                    <div className="flex space-x-2">
-                      <input
-                        type="text"
-                        value={newSectionName}
-                        onChange={(e) => setNewSectionName(e.target.value)}
-                        placeholder="Section name"
-                        className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
-                        autoFocus
-                      />
-                      <button
-                        type="button"
-                        onClick={addSection}
-                        className="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
-                      >
-                        <FiCheck />
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setShowNewSectionInput(false)}
-                        className="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-gray-700 bg-gray-100 hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
-                      >
-                        <FiX />
-                      </button>
-                    </div>
-                  )}
+                  ) : null}
                 </div>
+
+                {showNewSectionInput && (
+                  <div className="mt-2 flex items-center space-x-2 animate-fade-in">
+                    <input
+                      type="text"
+                      value={newSectionName}
+                      onChange={(e) => setNewSectionName(e.target.value)}
+                      placeholder="New section name"
+                      className="input w-full py-1 text-sm"
+                      autoFocus
+                    />
+                    <button
+                      type="button"
+                      onClick={addSection}
+                      className="p-1.5 text-white bg-green-500 hover:bg-green-600 rounded-lg transition-colors"
+                    >
+                      <Check className="h-4 w-4" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setShowNewSectionInput(false)}
+                      className="p-1.5 text-gray-500 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
+                    >
+                      <X className="h-4 w-4" />
+                    </button>
+                  </div>
+                )}
               </div>
-              
-              <div>
-                <label className="flex items-center">
-                  <input
-                    type="checkbox"
-                    {...register('isPublished')}
-                    className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-                  />
-                  <span className="ml-2 text-sm text-gray-700">Publish this video</span>
+
+              <div className="flex items-center pt-6">
+                <label className="flex items-center cursor-pointer group">
+                  <div className="relative">
+                    <input
+                      type="checkbox"
+                      {...register('isPublished')}
+                      className="sr-only peer"
+                    />
+                    <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary-600"></div>
+                  </div>
+                  <span className="ml-3 text-sm font-medium text-gray-700 group-hover:text-gray-900">Publish immediately</span>
                 </label>
               </div>
             </div>
-            
-            <div className="pt-4">
-              <div className="flex justify-end space-x-3">
-                {isEditing ? (
-                  <>
-                    <button
-                      type="button"
-                      onClick={handleCancelEdit}
-                      className="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-                    >
-                      Cancel
-                    </button>
-                    <button
-                      type="submit"
-                      disabled={isUploading}
-                      className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      {isUploading ? 'Saving...' : 'Save Changes'}
-                    </button>
-                  </>
-                ) : (
+
+            <div className="pt-4 flex justify-end space-x-3 border-t border-gray-100 mt-6">
+              {isEditing ? (
+                <>
+                  <button
+                    type="button"
+                    onClick={handleCancelEdit}
+                    className="btn-secondary"
+                  >
+                    Cancel
+                  </button>
                   <button
                     type="submit"
-                    disabled={!selectedFile || isUploading}
-                    className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                    disabled={isUploading}
+                    className="btn-primary"
                   >
-                    {isUploading ? 'Uploading...' : 'Upload Video'}
+                    {isUploading ? 'Saving...' : 'Save Changes'}
                   </button>
-                )}
-              </div>
+                </>
+              ) : (
+                <button
+                  type="submit"
+                  disabled={!selectedFile || isUploading}
+                  className="btn-primary w-full md:w-auto"
+                >
+                  {isUploading ? 'Uploading...' : 'Upload Video'}
+                </button>
+              )}
             </div>
           </div>
         </div>
       </form>
-      
-      {/* Video List */}
-      {videos.length > 0 && (
-        <div className="mt-12">
-          <h3 className="text-lg font-medium text-gray-900 mb-4">Course Videos</h3>
-          <div className="bg-white shadow overflow-hidden sm:rounded-md">
-            <ul className="divide-y divide-gray-200">
-              {videos.map((video) => (
-                <li key={video._id}>
-                  <div className="px-4 py-4 flex items-center sm:px-6">
-                    <div className="min-w-0 flex-1 sm:flex sm:items-center sm:justify-between">
-                      <div className="truncate">
-                        <div className="flex text-sm">
-                          <p className="font-medium text-blue-600 truncate">
-                            {video.title}
-                          </p>
-                          <p className="ml-2 flex-shrink-0 font-normal text-gray-500">
-                            {video.duration ? `(${Math.floor(video.duration / 60)}:${(video.duration % 60).toString().padStart(2, '0')})` : ''}
-                          </p>
-                        </div>
-                        <div className="mt-2 flex">
-                          <div className="flex items-center text-sm text-gray-500">
-                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                              {video.isPublished ? 'Published' : 'Draft'}
-                            </span>
-                            <span className="ml-2">
-                              {sections.find(s => s.id === video.section)?.name || 'Uncategorized'}
-                            </span>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                    <div className="ml-5 flex-shrink-0">
-                      <button
-                        type="button"
-                        onClick={() => handleEditVideo(video)}
-                        className="inline-flex items-center p-2 border border-transparent rounded-full shadow-sm text-blue-600 bg-blue-100 hover:bg-blue-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 mr-2"
-                      >
-                        <FiEdit2 className="h-4 w-4" />
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => handleDeleteVideo(video._id)}
-                        className="inline-flex items-center p-2 border border-transparent rounded-full shadow-sm text-red-600 bg-red-100 hover:bg-red-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
-                      >
-                        <FiTrash2 className="h-4 w-4" />
-                      </button>
-                    </div>
-                  </div>
-                </li>
-              ))}
-            </ul>
-          </div>
-        </div>
-      )}
     </div>
   );
 };

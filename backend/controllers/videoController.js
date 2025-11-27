@@ -47,8 +47,8 @@ exports.uploadVideo = async (req, res, next) => {
     // Check if course exists and user is the creator
     const course = await Course.findOne({
       _id: courseId,
-      creator: req.user.id || req.user._id 
-      
+      creator: req.user.id || req.user._id
+
     });
 
     if (!course) {
@@ -61,7 +61,7 @@ exports.uploadVideo = async (req, res, next) => {
     // Upload video to ImageKit
     const uploadResult = await new Promise((resolve, reject) => {
       const fileName = `${uuidv4()}${path.extname(videoFile.name)}`;
-      
+
       imagekit.upload({
         file: videoFile.data.toString('base64'),
         fileName: fileName,
@@ -74,7 +74,7 @@ exports.uploadVideo = async (req, res, next) => {
         resolve(result);
       });
     });
-    
+
     if (!uploadResult || !uploadResult.url) {
       throw new Error('Failed to upload video to ImageKit');
     }
@@ -84,7 +84,7 @@ exports.uploadVideo = async (req, res, next) => {
       title: title || videoFile.name.replace(/\.[^/.]+$/, ''),
       description: description || '',
       videoUrl: uploadResult.url,
-      thumbnailUrl: uploadResult.thumbnailUrl || '',
+      thumbnailUrl: uploadResult.thumbnailUrl || `${uploadResult.url}/ik-thumbnail.jpg`,
       fileId: uploadResult.fileId,
       duration: 0, // Will be updated by webhook
       width: uploadResult.width || 0,
@@ -242,9 +242,9 @@ exports.getCourseVideos = async (req, res) => {
 exports.updateVideo = async (req, res, next) => {
   try {
     const { title, description, sectionId, isPublished } = req.body;
-    
+
     const video = await Video.findById(req.params.id);
-    
+
     if (!video) {
       return res.status(404).json({
         success: false,
@@ -268,7 +268,7 @@ exports.updateVideo = async (req, res, next) => {
     // If section is being updated
     if (sectionId && sectionId !== video.section.toString()) {
       const course = await Course.findOne({ _id: video.course, creator: req.user.id });
-      
+
       if (!course) {
         return res.status(404).json({
           success: false,
@@ -333,7 +333,7 @@ exports.updateVideo = async (req, res, next) => {
 exports.deleteVideo = async (req, res, next) => {
   try {
     const video = await Video.findById(req.params.id);
-    
+
     if (!video) {
       return res.status(404).json({
         success: false,
@@ -443,7 +443,7 @@ exports.createVideo = async (req, res, next) => {
 
     // Accept both url and videoUrl, use whichever is provided
     const videoUrlValue = videoUrl || url;
-    
+
     if (!videoUrlValue || !fileId) {
       console.error('❌ Missing required fields:');
       console.error('  videoUrl:', videoUrl);
@@ -540,7 +540,7 @@ exports.createVideo = async (req, res, next) => {
   } catch (error) {
     console.error('Error creating video:', error);
     console.error('Error stack:', error.stack);
-    
+
     // Provide more specific error messages
     let errorMessage = 'Error creating video lesson';
     if (error.name === 'ValidationError') {
@@ -548,7 +548,7 @@ exports.createVideo = async (req, res, next) => {
     } else if (error.name === 'CastError') {
       errorMessage = 'Invalid ID format provided';
     }
-    
+
     res.status(500).json({
       success: false,
       message: errorMessage,

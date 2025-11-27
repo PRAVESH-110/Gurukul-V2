@@ -32,8 +32,8 @@ const fileTypes = {
 
 // Create storage configuration
 const getStorage = (type = 'general') => {
-  const uploadDir = path.join(__dirname, `../../uploads/${type}`);
-  
+  const uploadDir = path.join(__dirname, `../uploads/${type}`);
+
   // Ensure upload directory exists
   if (!fs.existsSync(uploadDir)) {
     fs.mkdirSync(uploadDir, { recursive: true });
@@ -54,7 +54,7 @@ const getStorage = (type = 'general') => {
 // Create file filter based on type
 const createFileFilter = (type) => (req, file, cb) => {
   const config = fileTypes[type] || fileTypes.image;
-  
+
   if (config.allowed.includes(file.mimetype)) {
     cb(null, true);
   } else {
@@ -65,7 +65,7 @@ const createFileFilter = (type) => (req, file, cb) => {
 // Create multer instances for different file types
 const createUploader = (type) => {
   const config = fileTypes[type] || fileTypes.image;
-  
+
   return multer({
     storage: getStorage(type),
     limits: {
@@ -83,19 +83,19 @@ const upload = {
     const uploader = createUploader(type);
     return uploader.single(field);
   },
-  
+
   // Multiple files upload
   array: (field, maxCount = 5, type = 'image') => {
     const uploader = createUploader(type);
     return uploader.array(field, maxCount);
   },
-  
+
   // Fields upload
   fields: (fields, type = 'image') => {
     const uploader = createUploader(type);
     return uploader.fields(fields);
   },
-  
+
   // Any file type
   any: () => {
     return multer({
@@ -110,11 +110,11 @@ const handleUploadErrors = (err, req, res, next) => {
   if (err) {
     let status = 500;
     let message = 'An error occurred during file upload';
-    
+
     if (err instanceof multer.MulterError) {
       status = 400;
       message = 'File upload error';
-      
+
       switch (err.code) {
         case 'LIMIT_FILE_SIZE':
           message = 'File size exceeds the allowed limit';
@@ -130,23 +130,23 @@ const handleUploadErrors = (err, req, res, next) => {
       status = 400; // Bad request for invalid file types
       message = err.message;
     }
-    
+
     return res.status(status).json({
       success: false,
       message,
       error: process.env.NODE_ENV === 'development' ? err.message : undefined
     });
   }
-  
+
   next();
 };
 
 // Helper function to delete a file
 const deleteFile = (filePath) => {
   if (!filePath) return;
-  
+
   const fullPath = path.join(__dirname, '../../', filePath);
-  
+
   fs.unlink(fullPath, (err) => {
     if (err && err.code !== 'ENOENT') {
       console.error('Error deleting file:', err);

@@ -46,7 +46,7 @@ router.post('/video', protect, upload.single('file'), async (req, res, next) => 
       fileId: result.fileId,
       name: result.name,
       size: result.size,
-      thumbnailUrl: result.thumbnailUrl
+      thumbnailUrl: result.thumbnailUrl || `${result.url}/ik-thumbnail.jpg`
     });
   } catch (error) {
     console.error('Upload error:', error);

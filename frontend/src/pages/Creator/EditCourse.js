@@ -4,6 +4,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { courseAPI, uploadAPI } from '../../services/api';
 import { ArrowLeft, Upload, X, Save, Loader } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { getImageUrl } from '../../utils/imageUtils';
 
 const EditCourse = () => {
   const { courseId } = useParams();
@@ -24,7 +25,7 @@ const EditCourse = () => {
     isPublished: false,
     allowComments: true
   });
-  
+
   const [thumbnail, setThumbnail] = useState(null);
   const [thumbnailPreview, setThumbnailPreview] = useState(null);
   const [tagInput, setTagInput] = useState('');
@@ -142,9 +143,9 @@ const EditCourse = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     const submitData = new FormData();
-    
+
     // Add all form fields
     Object.keys(formData).forEach(key => {
       if (key === 'tags' || key === 'requirements' || key === 'learningOutcomes') {
@@ -188,7 +189,7 @@ const EditCourse = () => {
         {/* Basic Information */}
         <div className="bg-white rounded-lg shadow-sm border p-6">
           <h2 className="text-xl font-semibold text-gray-900 mb-4">Basic Information</h2>
-          
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="md:col-span-2">
               <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -300,12 +301,12 @@ const EditCourse = () => {
         {/* Thumbnail */}
         <div className="bg-white rounded-lg shadow-sm border p-6">
           <h2 className="text-xl font-semibold text-gray-900 mb-4">Course Thumbnail</h2>
-          
+
           <div className="flex items-start space-x-6">
             {thumbnailPreview && (
               <div className="relative">
                 <img
-                  src={thumbnailPreview}
+                  src={getImageUrl(thumbnailPreview)}
                   alt="Thumbnail preview"
                   className="w-32 h-20 object-cover rounded-lg"
                 />
@@ -321,7 +322,7 @@ const EditCourse = () => {
                 </button>
               </div>
             )}
-            
+
             <div>
               <label className="block">
                 <input
@@ -345,7 +346,7 @@ const EditCourse = () => {
         {/* Tags */}
         <div className="bg-white rounded-lg shadow-sm border p-6">
           <h2 className="text-xl font-semibold text-gray-900 mb-4">Tags</h2>
-          
+
           <div className="flex flex-wrap gap-2 mb-4">
             {formData.tags.map(tag => (
               <span
@@ -363,7 +364,7 @@ const EditCourse = () => {
               </span>
             ))}
           </div>
-          
+
           <div className="flex gap-2">
             <input
               type="text"
@@ -386,7 +387,7 @@ const EditCourse = () => {
         {/* Requirements */}
         <div className="bg-white rounded-lg shadow-sm border p-6">
           <h2 className="text-xl font-semibold text-gray-900 mb-4">Requirements</h2>
-          
+
           <ul className="space-y-2 mb-4">
             {formData.requirements.map((req, index) => (
               <li key={index} className="flex items-center justify-between bg-gray-50 p-3 rounded">
@@ -401,7 +402,7 @@ const EditCourse = () => {
               </li>
             ))}
           </ul>
-          
+
           <div className="flex gap-2">
             <input
               type="text"
@@ -424,7 +425,7 @@ const EditCourse = () => {
         {/* Learning Outcomes */}
         <div className="bg-white rounded-lg shadow-sm border p-6">
           <h2 className="text-xl font-semibold text-gray-900 mb-4">What Students Will Learn</h2>
-          
+
           <ul className="space-y-2 mb-4">
             {formData.learningOutcomes.map((outcome, index) => (
               <li key={index} className="flex items-center justify-between bg-gray-50 p-3 rounded">
@@ -439,7 +440,7 @@ const EditCourse = () => {
               </li>
             ))}
           </ul>
-          
+
           <div className="flex gap-2">
             <input
               type="text"
@@ -462,7 +463,7 @@ const EditCourse = () => {
         {/* Settings */}
         <div className="bg-white rounded-lg shadow-sm border p-6">
           <h2 className="text-xl font-semibold text-gray-900 mb-4">Course Settings</h2>
-          
+
           <div className="space-y-4">
             <label className="flex items-center">
               <input

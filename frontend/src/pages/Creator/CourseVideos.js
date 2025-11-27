@@ -5,7 +5,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { courseAPI, videoAPI } from '../../services/api';
 import VideoUpload from '../../components/video/VideoUpload';
 import VideoEditModal from '../../components/video/VideoEditModal';
-import { ArrowLeft, Video, Plus, Edit, Trash2, Eye, Settings, Play, MoreVertical } from 'lucide-react';
+import { ArrowLeft, Video, Plus, Edit, Trash2, Eye, Settings, Play, MoreVertical, Clock, HardDrive, FileText, AlertCircle } from 'lucide-react';
 
 const CourseVideos = () => {
   const { courseId } = useParams();
@@ -31,80 +31,45 @@ const CourseVideos = () => {
 
       try {
         setIsLoading(true);
-        console.log('Fetching videos for courseId:', courseId);
-        
+
         // Fetch course details and videos
         const [courseRes, videosRes] = await Promise.all([
           courseAPI.getCourse(courseId),
           videoAPI.getCourseVideos(courseId)
         ]);
-        
-        console.log('Full videosRes object:', videosRes);
-        console.log('videosRes.data:', videosRes?.data);
-        console.log('videosRes.status:', videosRes?.status);
-        
-        // Handle course data (which might be in courseRes.data.course or courseRes.data)
+
+        // Handle course data
         const courseData = courseRes.data?.course || courseRes.data;
         setCourse(courseData);
-        
-        // Handle videos data - API returns { success: true, count: X, data: videos }
-        // videosRes is the axios response, so videosRes.data is the API response object
+
+        // Handle videos data
         let videosData = [];
-        
-        // Check if API returned an error
+
         if (videosRes?.data && videosRes.data.success === false) {
-          console.error('❌ API returned error:', videosRes.data.message || 'Unknown error');
           toast.error(videosRes.data.message || 'Failed to load videos');
           setVideos([]);
           setError(videosRes.data.message || 'Failed to load videos');
           setIsLoading(false);
           return;
         }
-        
+
         if (videosRes?.data) {
-          console.log('videosRes.data structure:', {
-            success: videosRes.data.success,
-            count: videosRes.data.count,
-            hasData: !!videosRes.data.data,
-            dataIsArray: Array.isArray(videosRes.data.data),
-            dataLength: Array.isArray(videosRes.data.data) ? videosRes.data.data.length : 'not array',
-            allKeys: Object.keys(videosRes.data)
-          });
-          
-          // Check if response has a data property (the videos array)
           if (Array.isArray(videosRes.data.data)) {
             videosData = videosRes.data.data;
-            console.log('✅ Found videos in videosRes.data.data:', videosData.length);
           } else if (Array.isArray(videosRes.data)) {
-            // If the response itself is an array
             videosData = videosRes.data;
-            console.log('✅ Found videos in videosRes.data (array):', videosData.length);
           } else if (videosRes.data.videos && Array.isArray(videosRes.data.videos)) {
-            // Alternative response structure
             videosData = videosRes.data.videos;
-            console.log('✅ Found videos in videosRes.data.videos:', videosData.length);
-          } else {
-            console.warn('⚠️ No videos array found in response. Response structure:', videosRes.data);
-            // Try to log the full response to understand the structure
-            console.warn('Full response:', JSON.stringify(videosRes.data, null, 2));
           }
-        } else {
-          console.error('❌ videosRes.data is undefined or null');
-          console.error('Full videosRes:', videosRes);
         }
-        
-        console.log('Final videosData:', videosData);
-        console.log('Videos count:', videosData.length);
-        
+
         setVideos(videosData);
         setError(null);
       } catch (err) {
         console.error('❌ Error fetching data:', err);
-        console.error('Error response:', err.response);
-        console.error('Error details:', err.response?.data || err.message);
         setError('Failed to load course data. Please try again.');
         toast.error('Failed to load course data');
-        setVideos([]); // Ensure videos is set to empty array on error
+        setVideos([]);
       } finally {
         setIsLoading(false);
       }
@@ -115,16 +80,12 @@ const CourseVideos = () => {
 
   // Refetch videos from API
   const refetchVideos = async () => {
-    if (!courseId) {
-      console.error('No courseId for refetch');
-      return;
-    }
-    
+    if (!courseId) return;
+
     try {
-      console.log('Refetching videos for courseId:', courseId);
       const videosRes = await videoAPI.getCourseVideos(courseId);
       let videosData = [];
-      
+
       if (videosRes?.data) {
         if (Array.isArray(videosRes.data.data)) {
           videosData = videosRes.data.data;
@@ -134,8 +95,7 @@ const CourseVideos = () => {
           videosData = videosRes.data.videos;
         }
       }
-      
-      console.log('Refetched videos:', videosData.length);
+
       setVideos(videosData);
     } catch (err) {
       console.error('Error refetching videos:', err);
@@ -147,19 +107,16 @@ const CourseVideos = () => {
   const handleVideoUploaded = async (newVideo) => {
     setShowUploadForm(false);
     toast.success('Video uploaded successfully!');
-    // Refetch videos to ensure we have the latest data
     await refetchVideos();
   };
 
   // Handle video deletion
   const handleVideoDeleted = async (videoId) => {
-    // Refetch videos to ensure we have the latest data
     await refetchVideos();
   };
 
   // Handle video update
   const handleVideoUpdated = async (updatedVideo) => {
-    // Refetch videos to ensure we have the latest data
     await refetchVideos();
   };
 
@@ -172,19 +129,17 @@ const CourseVideos = () => {
   // Handle delete video
   const handleDeleteVideo = async (videoId, videoTitle) => {
     const confirmMessage = `Are you sure you want to delete "${videoTitle}"?\n\nThis will permanently remove the video from the course.\n\nThis action cannot be undone.`;
-    
+
     if (window.confirm(confirmMessage)) {
       const deleteToast = toast.loading('Deleting video...');
-      
+
       try {
         await videoAPI.deleteVideo(videoId);
         toast.success('Video deleted successfully', { id: deleteToast });
-        // Refetch videos to ensure we have the latest data
         await refetchVideos();
       } catch (error) {
         const errorMessage = error.response?.data?.message || 'Failed to delete video';
         toast.error(errorMessage, { id: deleteToast });
-        console.error('Delete video error:', error);
       }
     }
   };
@@ -197,20 +152,24 @@ const CourseVideos = () => {
 
   if (isLoading) {
     return (
-      <div className="flex justify-center items-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+      <div className="flex justify-center items-center h-screen bg-gray-50">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary-600"></div>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="bg-white rounded-lg shadow p-6">
-        <div className="text-center py-12">
-          <p className="text-red-500 text-lg">{error}</p>
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        <div className="bg-white rounded-2xl shadow-sm border border-red-100 p-12 text-center">
+          <div className="w-16 h-16 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-4">
+            <AlertCircle className="h-8 w-8 text-red-500" />
+          </div>
+          <h3 className="text-lg font-medium text-gray-900 mb-2">Error Loading Content</h3>
+          <p className="text-gray-500 mb-6">{error}</p>
           <button
             onClick={() => window.location.reload()}
-            className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+            className="btn-primary"
           >
             Retry
           </button>
@@ -220,216 +179,249 @@ const CourseVideos = () => {
   }
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="mb-6">
-        <button
-          onClick={() => navigate(-1)}
-          className="flex items-center text-blue-600 hover:text-blue-800 mb-4"
-        >
-          <ArrowLeft className="mr-1 h-4 w-4" /> Back to Course
-        </button>
-        
-        <div className="flex justify-between items-center mb-6">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900">
-              {course?.title || 'Course Videos'}
-            </h1>
-            <p className="text-gray-600 mt-1">
-              
-            </p>
+    <div className="min-h-screen bg-gray-50/50 font-sans pb-12">
+      {/* Header */}
+      <div className="bg-white border-b border-gray-200 sticky top-0 z-10">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center">
+              <button
+                onClick={() => navigate(-1)}
+                className="mr-4 p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full transition-colors"
+              >
+                <ArrowLeft className="h-5 w-5" />
+              </button>
+              <div>
+                <h1 className="text-2xl font-bold text-gray-900">
+                  {course?.title || 'Course Videos'}
+                </h1>
+                <p className="text-sm text-gray-500 mt-0.5">
+                  Manage your course content and videos
+                </p>
+              </div>
+            </div>
+
+            {!showUploadForm && (
+              <button
+                onClick={() => setShowUploadForm(true)}
+                className="btn-primary flex items-center shadow-lg shadow-primary-600/20"
+              >
+                <Plus className="mr-2 h-5 w-5" />
+                Add New Video
+              </button>
+            )}
           </div>
-          
-          {!showUploadForm && (
-            <button
-              onClick={() => setShowUploadForm(true)}
-              className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-            >
-              <Plus className="mr-2 h-4 w-4" /> Add Video
-            </button>
-          )}
-        </div>
-        
-        {/* Tabs */}
-        <div className="border-b border-gray-200 mb-6">
-          <nav className="-mb-px flex space-x-8">
+
+          {/* Tabs */}
+          <div className="flex space-x-8 mt-6 -mb-px">
             <button
               onClick={() => setActiveTab('videos')}
-              className={`${
-                activeTab === 'videos'
-                  ? 'border-blue-500 text-blue-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-              } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm`}
+              className={`pb-4 text-sm font-medium border-b-2 transition-colors ${activeTab === 'videos'
+                ? 'border-primary-600 text-primary-600'
+                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                }`}
             >
               Videos
             </button>
             <button
               onClick={() => setActiveTab('sections')}
-              className={`${
-                activeTab === 'sections'
-                  ? 'border-blue-500 text-blue-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-              } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm`}
+              className={`pb-4 text-sm font-medium border-b-2 transition-colors ${activeTab === 'sections'
+                ? 'border-primary-600 text-primary-600'
+                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                }`}
             >
               Sections
             </button>
-          </nav>
+          </div>
         </div>
       </div>
-      
-      {showUploadForm ? (
-        <div className="bg-white rounded-lg shadow p-6 mb-8">
-          <div className="flex justify-between items-center mb-6">
-            <h2 className="text-xl font-semibold">Upload New Video</h2>
-            <button
-              onClick={() => setShowUploadForm(false)}
-              className="text-gray-500 hover:text-gray-700"
-            >
-              <span className="text-2xl">&times;</span>
-            </button>
+
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {showUploadForm ? (
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden animate-fade-in">
+            <div className="p-6 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
+              <div>
+                <h2 className="text-lg font-bold text-gray-900">Upload New Video</h2>
+                <p className="text-sm text-gray-500">Upload and configure your video content</p>
+              </div>
+              <button
+                onClick={() => setShowUploadForm(false)}
+                className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full transition-colors"
+              >
+                <span className="sr-only">Close</span>
+                <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+            <div className="p-6">
+              <VideoUpload
+                courseId={courseId}
+                onUploadComplete={handleVideoUploaded}
+                existingVideos={videos}
+              />
+            </div>
           </div>
-          <VideoUpload 
-            courseId={courseId} 
-            onUploadComplete={handleVideoUploaded}
-            existingVideos={videos}
-          />
-        </div>
-      ) : (
-        <div className="space-y-8">
-          {activeTab === 'videos' ? (
-            <div className="bg-white shadow overflow-hidden sm:rounded-lg">
-              {videos.length === 0 ? (
-                <div className="text-center py-12">
-                  <Video className="mx-auto h-12 w-12 text-gray-400" />
-                  <h3 className="mt-2 text-lg font-medium text-gray-900">No videos yet</h3>
-                  <p className="mt-1 text-sm text-gray-500">
-                    Get started by uploading your first video.
-                  </p>
-                  <div className="mt-6">
+        ) : (
+          <div className="space-y-6">
+            {activeTab === 'videos' ? (
+              <div className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden min-h-[400px]">
+                {videos.length === 0 ? (
+                  <div className="flex flex-col items-center justify-center h-full py-20 text-center">
+                    <div className="w-20 h-20 bg-primary-50 rounded-full flex items-center justify-center mb-6">
+                      <Video className="h-10 w-10 text-primary-600" />
+                    </div>
+                    <h3 className="text-xl font-bold text-gray-900 mb-2">No videos yet</h3>
+                    <p className="text-gray-500 max-w-sm mb-8">
+                      Get started by uploading your first video lesson to this course.
+                    </p>
                     <button
                       onClick={() => setShowUploadForm(true)}
-                      className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                      className="btn-primary flex items-center"
                     >
-                      <Plus className="mr-2 h-4 w-4" /> Upload Video
+                      <Plus className="mr-2 h-5 w-5" />
+                      Upload Video
                     </button>
                   </div>
-                </div>
-              ) : (
-                <div>
-                  {/* Video List Header */}
-                  <div className="px-6 py-4 border-b bg-gray-50">
-                    <div className="flex items-center justify-between">
-                      <h3 className="text-lg font-medium text-gray-900">
-                        Course Videos ({videos.length})
+                ) : (
+                  <div>
+                    {/* Video List Header */}
+                    <div className="px-6 py-4 border-b border-gray-100 bg-gray-50/50 flex items-center justify-between">
+                      <h3 className="font-semibold text-gray-900">
+                        All Videos <span className="ml-2 text-sm font-normal text-gray-500 bg-white px-2 py-0.5 rounded-full border border-gray-200">{videos.length}</span>
                       </h3>
+                      <div className="text-sm text-gray-500">
+                        Total Duration: {Math.round(videos.reduce((acc, v) => acc + (v.duration || 0), 0) / 60)} mins
+                      </div>
                     </div>
-                  </div>
 
-                  {/* Video List */}
-                  <div className="divide-y divide-gray-200">
-                    {videos.map((video, index) => (
-                      <div key={video._id} className="px-6 py-4 hover:bg-gray-50">
-                        <div className="flex items-center space-x-4">
-                          {/* Video Thumbnail/Icon */}
-                          <div className="flex-shrink-0">
-                            {video.thumbnailUrl ? (
-                              <img
-                                src={video.thumbnailUrl}
-                                alt={video.title}
-                                className="w-16 h-10 object-cover rounded"
-                              />
-                            ) : (
-                              <div className="w-16 h-10 bg-primary-100 rounded flex items-center justify-center">
-                                <Play className="h-4 w-4 text-primary-600" />
+                    {/* Video List */}
+                    <div className="divide-y divide-gray-100">
+                      {videos.map((video, index) => (
+                        <div key={video._id} className="group p-6 hover:bg-gray-50 transition-colors">
+                          <div className="flex items-start space-x-4">
+                            {/* Video Thumbnail/Icon */}
+                            <div className="flex-shrink-0 relative">
+                              {video.thumbnailUrl || video.videoUrl ? (
+                                <div className="relative w-32 aspect-video rounded-lg overflow-hidden shadow-sm group-hover:shadow-md transition-all">
+                                  <img
+                                    src={video.thumbnailUrl || (video.videoUrl && video.videoUrl.includes('imagekit.io') ? `${video.videoUrl}/ik-thumbnail.jpg` : null)}
+                                    alt={video.title}
+                                    className="w-full h-full object-cover"
+                                    onError={(e) => {
+                                      e.target.onerror = null;
+                                      e.target.src = 'https://placehold.co/600x400?text=No+Thumbnail';
+                                    }}
+                                  />
+                                  <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors flex items-center justify-center">
+                                    <Play className="h-8 w-8 text-white opacity-0 group-hover:opacity-100 drop-shadow-lg transform scale-90 group-hover:scale-100 transition-all" />
+                                  </div>
+                                </div>
+                              ) : (
+                                <div className="w-32 aspect-video bg-gray-100 rounded-lg flex items-center justify-center border border-gray-200 group-hover:border-gray-300 transition-colors">
+                                  <Video className="h-8 w-8 text-gray-400" />
+                                </div>
+                              )}
+                              <div className="absolute bottom-1 right-1 bg-black/70 text-white text-[10px] font-medium px-1.5 py-0.5 rounded">
+                                {video.duration ? `${Math.floor(video.duration / 60)}:${(video.duration % 60).toString().padStart(2, '0')}` : '0:00'}
                               </div>
-                            )}
-                          </div>
-
-                          {/* Video Info */}
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center space-x-2">
-                              <span className="text-xs font-medium text-gray-500 bg-gray-100 px-2 py-1 rounded">
-                                #{video.order || index + 1}
-                              </span>
-                              <h4 className="text-sm font-medium text-gray-900 truncate">
-                                {video.title}
-                              </h4>
-                              {video.isPreview && (
-                                <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full">
-                                  Preview
-                                </span>
-                              )}
-                              {!video.isPublished && (
-                                <span className="text-xs bg-yellow-100 text-yellow-800 px-2 py-1 rounded-full">
-                                  Draft
-                                </span>
-                              )}
                             </div>
-                            <p className="text-sm text-gray-500 truncate mt-1">
-                              {video.description || 'No description'}
-                            </p>
-                            <div className="flex items-center space-x-4 mt-2 text-xs text-gray-500">
-                              <span>Duration: {video.duration || 'Unknown'}</span>
-                              <span>Size: {video.size ? Math.round(video.size / (1024 * 1024)) : 0}MB</span>
-                              <span>Status: {video.status || 'Ready'}</span>
-                            </div>
-                          </div>
 
-                          {/* Actions */}
-                          <div className="flex items-center space-x-2">
-                            <a
-                              href={video.url}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="p-2 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-full"
-                              title="Watch video"
-                            >
-                              <Eye className="h-4 w-4" />
-                            </a>
-                            <button
-                              onClick={() => handleEditVideo(video)}
-                              className="p-2 text-gray-500 hover:text-green-600 hover:bg-green-50 rounded-full"
-                              title="Edit video"
-                            >
-                              <Edit className="h-4 w-4" />
-                            </button>
-                            <button
-                              onClick={() => handleDeleteVideo(video._id, video.title)}
-                              className="p-2 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-full"
-                              title="Delete video"
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </button>
+                            {/* Video Info */}
+                            <div className="flex-1 min-w-0 pt-1">
+                              <div className="flex items-center space-x-2 mb-1">
+                                <span className="flex-shrink-0 w-6 h-6 rounded-full bg-gray-100 text-gray-500 text-xs font-medium flex items-center justify-center">
+                                  {video.order || index + 1}
+                                </span>
+                                <h4 className="text-base font-semibold text-gray-900 truncate group-hover:text-primary-600 transition-colors">
+                                  {video.title}
+                                </h4>
+                                {video.isPreview && (
+                                  <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800">
+                                    Preview
+                                  </span>
+                                )}
+                                {!video.isPublished && (
+                                  <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-yellow-100 text-yellow-800">
+                                    Draft
+                                  </span>
+                                )}
+                              </div>
+
+                              <p className="text-sm text-gray-500 line-clamp-2 mb-3">
+                                {video.description || 'No description provided for this video.'}
+                              </p>
+
+                              <div className="flex items-center space-x-6 text-xs text-gray-500">
+                                <div className="flex items-center">
+                                  <HardDrive className="h-3.5 w-3.5 mr-1.5" />
+                                  {video.size ? `${Math.round(video.size / (1024 * 1024))} MB` : 'Unknown size'}
+                                </div>
+                                <div className="flex items-center">
+                                  <div className={`w-2 h-2 rounded-full mr-1.5 ${video.status === 'Ready' ? 'bg-green-500' : 'bg-yellow-500'}`}></div>
+                                  {video.status || 'Processing'}
+                                </div>
+                              </div>
+                            </div>
+
+                            {/* Actions */}
+                            <div className="flex items-center space-x-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                              <a
+                                href={video.videoUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="p-2 text-gray-400 hover:text-primary-600 hover:bg-primary-50 rounded-lg transition-colors"
+                                title="Watch video"
+                              >
+                                <Eye className="h-5 w-5" />
+                              </a>
+                              <button
+                                onClick={() => handleEditVideo(video)}
+                                className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                                title="Edit details"
+                              >
+                                <Edit className="h-5 w-5" />
+                              </button>
+                              <button
+                                onClick={() => handleDeleteVideo(video._id, video.title)}
+                                className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                                title="Delete video"
+                              >
+                                <Trash2 className="h-5 w-5" />
+                              </button>
+                            </div>
                           </div>
                         </div>
-                      </div>
-                    ))}
+                      ))}
+                    </div>
                   </div>
-                </div>
-              )}
-            </div>
-          ) : (
-            <div className="bg-white shadow overflow-hidden sm:rounded-lg p-6">
-              <h2 className="text-lg font-medium text-gray-900 mb-4">Course Sections</h2>
-              <p className="text-gray-600 mb-6">
-                Organize your course content into sections and lectures. Drag and drop to reorder.
-              </p>
-              
-              {/* Sections list will be implemented here */}
-              <div className="border border-dashed border-gray-300 rounded-lg p-8 text-center">
-                <p className="text-gray-500">Sections management coming soon</p>
+                )}
               </div>
-            </div>
-          )}
-        </div>
-      )}
+            ) : (
+              <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-12 text-center">
+                <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <FileText className="h-8 w-8 text-gray-400" />
+                </div>
+                <h2 className="text-lg font-bold text-gray-900 mb-2">Course Sections</h2>
+                <p className="text-gray-500 mb-6 max-w-md mx-auto">
+                  Organize your course content into sections and lectures. This feature is currently under development.
+                </p>
+                <div className="inline-flex items-center px-4 py-2 rounded-lg bg-gray-100 text-gray-600 text-sm font-medium">
+                  Coming Soon
+                </div>
+              </div>
+            )}
+          </div>
+        )}
 
-      {/* Video Edit Modal */}
-      <VideoEditModal
-        video={editingVideo}
-        isOpen={showEditModal}
-        onClose={handleCloseEditModal}
-        courseId={courseId}
-      />
+        {/* Video Edit Modal */}
+        <VideoEditModal
+          video={editingVideo}
+          isOpen={showEditModal}
+          onClose={handleCloseEditModal}
+          courseId={courseId}
+        />
+      </div>
     </div>
   );
 };
