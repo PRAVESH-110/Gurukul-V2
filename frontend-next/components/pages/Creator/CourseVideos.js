@@ -5,8 +5,8 @@ import { useParams, useRouter } from 'next/navigation';
 import toast from 'react-hot-toast';
 import { useAuth } from '@/context/AuthContext';
 import { courseAPI, videoAPI } from '@/services/api';
-import VideoUpload from '@/components/video/VideoUpload';
-import VideoEditModal from '@/components/video/VideoEditModal';
+import VideoUpload from '@/components/Video/VideoUpload';
+import VideoEditModal from '@/components/Video/VideoEditModal';
 import { ArrowLeft, Video, Plus, Edit, Trash2, Eye, Settings, Play, MoreVertical, Clock, HardDrive, FileText, AlertCircle } from 'lucide-react';
 
 const CourseVideos = () => {

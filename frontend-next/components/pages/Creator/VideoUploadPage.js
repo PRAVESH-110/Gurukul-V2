@@ -7,7 +7,7 @@ import { useQuery } from '@tanstack/react-query';
 import { videoAPI, courseAPI } from '@/services/api';
 import { Clock, Save, ArrowLeft, Video, CheckCircle, AlertCircle } from 'lucide-react';
 import toast from 'react-hot-toast';
-import EnhancedVideoUpload from '@/components/video/EnhancedVideoUpload';
+import EnhancedVideoUpload from '@/components/Video/EnhancedVideoUpload';
 
 const VideoUploadPage = () => {
   const router = useRouter();

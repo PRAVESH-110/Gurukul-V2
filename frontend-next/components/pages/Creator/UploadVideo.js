@@ -8,7 +8,7 @@ import { useQuery } from '@tanstack/react-query';
 import { videoAPI, courseAPI } from '@/services/api';
 import { Clock, Save } from 'lucide-react';
 import toast from 'react-hot-toast';
-import EnhancedVideoUpload from '@/components/video/EnhancedVideoUpload';
+import EnhancedVideoUpload from '@/components/Video/EnhancedVideoUpload';
 import LoadingSpinner from '@/components/UI/LoadingSpinner';
 
 const UploadVideo = () => {
