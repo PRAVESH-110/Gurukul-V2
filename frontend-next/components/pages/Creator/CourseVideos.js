@@ -11,7 +11,7 @@ import { ArrowLeft, Video, Plus, Edit, Trash2, Eye, Settings, Play, MoreVertical
 
 const CourseVideos = () => {
   const params = useParams();
-  const courseId = params?.courseId;
+  const courseId = params?.courseId || params?.id;
   const router = useRouter();
   const { user } = useAuth();
   const [course, setCourse] = useState(null);
