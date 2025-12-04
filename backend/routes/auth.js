@@ -63,7 +63,7 @@ const register = async (req, res, next) => {
     // Send verification email
     try {
       const verificationUrl = `${process.env.CLIENT_URL}/verify-email?token=${user.verificationToken}`;
-      
+
       await sendEmail({
         to: user.email,
         subject: 'Verify Your Email - Gurukul Platform',
@@ -115,7 +115,7 @@ const login = async (req, res, next) => {
 
     // Find user and include password
     const user = await User.findOne({ email }).select('+password');
-    
+
     if (!user) {
       return res.status(401).json({
         success: false,
@@ -133,7 +133,7 @@ const login = async (req, res, next) => {
 
     // Check password
     const isPasswordMatch = await user.comparePassword(password);
-    
+
     if (!isPasswordMatch) {
       return res.status(401).json({
         success: false,
@@ -253,7 +253,7 @@ router.post('/forgot-password', [
 
     // Send email with reset link
     const resetUrl = `${process.env.CLIENT_URL}/reset-password?token=${resetToken}`;
-    
+
     await sendEmail({
       to: user.email,
       subject: 'Password Reset Request - Gurukul Platform',
@@ -301,7 +301,7 @@ router.post('/reset-password', [
     }
 
     const { token, password } = req.body;
-    
+
     // Hash the token from the URL to match the hashed token in the database
     const resetPasswordToken = crypto
       .createHash('sha256')
@@ -408,15 +408,5 @@ router.post('/login', [validateUserLogin, authLimiter], login);
 router.get('/me', protect, getMe);
 router.put('/profile', protect, updateProfile);
 router.post('/logout', protect, logout);
-
-module.exports = {
-  router,
-  register,
-  login,
-  getMe,
-  updateProfile,
-  logout
-};
-
 
 module.exports = router;

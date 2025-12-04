@@ -8,7 +8,7 @@ const getBaseUrl = () => {
     return process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001/api';
   }
   // In production, use the production URL
-  return process.env.NEXT_PUBLIC_API_URL_PROD || 'https://gurukul-platform-api.onrender.com/api';
+  return process.env.NEXT_PUBLIC_API_URL_PROD || 'https://gurukul-04ad.onrender.com/api';
 };
 
 // Create axios instance with default config
