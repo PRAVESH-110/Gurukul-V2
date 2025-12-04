@@ -18,9 +18,9 @@ const getStudentDashboard = async (req, res, next) => {
     const userId = req.query.userId ? req.query.userId : req.user._id;
 
     // Get user's enrolled courses with progress
-    const enrolledCourses = await Course.find({ 
+    const enrolledCourses = await Course.find({
       'enrolledStudents.user': userId,
-      isPublished: true 
+      isPublished: true
     })
       .populate('creator', 'firstName lastName avatar')
       .select('title description thumbnail creator enrollmentCount rating videoCount duration');
@@ -28,11 +28,11 @@ const getStudentDashboard = async (req, res, next) => {
     // Calculate progress for each course
     const coursesWithProgress = await Promise.all(
       enrolledCourses.map(async (course) => {
-        const totalVideos = await Video.countDocuments({ 
-          course: course._id, 
-          isActive: true 
+        const totalVideos = await Video.countDocuments({
+          course: course._id,
+          isActive: true
         });
-        
+
         const watchedVideos = await Video.countDocuments({
           course: course._id,
           isActive: true,
@@ -134,7 +134,7 @@ const getCreatorDashboard = async (req, res, next) => {
     // Get creator's communities with member counts
     const createdCommunities = await Community.find({ creator: userId, isActive: true })
       .sort({ createdAt: -1 });
-      
+
     // Calculate member counts
     const communitiesWithCounts = createdCommunities.map(community => ({
       ...community.toObject(),
@@ -203,16 +203,16 @@ const getCreatorDashboard = async (req, res, next) => {
 
     // Calculate average rating across all courses
     const coursesWithRatings = createdCourses.filter(course => course.rating && course.rating.average > 0);
-    const averageRating = coursesWithRatings.length > 0 
-      ? coursesWithRatings.reduce((sum, course) => sum + (course.rating.average || 0), 0) / coursesWithRatings.length 
+    const averageRating = coursesWithRatings.length > 0
+      ? coursesWithRatings.reduce((sum, course) => sum + (course.rating.average || 0), 0) / coursesWithRatings.length
       : 0;
 
     // Get course analytics
     const courseAnalytics = await Promise.all(
       createdCourses.map(async (course) => {
-        const totalVideos = await Video.countDocuments({ 
-          course: course._id, 
-          isActive: true 
+        const totalVideos = await Video.countDocuments({
+          course: course._id,
+          isActive: true
         });
 
         const totalWatches = await Video.aggregate([
@@ -273,93 +273,164 @@ const getCreatorDashboard = async (req, res, next) => {
 // @access  Private (Creator or Admin only)
 const getAnalytics = async (req, res, next) => {
   try {
-    // Allow admin to view any creator's analytics or their own
     const userId = req.user.role === 'admin' && req.query.userId ? req.query.userId : req.user._id;
-    const { period = '30' } = req.query; // days
+    const { timeRange = '30d' } = req.query;
 
-    const daysAgo = new Date();
-    daysAgo.setDate(daysAgo.getDate() - parseInt(period));
+    // Calculate date ranges
+    const now = new Date();
+    const startDate = new Date();
+    const prevStartDate = new Date();
 
-    // Get enrollment trends
-    const enrollmentTrends = await Course.aggregate([
-      { $match: { creator: userId } },
-      { $unwind: '$enrolledStudents' },
-      {
-        $lookup: {
-          from: 'users',
-          localField: 'enrolledStudents',
-          foreignField: '_id',
-          as: 'student'
-        }
-      },
-      { $unwind: '$student' },
-      {
-        $group: {
-          _id: {
-            $dateToString: { format: '%Y-%m-%d', date: '$updatedAt' }
-          },
-          enrollments: { $sum: 1 }
-        }
-      },
-      { $sort: { _id: 1 } }
-    ]);
+    let days = 30;
+    if (timeRange === '7d') days = 7;
+    if (timeRange === '90d') days = 90;
+    if (timeRange === '1y') days = 365;
 
-    // Get video watch analytics
-    const videoWatchAnalytics = await Video.aggregate([
-      {
-        $lookup: {
-          from: 'courses',
-          localField: 'course',
-          foreignField: '_id',
-          as: 'courseInfo'
-        }
-      },
-      { $unwind: '$courseInfo' },
-      { $match: { 'courseInfo.creator': userId } },
-      { $unwind: '$watchedBy' },
-      {
-        $group: {
-          _id: {
-            $dateToString: { format: '%Y-%m-%d', date: '$watchedBy.watchedAt' }
-          },
-          watches: { $sum: 1 },
-          completions: {
-            $sum: { $cond: ['$watchedBy.completed', 1, 0] }
+    startDate.setDate(now.getDate() - days);
+    prevStartDate.setDate(now.getDate() - (days * 2));
+
+    // Get all courses by creator
+    const courses = await Course.find({ creator: userId })
+      .select('title category thumbnail price enrollmentCount rating stats enrolledStudents reviews isPublished');
+
+    // 1. Revenue Metrics
+    let totalRevenue = 0;
+    let currentPeriodRevenue = 0;
+    let prevPeriodRevenue = 0;
+
+    // 2. Student Metrics
+    const allStudentIds = new Set();
+    const newStudentIds = new Set();
+
+    // 3. Course Performance List
+    const coursePerformance = [];
+
+    courses.forEach(course => {
+      // Revenue
+      const courseRevenue = (course.price || 0) * (course.enrollmentCount || 0);
+      totalRevenue += courseRevenue;
+
+      // Process enrollments for growth and student counts
+      if (course.enrolledStudents) {
+        course.enrolledStudents.forEach(enrollment => {
+          const enrollDate = new Date(enrollment.enrolledAt);
+          const studentId = enrollment.user ? enrollment.user.toString() : null;
+
+          if (studentId) allStudentIds.add(studentId);
+
+          // Current Period
+          if (enrollDate >= startDate && enrollDate <= now) {
+            currentPeriodRevenue += (course.price || 0);
+            if (studentId) newStudentIds.add(studentId);
           }
-        }
-      },
-      { $sort: { _id: 1 } }
-    ]);
 
-    // Get top performing courses
-    const topCourses = await Course.find({ creator: userId })
-      .sort({ enrollmentCount: -1, 'rating.average': -1 })
-      .limit(5)
-      .select('title enrollmentCount rating');
+          // Previous Period
+          if (enrollDate >= prevStartDate && enrollDate < startDate) {
+            prevPeriodRevenue += (course.price || 0);
+          }
+        });
+      }
 
-    // Get community growth
-    const communityGrowth = await Community.aggregate([
-      { $match: { creator: userId, isActive: true } },
-      { $unwind: '$members' },
-      {
-        $group: {
-          _id: {
-            $dateToString: { format: '%Y-%m-%d', date: '$members.joinedAt' }
-          },
-          newMembers: { $sum: 1 }
-        }
-      },
-      { $sort: { _id: 1 } }
-    ]);
+      coursePerformance.push({
+        _id: course._id,
+        title: course.title,
+        category: course.category,
+        thumbnail: course.thumbnail,
+        enrollmentCount: course.enrollmentCount || 0,
+        revenue: courseRevenue,
+        rating: course.rating?.average || 0,
+        completionRate: course.stats?.completionRate || 0
+      });
+    });
+
+    // Revenue Growth
+    const revenueGrowth = prevPeriodRevenue > 0
+      ? Math.round(((currentPeriodRevenue - prevPeriodRevenue) / prevPeriodRevenue) * 100)
+      : 100;
+
+    // 4. Views Metrics
+    // Get all videos for these courses
+    const courseIds = courses.map(c => c._id);
+    const videos = await Video.find({ course: { $in: courseIds } }).select('views watchedBy title');
+
+    const totalViews = videos.reduce((sum, video) => sum + (video.views || 0), 0);
+    const avgViewsPerCourse = courses.length > 0 ? Math.round(totalViews / courses.length) : 0;
+
+    // 5. Rating Metrics
+    const totalRatingSum = courses.reduce((sum, c) => sum + (c.rating?.average || 0), 0);
+    const avgRating = courses.length > 0 ? (totalRatingSum / courses.length) : 0;
+    const totalReviews = courses.reduce((sum, c) => sum + (c.rating?.count || 0), 0);
+
+    // 6. Top Content (Videos by views)
+    const topContent = videos
+      .sort((a, b) => b.views - a.views)
+      .slice(0, 5)
+      .map(v => ({
+        title: v.title,
+        views: v.views
+      }));
+
+    // 7. Engagement (Mocked or calculated)
+    // Calculate avg watch time from video stats
+    let totalWatchTimeSeconds = 0;
+    let totalWatches = 0;
+
+    videos.forEach(video => {
+      if (video.watchedBy) {
+        video.watchedBy.forEach(watch => {
+          totalWatchTimeSeconds += (watch.watchTime || 0);
+          totalWatches++;
+        });
+      }
+    });
+
+    const avgWatchTimeMinutes = totalWatches > 0 ? Math.round((totalWatchTimeSeconds / totalWatches) / 60) : 0;
+
+    // Get posts count
+    const discussionPosts = await Post.countDocuments({
+      // Assuming posts are linked to communities which are linked to creator
+      // For now, simple query if posts have creator field or we need to find communities first
+      // Let's try finding posts by author (creator) or in their communities
+      // Simplified: just return 0 or implement properly if Community model is linked
+    });
+
+    // We need communities to get posts
+    const communities = await Community.find({ creator: userId }).select('_id');
+    const communityIds = communities.map(c => c._id);
+    const totalPosts = await Post.countDocuments({ community: { $in: communityIds } });
+
 
     res.status(200).json({
       success: true,
       analytics: {
-        period: parseInt(period),
-        enrollmentTrends,
-        videoWatchAnalytics,
-        topCourses,
-        communityGrowth
+        revenue: {
+          total: totalRevenue,
+          growth: revenueGrowth
+        },
+        students: {
+          total: allStudentIds.size,
+          new: newStudentIds.size
+        },
+        views: {
+          total: totalViews,
+          avgPerCourse: avgViewsPerCourse
+        },
+        rating: {
+          average: avgRating,
+          totalReviews: totalReviews
+        },
+        courses: coursePerformance,
+        topContent: topContent,
+        engagement: {
+          avgWatchTime: `${avgWatchTimeMinutes}m`,
+          discussionPosts: totalPosts,
+          questions: 0 // Placeholder
+        },
+        revenueBreakdown: {
+          courses: totalRevenue,
+          subscriptions: 0,
+          other: 0
+        }
       }
     });
   } catch (error) {

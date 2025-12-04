@@ -2,7 +2,7 @@ const express = require('express');
 const mongoose = require('mongoose');
 const router = express.Router();
 const videoController = require('../controllers/videoController');
-const { protect, authorize } = require('../middleware/auth');
+const { protect, authorize, optionalProtect } = require('../middleware/auth');
 const Video = require('../models/Video');
 const ImageKit = require('imagekit');
 const { getCourseVideos } = require('../controllers/videoController');
@@ -23,7 +23,7 @@ router.route('/')
 router.route('/:id')
   // @desc    Get video details
   // @access  Private
-  .get(protect, videoController.getVideo) 
+  .get(protect, videoController.getVideo)
   // @desc    Update video details
   // @access  Private/Creator
   .put(protect, authorize('creator', 'admin'), videoController.updateVideo)
@@ -33,17 +33,17 @@ router.route('/:id')
 
 // @desc    Get videos by course
 // @route   GET /api/videos/course/:courseId
-// @access  Private (Enrolled students, creators, or admins only)
-router.get('/course/:courseId', protect, async (req, res, next) => {
+// @access  Public (Metadata only) / Private (Full access)
+router.get('/course/:courseId', optionalProtect, async (req, res, next) => {
   try {
     const { courseId } = req.params;
     const { section } = req.query;
-    
+
     // Convert courseId to ObjectId if it's a valid ObjectId string
     let courseObjectId;
     try {
-      courseObjectId = mongoose.Types.ObjectId.isValid(courseId) 
-        ? new mongoose.Types.ObjectId(courseId) 
+      courseObjectId = mongoose.Types.ObjectId.isValid(courseId)
+        ? new mongoose.Types.ObjectId(courseId)
         : courseId;
     } catch (err) {
       return res.status(400).json({
@@ -51,61 +51,93 @@ router.get('/course/:courseId', protect, async (req, res, next) => {
         message: 'Invalid course ID format'
       });
     }
-    
+
     console.log('Fetching videos for courseId:', courseId);
-    console.log('Converted to ObjectId:', courseObjectId);
-    
+
     // Check if user has access to this course
     const Course = require('../models/Course');
     const course = await Course.findById(courseObjectId);
-    
+
     if (!course || !course.isPublished) {
       return res.status(404).json({
         success: false,
         message: 'Course not found or not published'
       });
     }
-    
+
     // Check if user is enrolled, creator, or admin
-    const isEnrolled = course.enrolledStudents.some(student => 
-      student.user && student.user.toString() === req.user._id.toString()
-    );
-    const isCreator = course.creator.toString() === req.user._id.toString();
-    const isAdmin = req.user.role === 'admin';
-    
-    if (!isEnrolled && !isCreator && !isAdmin) {
-      return res.status(403).json({
-        success: false,
-        message: 'Not authorized to view videos for this course'
-      });
+    let isEnrolled = false;
+    let isCreator = false;
+    let isAdmin = false;
+
+    if (req.user) {
+      isEnrolled = course.enrolledStudents.some(student =>
+        student.user && student.user.toString() === req.user._id.toString()
+      );
+      isCreator = course.creator.toString() === req.user._id.toString();
+      isAdmin = req.user.role === 'admin';
     }
-    
+
     const query = { course: courseObjectId, isActive: true };
     if (section) {
       query.section = section;
     }
-    
-    console.log('Query:', query);
-    
+
     // Find all active videos for this course
     const videos = await Video.find(query)
       .sort('order')
       .select('_id title description videoUrl url thumbnailUrl duration isPublished order section format width height size status isPreview isActive createdAt updatedAt');
-    
-    console.log(`Found ${videos.length} videos for course ${courseId}`);
-    
-    // Map videos to include both videoUrl and url for compatibility
-    const mappedVideos = videos.map(video => ({
-      ...video.toObject(),
-      url: video.videoUrl || video.url, // Use videoUrl if available, fallback to url
-      thumbnailUrl: video.thumbnailUrl || ''
-    }));
-      
+
+    // If user has full access, return everything
+    if (isEnrolled || isCreator || isAdmin) {
+      const mappedVideos = videos.map(video => ({
+        ...video.toObject(),
+        url: video.videoUrl || video.url,
+        thumbnailUrl: video.thumbnailUrl || ''
+      }));
+
+      return res.status(200).json({
+        success: true,
+        count: mappedVideos.length,
+        data: mappedVideos
+      });
+    }
+
+    // If no full access, return metadata only
+    const mappedVideos = videos.map(video => {
+      const vidObj = video.toObject();
+      const isPreview = vidObj.isPreview;
+
+      if (isPreview) {
+        return {
+          ...vidObj,
+          url: vidObj.videoUrl || vidObj.url,
+          thumbnailUrl: vidObj.thumbnailUrl || ''
+        };
+      }
+
+      return {
+        _id: vidObj._id,
+        title: vidObj.title,
+        description: vidObj.description,
+        duration: vidObj.duration,
+        order: vidObj.order,
+        section: vidObj.section,
+        isPreview: vidObj.isPreview,
+        thumbnailUrl: vidObj.thumbnailUrl || '',
+        // Explicitly nullify sensitive fields
+        videoUrl: null,
+        url: null,
+        fileId: null
+      };
+    });
+
     res.status(200).json({
       success: true,
       count: mappedVideos.length,
       data: mappedVideos
     });
+
   } catch (error) {
     console.error('Error fetching course videos:', error);
     next(error);
@@ -118,14 +150,14 @@ router.get('/course/:courseId', protect, async (req, res, next) => {
 router.get('/upload-url', protect, authorize('creator', 'admin'), (req, res) => {
   try {
     const { filename, mimeType } = req.query;
-    
+
     if (!filename || !mimeType) {
       return res.status(400).json({
         success: false,
         message: 'Filename and mimeType are required'
       });
     }
-    
+
     const fileId = `videos/${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
     const uploadOptions = {
       fileId,
@@ -136,10 +168,10 @@ router.get('/upload-url', protect, authorize('creator', 'admin'), (req, res) => 
       tags: ['video', 'gurukul'],
       responseFields: ['url', 'fileId', 'name', 'size', 'thumbnailUrl', 'width', 'height']
     };
-    
+
     // Get authentication parameters for client-side upload
     const authParams = imagekit.getAuthenticationParameters(uploadOptions);
-    
+
     res.status(200).json({
       success: true,
       data: {
@@ -165,7 +197,7 @@ router.get('/upload-url', protect, authorize('creator', 'admin'), (req, res) => 
 router.post('/webhook', (req, res) => {
   try {
     const { event, data } = req.body;
-    
+
     if (event === 'video.encoded' || event === 'file.uploaded') {
       // Handle video upload/encoding completion
       const updateData = {
@@ -180,10 +212,10 @@ router.post('/webhook', (req, res) => {
         mimeType: data.mimeType || 'video/mp4',
         size: data.size || 0
       };
-      
+
       // For uploaded videos, we might need to update by URL since fileId might not be set
       const query = data.fileId ? { fileId: data.fileId } : { url: data.url };
-      
+
       Video.findOneAndUpdate(
         query,
         { $set: updateData },
@@ -196,14 +228,14 @@ router.post('/webhook', (req, res) => {
         console.error('Error updating video after processing:', error);
       });
     }
-    
+
     res.status(200).json({ success: true });
   } catch (error) {
     console.error('Error processing webhook:', error);
-    res.status(500).json({ 
+    res.status(500).json({
       success: false,
       error: 'Error processing webhook',
-      details: error.message 
+      details: error.message
     });
   }
 });
@@ -214,14 +246,14 @@ router.post('/webhook', (req, res) => {
 router.get('/:id/analytics', protect, authorize('creator', 'admin'), async (req, res, next) => {
   try {
     const video = await Video.findById(req.params.id);
-    
+
     if (!video) {
       return res.status(404).json({
         success: false,
         message: 'Video not found'
       });
     }
-    
+
     // Check if user is the creator of the video
     if (video.creator.toString() !== req.user.id && req.user.role !== 'admin') {
       return res.status(403).json({
@@ -229,7 +261,7 @@ router.get('/:id/analytics', protect, authorize('creator', 'admin'), async (req,
         message: 'Not authorized to view analytics for this video'
       });
     }
-    
+
     // Get analytics data (this is a simplified example)
     const analytics = {
       views: video.views,
@@ -238,12 +270,12 @@ router.get('/:id/analytics', protect, authorize('creator', 'admin'), async (req,
       engagement: video.engagement || [],
       topSegments: video.topSegments || []
     };
-    
+
     res.status(200).json({
       success: true,
       data: analytics
     });
-    
+
   } catch (error) {
     next(error);
   }
@@ -255,7 +287,7 @@ router.get('/:id/analytics', protect, authorize('creator', 'admin'), async (req,
 router.get('/stream/:id', protect, async (req, res, next) => {
   try {
     const video = await Video.findById(req.params.id);
-    
+
     if (!video) {
       return res.status(404).json({
         success: false,

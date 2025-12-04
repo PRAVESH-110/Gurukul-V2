@@ -3,7 +3,7 @@ const path = require('path');
 const Course = require('../models/Course');
 const Video = require('../models/Video');
 const User = require('../models/User');
-const { protect, authorize, checkCourseEnrollment } = require('../middleware/auth');
+const { protect, authorize, checkCourseEnrollment, optionalProtect } = require('../middleware/auth');
 const { validateCourse, validateObjectId } = require('../middleware/validation');
 const { upload, handleUploadErrors } = require('../middleware/upload');
 
@@ -18,20 +18,20 @@ const getCourses = async (req, res, next) => {
   try {
     console.log('getCourses called with query params:', req.query);
     const { page = 1, limit = 10, search, category, level, sort = 'createdAt' } = req.query;
-    
+
     const query = { isPublished: true };
     console.log('Initial query:', query);
-    
+
     // Add search filter
     if (search && search.trim()) {
       query.$text = { $search: search.trim() };
     }
-    
+
     // Add category filter
     if (category && category.trim()) {
       query.category = new RegExp(category.trim(), 'i');
     }
-    
+
     // Add level filter
     if (level && ['beginner', 'intermediate', 'advanced'].includes(level)) {
       query.level = level;
@@ -62,7 +62,7 @@ const getCourses = async (req, res, next) => {
 
     console.log('Final query before database call:', query);
     console.log('Sort option:', sortOption);
-    
+
     const courses = await Course.find(query)
       .populate('creator', 'firstName lastName avatar')
       .populate('community', 'name')
@@ -97,7 +97,7 @@ const createCourse = async (req, res, next) => {
   try {
     console.log('Course creation request body:', req.body);
     console.log('Course creation request file:', req.file);
-    
+
     const {
       title,
       description,
@@ -111,6 +111,7 @@ const createCourse = async (req, res, next) => {
       learningOutcomes,
       language,
       isPublished,
+      visibility,
       allowComments
     } = req.body;
 
@@ -120,7 +121,7 @@ const createCourse = async (req, res, next) => {
     if (!description) errors.push({ msg: 'Course description is required', param: 'description' });
     if (!category) errors.push({ msg: 'Course category is required', param: 'category' });
     if (!level) errors.push({ msg: 'Course level is required', param: 'level' });
-    
+
     if (errors.length > 0) {
       return res.status(400).json({
         success: false,
@@ -133,7 +134,7 @@ const createCourse = async (req, res, next) => {
     let parsedTags = [];
     let parsedRequirements = [];
     let parsedLearningOutcomes = [];
-    
+
     try {
       if (tags) {
         parsedTags = typeof tags === 'string' ? JSON.parse(tags) : tags;
@@ -156,12 +157,12 @@ const createCourse = async (req, res, next) => {
         path: req.file.path,
         destination: req.file.destination
       });
-      
+
       // Extract the type subdirectory from the file path
       const pathParts = req.file.path.split(path.sep);
       const typeDir = pathParts[pathParts.length - 2]; // Get the subdirectory name
       thumbnailUrl = `/uploads/${typeDir}/${req.file.filename}`;
-      
+
       console.log('🖼️ Thumbnail URL constructed:', thumbnailUrl);
     }
 
@@ -169,7 +170,7 @@ const createCourse = async (req, res, next) => {
       title,
       description,
       thumbnail: thumbnailUrl,
-      creator: req.user._id  ,
+      creator: req.user._id,
       community: community || undefined,
       price: parseFloat(price) || 0,
       level,
@@ -179,11 +180,12 @@ const createCourse = async (req, res, next) => {
       learningOutcomes: parsedLearningOutcomes,
       language: language || 'English',
       isPublished: isPublished === 'true' || isPublished === true,
+      visibility: visibility || (isPublished === 'true' || isPublished === true ? 'public' : 'private'),
       allowComments: allowComments !== 'false' && allowComments !== false
     };
 
     console.log('Creating course with data:', courseData);
-    
+
     const course = await Course.create(courseData);
     await course.populate('creator', 'firstName lastName avatar');
 
@@ -264,14 +266,16 @@ const updateCourse = async (req, res, next) => {
       });
     }
 
-    const updatedCourse = await Course.findByIdAndUpdate(
-      req.params.id,
-      req.body,
-      {
-        new: true,
-        runValidators: true
-      }
-    ).populate('creator', 'firstName lastName avatar');
+    // Update fields
+    Object.keys(req.body).forEach(key => {
+      course[key] = req.body[key];
+    });
+
+    await course.save();
+
+    // Populate after save
+    const updatedCourse = await Course.findById(course._id)
+      .populate('creator', 'firstName lastName avatar');
 
     res.status(200).json({
       success: true,
@@ -409,7 +413,7 @@ const unenrollFromCourse = async (req, res, next) => {
 
 // @desc    Get course videos
 // @route   GET /api/courses/:id/videos
-// @access  Private (Enrolled students or creator or admin)
+// @access  Public (Metadata only) / Private (Full access)
 const getCourseVideos = async (req, res, next) => {
   try {
     const course = await Course.findById(req.params.id);
@@ -422,30 +426,66 @@ const getCourseVideos = async (req, res, next) => {
     }
 
     // Check if user is enrolled or is the creator
-    const isEnrolled = course.isEnrolled(req.user._id || req.user.id) ;
-    const isCreator = course.creator.toString() === req.user._id.toString();
-    const isAdmin = req.user.role === 'admin';
+    let isEnrolled = false;
+    let isCreator = false;
+    let isAdmin = false;
 
-    if (!isEnrolled && !isCreator && !isAdmin) {
-      return res.status(403).json({
-        success: false,
-        message: 'You must be enrolled to access course videos'
-      });
+    if (req.user) {
+      isEnrolled = course.isEnrolled(req.user._id || req.user.id);
+      isCreator = course.creator.toString() === req.user._id.toString();
+      isAdmin = req.user.role === 'admin';
     }
 
     const videos = await Video.find({ course: course._id, isActive: true })
       .sort({ order: 1 });
 
-    // Add user's progress for each video (simplified for now)
-    const videosWithProgress = videos.map(video => ({
-      ...video.toObject(),
-      userProgress: 0, // You can implement actual progress tracking later
-      hasWatched: false // You can implement actual watch status later
-    }));
+    // If user has full access, return everything
+    if (isEnrolled || isCreator || isAdmin) {
+      const videosWithProgress = videos.map(video => ({
+        ...video.toObject(),
+        userProgress: 0, // You can implement actual progress tracking later
+        hasWatched: false
+      }));
+
+      return res.status(200).json({
+        success: true,
+        videos: videosWithProgress
+      });
+    }
+
+    // If no full access, return metadata only (exclude sensitive fields)
+    const videosMetadata = videos.map(video => {
+      const vidObj = video.toObject();
+
+      // If it's a preview video, keep the URL/fileId
+      if (vidObj.isPreview) {
+        return {
+          ...vidObj,
+          userProgress: 0,
+          hasWatched: false
+        };
+      }
+
+      // Otherwise, remove sensitive data
+      return {
+        _id: vidObj._id,
+        title: vidObj.title,
+        description: vidObj.description,
+        duration: vidObj.duration,
+        order: vidObj.order,
+        isPreview: vidObj.isPreview,
+        thumbnail: vidObj.thumbnail,
+        // Explicitly set these to null/undefined to be safe
+        videoUrl: null,
+        fileId: null,
+        userProgress: 0,
+        hasWatched: false
+      };
+    });
 
     res.status(200).json({
       success: true,
-      videos: videosWithProgress
+      videos: videosMetadata
     });
   } catch (error) {
     next(error);
@@ -546,7 +586,7 @@ const addCourseReview = async (req, res, next) => {
 const getCreatorCourses = async (req, res, next) => {
   try {
     console.log('getCreatorCourses called by user:', req.user._id, 'role:', req.user.role);
-    
+
     // For admins, show all courses; for creators, show only their own
     const courses = await Course.find(
       req.user.role === 'admin' ? {} : { creator: req.user._id }
@@ -555,22 +595,23 @@ const getCreatorCourses = async (req, res, next) => {
       .sort({ createdAt: -1 });
 
     console.log('Found courses:', courses.length);
-    
+
     // Add video count for each course
     const coursesWithStats = await Promise.all(
       courses.map(async (course) => {
-        const videoCount = await Video.countDocuments({ 
-          course: course._id, 
-          isActive: true 
+        const videoCount = await Video.countDocuments({
+          course: course._id,
+          isActive: true
         });
-        
+
         const enrollmentCount = course.enrolledStudents?.length || 0;
         const courseRevenue = (course.price || 0) * enrollmentCount;
-        
+
         return {
           ...course.toObject(),
           videoCount,
-          status: course.isPublished ? 'published' : 'draft',
+          status: course.status, // Keep original status
+          visibility: course.visibility || (course.isPublished ? 'public' : 'private'),
           enrollmentCount,
           rating: course.rating?.average || 0,
           ratingCount: course.rating?.count || 0,
@@ -578,18 +619,18 @@ const getCreatorCourses = async (req, res, next) => {
         };
       })
     );
-    
+
     // Calculate overall stats
     const totalCourses = courses.length;
     const totalStudents = courses.reduce((sum, course) => sum + (course.enrolledStudents?.length || 0), 0);
     const totalRevenue = coursesWithStats.reduce((sum, course) => sum + (course.revenue || 0), 0);
-    
+
     // Calculate average rating across all courses
     const coursesWithRatings = courses.filter(course => course.rating && course.rating.average > 0);
-    const averageRating = coursesWithRatings.length > 0 
-      ? coursesWithRatings.reduce((sum, course) => sum + (course.rating.average || 0), 0) / coursesWithRatings.length 
+    const averageRating = coursesWithRatings.length > 0
+      ? coursesWithRatings.reduce((sum, course) => sum + (course.rating.average || 0), 0) / coursesWithRatings.length
       : 0;
-    
+
     res.status(200).json({
       success: true,
       count: courses.length,
@@ -639,7 +680,7 @@ router.delete('/:id/test-delete', (req, res) => {
   res.json({ message: 'DELETE test works', id: req.params.id });
 });
 
-router.get('/:id/videos', protect, validateObjectId('id'), getCourseVideos);
+router.get('/:id/videos', optionalProtect, validateObjectId('id'), getCourseVideos);
 router.get('/:id/students', protect, validateObjectId('id'), getEnrolledStudents);
 router.post('/:id/review', protect, validateObjectId('id'), addCourseReview);
 

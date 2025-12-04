@@ -22,6 +22,9 @@ const upload = multer({
  * Handles video uploads to ImageKit
  */
 router.post('/video', protect, upload.single('file'), async (req, res, next) => {
+  // Increase timeout to 10 minutes for this request
+  req.setTimeout(600000);
+
   try {
     if (!req.file) return res.status(400).json({ message: 'No file uploaded' });
 

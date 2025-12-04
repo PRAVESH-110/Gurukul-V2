@@ -157,6 +157,11 @@ const courseSchema = new mongoose.Schema({
     enum: ['draft', 'pending', 'published', 'rejected'],
     default: 'draft'
   },
+  visibility: {
+    type: String,
+    enum: ['public', 'private'],
+    default: 'private'
+  },
   duration: {
     type: Number, // in minutes
     default: 0
@@ -254,13 +259,13 @@ courseSchema.index({
 });
 
 // Calculate average rating
-courseSchema.methods.calculateAverageRating = function() {
+courseSchema.methods.calculateAverageRating = function () {
   if (this.reviews.length === 0) {
     this.rating.average = 0;
     this.rating.count = 0;
     return 0;
   }
-  
+
   const totalRating = this.reviews.reduce((sum, review) => sum + review.rating, 0);
   this.rating.average = Math.round((totalRating / this.reviews.length) * 10) / 10;
   this.rating.count = this.reviews.length;
@@ -268,7 +273,7 @@ courseSchema.methods.calculateAverageRating = function() {
 };
 
 // Update enrollment count before saving
-courseSchema.pre('save', function(next) {
+courseSchema.pre('save', function (next) {
   // Handle both array formats for backward compatibility
   if (this.enrolledStudents && this.enrolledStudents.length > 0) {
     // If enrolledStudents contains objects with user property
@@ -281,83 +286,97 @@ courseSchema.pre('save', function(next) {
   } else {
     this.enrollmentCount = 0;
   }
-  
+
   // Calculate duration from videos
   if (this.isModified('sections')) {
     this.totalVideos = this.sections.reduce(
-      (total, section) => total + (section.lectures?.length || 0), 
+      (total, section) => total + (section.lectures?.length || 0),
       0
     );
   }
-  
+
   // Ensure price is a number
   if (typeof this.price === 'string') {
     this.price = parseFloat(this.price) || 0;
   }
-  
+
   // Set isFree based on price
   this.isFree = this.price <= 0;
-  
+
+  // Sync isPublished with visibility
+  if (this.isModified('visibility')) {
+    this.isPublished = this.visibility === 'public';
+    // Also update status for backward compatibility if needed
+    if (this.visibility === 'public') {
+      this.status = 'published';
+    } else if (this.status === 'published' && this.visibility === 'private') {
+      this.status = 'draft';
+    }
+  } else if (this.isModified('isPublished')) {
+    // If isPublished is modified directly (legacy support), sync visibility
+    this.visibility = this.isPublished ? 'public' : 'private';
+  }
+
   next();
 });
 
 // Add a method to check if a user is enrolled
-courseSchema.methods.isEnrolled = function(userId) {
+courseSchema.methods.isEnrolled = function (userId) {
   if (!userId) return false;
-  return this.enrolledStudents.some(student => 
+  return this.enrolledStudents.some(student =>
     student.user && student.user.toString() === userId.toString()
   );
 };
 
 // Add a method to get user progress
-courseSchema.methods.getUserProgress = function(userId) {
-  const enrollment = this.enrolledStudents.find(student => 
+courseSchema.methods.getUserProgress = function (userId) {
+  const enrollment = this.enrolledStudents.find(student =>
     student.user && student.user.toString() === userId.toString()
   );
-  
+
   if (!enrollment) return 0;
-  
+
   if (this.totalVideos === 0) return 0;
-  
+
   const progress = Math.round((enrollment.completedVideos.length / this.totalVideos) * 100);
   return Math.min(progress, 100);
 };
 
 // Add a method to mark a video as completed
-courseSchema.methods.markVideoCompleted = async function(userId, videoId) {
-  const enrollment = this.enrolledStudents.find(student => 
+courseSchema.methods.markVideoCompleted = async function (userId, videoId) {
+  const enrollment = this.enrolledStudents.find(student =>
     student.user && student.user.toString() === userId.toString()
   );
-  
+
   if (!enrollment) {
     throw new Error('User is not enrolled in this course');
   }
-  
+
   // Check if video is already marked as completed
-  const videoExists = enrollment.completedVideos.some(vid => 
+  const videoExists = enrollment.completedVideos.some(vid =>
     vid.toString() === videoId.toString()
   );
-  
+
   if (!videoExists) {
     enrollment.completedVideos.push(videoId);
-    
+
     // Calculate new progress
     if (this.totalVideos > 0) {
       const progress = Math.round((enrollment.completedVideos.length / this.totalVideos) * 100);
       enrollment.progress = Math.min(progress, 100);
     }
-    
+
     await this.save();
   }
-  
+
   return enrollment.progress;
 };
 
 // Add a method to get course duration in hours and minutes
-courseSchema.virtual('durationFormatted').get(function() {
+courseSchema.virtual('durationFormatted').get(function () {
   const hours = Math.floor(this.duration / 60);
   const minutes = this.duration % 60;
-  
+
   if (hours > 0) {
     return `${hours}h ${minutes}m`;
   }
@@ -365,27 +384,27 @@ courseSchema.virtual('durationFormatted').get(function() {
 });
 
 // Add a method to get the first video in the course
-courseSchema.methods.getFirstVideo = async function() {
+courseSchema.methods.getFirstVideo = async function () {
   const course = await this.populate({
     path: 'sections.lectures',
     select: 'title url duration isPublished',
     match: { isPublished: true },
     options: { sort: { order: 1 }, limit: 1 }
   }).execPopulate();
-  
+
   for (const section of course.sections) {
     if (section.lectures && section.lectures.length > 0) {
       return section.lectures[0];
     }
   }
-  
+
   return null;
 };
 
 // Note: calculateAverageRating and isEnrolled methods are defined above
 
 // Enroll student
-courseSchema.methods.enrollStudent = function(userId) {
+courseSchema.methods.enrollStudent = function (userId) {
   if (!this.isEnrolled(userId)) {
     this.enrolledStudents.push({
       user: userId,
@@ -397,7 +416,7 @@ courseSchema.methods.enrollStudent = function(userId) {
 };
 
 // Unenroll student
-courseSchema.methods.unenrollStudent = function(userId) {
+courseSchema.methods.unenrollStudent = function (userId) {
   this.enrolledStudents = this.enrolledStudents.filter(
     student => student.user.toString() !== userId.toString()
   );

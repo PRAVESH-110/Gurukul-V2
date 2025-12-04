@@ -15,7 +15,7 @@ const protect = async (req, res, next) => {
 
     // Check for token in headers, cookies, or query params
     if (
-      req.headers.authorization && 
+      req.headers.authorization &&
       req.headers.authorization.startsWith('Bearer')
     ) {
       // Get token from header
@@ -39,14 +39,14 @@ const protect = async (req, res, next) => {
     try {
       // Verify token
       const decoded = jwt.verify(token, process.env.JWT_SECRET);
-      
+
       // Check if token is blacklisted (for logout functionality)
       // This requires a TokenBlacklist model or Redis cache
-      
+
       // Get user from token
       const user = await User.findById(decoded.id)
         .select('-password -__v -resetPasswordToken -resetPasswordExpire');
-      
+
       if (!user) {
         return res.status(401).json({
           success: false,
@@ -76,7 +76,7 @@ const protect = async (req, res, next) => {
       // Add user to request object
       req.user = user;
       res.locals.user = user;
-      
+
       // Continue to next middleware/route handler
       next();
     } catch (error) {
@@ -124,7 +124,7 @@ const checkOwnership = (Model, resourceParam = 'id') => {
   return async (req, res, next) => {
     try {
       const resource = await Model.findById(req.params[resourceParam]);
-      
+
       if (!resource) {
         return res.status(404).json({
           success: false,
@@ -153,9 +153,9 @@ const checkCommunityMembership = async (req, res, next) => {
   try {
     const Community = require('../models/Community');
     const communityId = req.params.communityId || req.params.id;
-    
+
     const community = await Community.findById(communityId);
-    
+
     if (!community) {
       return res.status(404).json({
         success: false,
@@ -166,8 +166,8 @@ const checkCommunityMembership = async (req, res, next) => {
     // Check if user is a member or creator
     const isMember = community.members.includes(req.user._id);
     const isCreator = community.creator.toString() === req.user._id.toString();
-    const isAdmin=  req.user.role === 'admin';
-    
+    const isAdmin = req.user.role === 'admin';
+
     if (!isMember && !isCreator && !isAdmin) {
       return res.status(403).json({
         success: false,
@@ -187,9 +187,9 @@ const checkCourseEnrollment = async (req, res, next) => {
   try {
     const Course = require('../models/Course');
     const courseId = req.params.courseId || req.params.id;
-    
+
     const course = await Course.findById(courseId);
-    
+
     if (!course) {
       return res.status(404).json({
         success: false,
@@ -200,7 +200,7 @@ const checkCourseEnrollment = async (req, res, next) => {
     // Check if user is enrolled or is the creator
     const isEnrolled = course.isEnrolled(req.user._id);
     const isCreator = course.creator.toString() === req.user._id.toString();
-    const isAdmin=  req.user.role === 'admin';    
+    const isAdmin = req.user.role === 'admin';
     if (!isEnrolled && !isCreator && !isAdmin) {
       return res.status(403).json({
         success: false,
@@ -215,10 +215,52 @@ const checkCourseEnrollment = async (req, res, next) => {
   }
 };
 
+// Optional authentication - verify token if present, otherwise proceed as guest
+const optionalProtect = async (req, res, next) => {
+  try {
+    let token;
+
+    if (
+      req.headers.authorization &&
+      req.headers.authorization.startsWith('Bearer')
+    ) {
+      token = req.headers.authorization.split(' ')[1];
+    } else if (req.cookies && req.cookies.token) {
+      token = req.cookies.token;
+    } else if (req.query && req.query.token) {
+      token = req.query.token;
+    }
+
+    if (!token) {
+      return next();
+    }
+
+    try {
+      const decoded = jwt.verify(token, process.env.JWT_SECRET);
+
+      const user = await User.findById(decoded.id)
+        .select('-password -__v -resetPasswordToken -resetPasswordExpire');
+
+      if (user && user.isActive) {
+        req.user = user;
+        res.locals.user = user;
+      }
+
+      next();
+    } catch (error) {
+      // If token is invalid, just proceed as guest
+      next();
+    }
+  } catch (error) {
+    next(error);
+  }
+};
+
 module.exports = {
   protect,
   authorize,
   checkOwnership,
   checkCommunityMembership,
-  checkCourseEnrollment
+  checkCourseEnrollment,
+  optionalProtect
 };
