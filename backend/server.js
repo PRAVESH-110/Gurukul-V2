@@ -64,13 +64,13 @@ const authLimiter = rateLimit({
 app.use('/api/auth', authLimiter);
 
 // CORS configuration
-const allowedOrigins = [
-  'http://localhost:3000',
-  'http://localhost:5173', // Vite default port
-  'https://gurukul-platform.vercel.app',
-  'http://localhost:5000',  // For direct API access
-  'http://localhost:5001'  // Another local port for testing
-];
+const allowedOrigins =
+  process.env.NODE_ENV === 'production'
+    ? [process.env.FRONTEND_URL, process.env.FRONTEND_URL2].filter(Boolean)
+    : [
+      'http://localhost:3000',
+      'http://localhost:5173',
+    ];
 
 // Create CORS options
 const corsOptions = {
@@ -79,12 +79,12 @@ const corsOptions = {
     if (process.env.NODE_ENV === 'development') {
       return callback(null, true);
     }
-    
+
     // In production, only allow specified origins
     if (!origin || allowedOrigins.includes(origin)) {
       return callback(null, true);
     }
-    
+
     const msg = `CORS policy does not allow access from ${origin}`;
     console.error(msg);
     return callback(new Error(msg), false);
@@ -92,9 +92,9 @@ const corsOptions = {
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS', 'HEAD'],
   allowedHeaders: [
-    'Content-Type', 
-    'Authorization', 
-    'X-Requested-With', 
+    'Content-Type',
+    'Authorization',
+    'X-Requested-With',
     'Accept',
     'X-XSRF-TOKEN',
     'X-Requested-With',
@@ -106,8 +106,8 @@ const corsOptions = {
     'X-Auth-Token'
   ],
   exposedHeaders: [
-    'Content-Range', 
-    'X-Content-Range', 
+    'Content-Range',
+    'X-Content-Range',
     'X-Total-Count',
     'Set-Cookie',
     'X-XSRF-TOKEN',
@@ -127,20 +127,20 @@ app.options('*', cors(corsOptions));
 // Add CORS headers to all responses
 app.use((req, res, next) => {
   const origin = req.headers.origin;
-  
+
   if (process.env.NODE_ENV === 'development' || (origin && allowedOrigins.includes(origin))) {
     res.header('Access-Control-Allow-Origin', origin || '*');
   }
-  
+
   res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, PATCH, DELETE, OPTIONS, HEAD');
   res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization, X-XSRF-TOKEN');
   res.header('Access-Control-Allow-Credentials', 'true');
-  
+
   // Handle preflight requests
   if (req.method === 'OPTIONS') {
     return res.status(200).end();
   }
-  
+
   next();
 });
 
@@ -163,8 +163,8 @@ mongoose.connect(process.env.MONGODB_URI, {
   useNewUrlParser: true,
   useUnifiedTopology: true,
 })
-.then(() => console.log('MongoDB connected successfully'))
-.catch(err => console.error('MongoDB connection error:', err));
+  .then(() => console.log('MongoDB connected successfully'))
+  .catch(err => console.error('MongoDB connection error:', err));
 
 // Mount routes - order matters!
 app.use('/api/auth', authRoutes);
