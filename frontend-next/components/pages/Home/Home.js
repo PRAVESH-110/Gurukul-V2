@@ -11,7 +11,9 @@ import {
   Play,
   Award,
   Globe,
-  Clock
+  Clock,
+  Send,
+  Sparkles
 } from 'lucide-react';
 import {
   Accordion,
@@ -23,11 +25,55 @@ import './flow.css';
 import Image from 'next/image';
 
 import CursorDotsAnimation from '@/components/UI/CursorDotsAnimation';
+import { chatAPI } from '@/services/api';
 
 const Home = () => {
   const { user } = useAuth();
   const [isFeaturesVisible, setIsFeaturesVisible] = useState(false);
   const featuresRef = useRef(null);
+
+  const [messages, setMessages] = useState([
+    {
+      role: 'assistant',
+      content: "Hi! I'm your Gurukul guide. Ask me anything about learning or creating courses!"
+    }
+  ]);
+  const [input, setInput] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const scrollRef = useRef(null);
+
+  useEffect(() => {
+    if (scrollRef.current) {
+      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+    }
+  }, [messages]);
+
+  const askagent = async () => {
+    if (!input.trim()) return;
+
+    const userMessage = { role: 'user', content: input };
+    setMessages((prev) => [...prev, userMessage]);
+    const currentInput = input; // Capture input for API call
+    setInput(''); // Clear input immediately
+    setIsLoading(true);
+
+    try {
+      const response = await chatAPI.chat({
+        messages: [...messages, userMessage].map(({ role, content }) => ({ role, content })),
+      });
+
+      const botMessage = {
+        role: 'assistant',
+        content: response.data.reply || "I'm having trouble connecting right now."
+      };
+      setMessages((prev) => [...prev, botMessage]);
+    } catch (error) {
+      console.error("Chat error:", error);
+      setMessages((prev) => [...prev, { role: 'assistant', content: "Sorry, something went wrong. Please try again." }]);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -349,59 +395,112 @@ const Home = () => {
       </section>
 
       {/* CTA Section */}
-      <section className="p-20 relative mb-10 p-20 font-sm w-[60%] border rounded-xl border-2 bg-gray-100">
-        <Accordion
-          type="single"
-          collapsible
-          className="w-full"
-          defaultValue="item-1" 
-        >
-          <AccordionItem value="item-1">
-            <AccordionTrigger>Product Information</AccordionTrigger>
-            <AccordionContent className="flex flex-col gap-4 text-balance">
-              <p>
-                Our flagship product combines cutting-edge technology with sleek
-                design. Built with premium materials, it offers unparalleled
-                performance and reliability.
-              </p>
-              <p>
-                Key features include advanced processing capabilities, and an
-                intuitive user interface designed for both beginners and experts.
-              </p>
-            </AccordionContent>
-          </AccordionItem>
-          <AccordionItem value="item-2">
-            <AccordionTrigger>Shipping Details</AccordionTrigger>
-            <AccordionContent className="flex flex-col gap-4 text-balance">
-              <p>
-                We offer worldwide shipping through trusted courier partners.
-                Standard delivery takes 3-5 business days, while express shipping
-                ensures delivery within 1-2 business days.
-              </p>
-              <p>
-                All orders are carefully packaged and fully insured. Track your
-                shipment in real-time through our dedicated tracking portal.
-              </p>
-            </AccordionContent>
-          </AccordionItem>
-          <AccordionItem value="item-3">
-            <AccordionTrigger>Return Policy</AccordionTrigger>
-            <AccordionContent className="flex flex-col gap-4 text-balance">
-              <p>
-                We stand behind our products with a comprehensive 30-day return
-                policy. If you&apos;re not completely satisfied, simply return the
-                item in its original condition.
-              </p>
-              <p>
-                Our hassle-free return process includes free return shipping and
-                full refunds processed within 48 hours of receiving the returned
-                item.
-              </p>
-            </AccordionContent>
-          </AccordionItem>
-        </Accordion>
+      <div className="flex justify-center gap-10">
 
-      </section>
+        <section className="p-20 relative mb-10 p-20 font-sm w-[60%] border rounded-xl border-2 bg-gray-100">
+          <h1 className="text-2xl font-bold mb-6">FAQ'S</h1>
+          <Accordion
+            type="single"
+            collapsible
+            className="w-full"
+            defaultValue="item-1"
+          >
+            <AccordionItem value="item-1">
+              <AccordionTrigger>What is Gurukul?</AccordionTrigger>
+              <AccordionContent className="flex flex-col gap-4 text-balance">
+                <p>
+                  Gurukul is a platform that provides online courses and resources for students to learn and grow.
+                </p>
+              </AccordionContent>
+            </AccordionItem>
+            <AccordionItem value="item-2">
+              <AccordionTrigger>What do I need to start creating on Gurukul</AccordionTrigger>
+              <AccordionContent className="flex flex-col gap-4 text-balance">
+                <p>
+                  If you already have an existing audience, you can start creating on Gurukul by creating a course and adding your content.
+                </p>
+                <p>
+                  Even if you dont have an already existing audience, you can start creating on Gurukul and build your audience over time.
+                </p>
+              </AccordionContent>
+            </AccordionItem>
+            <AccordionItem value="item-3">
+              <AccordionTrigger>How much does it cost to start creating on Gurukul?</AccordionTrigger>
+              <AccordionContent className="flex flex-col gap-4 text-balance">
+                <p>
+                  You will need to pay a very minimal amount to get started on Gurukul.
+                </p>
+                <p>
+                  As your audience and the courses grow, you will need to based on the course you create.
+                  Courses are still free to create and publish initially
+                </p>
+              </AccordionContent>
+            </AccordionItem>
+          </Accordion>
+        </section>
+
+        <section className="relative mb-10 font-sm w-[30%] h-[500px] flex flex-col p-6 bg-white rounded-2xl border border-gray-200 shadow-xl overflow-hidden">
+          <div className="flex items-center gap-3 mb-6 pb-4 border-b border-gray-100">
+            <div className="w-10 h-10 bg-gradient-to-tr from-primary-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg shadow-purple-500/20">
+              <Sparkles className="w-5 h-5 text-white" />
+            </div>
+            <div>
+              <h3 className="font-bold text-gray-900">Gurukul Assistant</h3>
+              <p className="text-xs text-gray-500">Ask me anything!</p>
+            </div>
+          </div>
+
+          <div ref={scrollRef} className="flex-1 overflow-y-auto mb-4 space-y-4 pr-2">
+            {messages.map((msg, index) => (
+              <div key={index} className={`flex gap-3 ${msg.role === 'user' ? 'justify-end' : ''}`}>
+                {msg.role !== 'user' && (
+                  <div className=" h-8 bg-gray-100 rounded-full flex items-center justify-center shrink-0">
+                    <Sparkles className="w-4 h-4 text-gray-500" />
+                  </div>
+                )}
+                <div
+                  className={`p-3 rounded-2xl text-sm max-w-[85%] ${msg.role === 'user'
+                    ? 'bg-primary-600 text-white rounded-tr-none'
+                    : 'bg-gray-100 text-gray-700 rounded-tl-none'
+                    }`}
+                >
+                  {msg.content}
+                </div>
+              </div>
+            ))}
+            {isLoading && (
+              <div className="flex gap-3">
+                <div className="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center shrink-0">
+                  <Sparkles className="w-4 h-4 text-gray-500" />
+                </div>
+                <div className="bg-gray-100 p-3 rounded-2xl rounded-tl-none text-sm text-gray-700 flex items-center gap-1">
+                  <div className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce"></div>
+                  <div className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce delay-100"></div>
+                  <div className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce delay-200"></div>
+                </div>
+              </div>
+            )}
+          </div>
+
+          <div className="relative">
+            <input
+              type="text"
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && askagent()}
+              placeholder="Type your question..."
+              className="w-full bg-gray-50 border border-gray-200 rounded-xl py-3 pl-4 pr-12 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-all"
+            />
+            <button
+              onClick={askagent}
+              disabled={!input.trim() || isLoading}
+              className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 bg-primary-600 hover:bg-primary-700 text-white rounded-lg transition-colors shadow-md shadow-primary/20 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <Send className="w-4 h-4" />
+            </button>
+          </div>
+        </section>
+      </div>
 
       {/* Footer */}
       <footer className="bg-gray-900 text-gray-300 py-16 border-t border-gray-800">

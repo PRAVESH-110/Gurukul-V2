@@ -364,4 +364,9 @@ export const searchAPI = {
   globalSearch: (params) => api.get('/search/global', { params }),
 };
 
+//chat api
+export const chatAPI = {
+  chat: (data) => api.post('/chat', data),
+};
+
 export default api;
