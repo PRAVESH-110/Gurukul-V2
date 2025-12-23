@@ -342,7 +342,7 @@ exports.deleteVideo = async (req, res, next) => {
     }
 
     // Check if user is the creator of the video
-    if (video.creator.toString() !== req.user.id || req.user.role !== 'admin') {
+    if (video.creator.toString() !== req.user.id && req.user.role !== 'admin') {
       return res.status(403).json({
         success: false,
         message: 'Not authorized to delete this video'

@@ -1,0 +1,76 @@
+.flow-wrapper {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 40px;
+    flex-wrap: wrap;
+}
+
+.social-icons {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    font-size: 35px;
+}
+
+.arrow {
+    font-size: 30px;
+    color: #4f4b4b;
+}
+
+.main-image {
+    max-width: 100%;
+}
+
+.main-image img {
+    border-radius: 12px;
+    max-width: 100%;
+    height: auto;
+    object-fit: contain;
+}
+
+.profiles {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.profiles img {
+    border-radius: 50%;
+    object-fit: cover;
+    width: 45px;
+    height: 45px;
+}
+
+.income-box {
+    border: 2px solid #989191;
+    padding: 18px;
+    border-radius: 10px;
+    text-align: center;
+    min-width: 10px;
+    transition: all 0.3s ease;
+}
+
+.income-box:hover {
+    border-color: #FFD700;
+    box-shadow: 0 0 25px rgba(255, 215, 0, 0.6), 0 5px 15px rgba(0, 0, 0, 0.8);
+}
+
+@media (max-width: 768px) {
+    .flow-wrapper {
+        flex-direction: column;
+        gap: 20px;
+    }
+
+    .arrow {
+        transform: rotate(90deg);
+    }
+
+    .social-icons {
+        flex-direction: row;
+    }
+
+    .profiles {
+        flex-direction: row;
+    }
+}

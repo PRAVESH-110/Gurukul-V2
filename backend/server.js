@@ -5,6 +5,7 @@ const helmet = require('helmet');
 const compression = require('compression');
 const morgan = require('morgan');
 const rateLimit = require('express-rate-limit');
+const { connectDB } = require('./config/database')
 require('dotenv').config();
 
 const app = express();
@@ -64,13 +65,12 @@ const authLimiter = rateLimit({
 app.use('/api/auth', authLimiter);
 
 // CORS configuration
-const allowedOrigins =
-  process.env.NODE_ENV === 'production'
-    ? [process.env.FRONTEND_URL, process.env.FRONTEND_URL2].filter(Boolean)
-    : [
-      'http://localhost:3000',
-      'http://localhost:5173',
-    ];
+const allowedOrigins = [
+  'http://localhost:3000',
+  'http://localhost:5173',
+  process.env.FRONTEND_URL,
+  process.env.FRONTEND_URL2
+].filter(Boolean);
 
 // Create CORS options
 const corsOptions = {
@@ -158,13 +158,13 @@ if (process.env.NODE_ENV === 'development') {
   app.use(morgan('dev'));
 }
 
-// Database connection
-mongoose.connect(process.env.MONGODB_URI, {
-  useNewUrlParser: true,
-  useUnifiedTopology: true,
-})
-  .then(() => console.log('MongoDB connected successfully'))
-  .catch(err => console.error('MongoDB connection error:', err));
+// // Database connection
+// mongoose.connect(process.env.MONGODB_URI, {
+//   useNewUrlParser: true,
+//   useUnifiedTopology: true,
+// })
+//   .then(() => console.log('MongoDB connected successfully'))
+//   .catch(err => console.error('MongoDB connection error:', err));
 
 // Mount routes - order matters!
 app.use('/api/auth', authRoutes);
@@ -204,9 +204,18 @@ app.use(errorHandler);
 
 const PORT = process.env.PORT || 5000;
 
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
-  console.log(`Environment: ${process.env.NODE_ENV}`);
-  console.log('Allowed origins:', allowedOrigins);
+(async () => {
+  try {
+    await connectDB();
+    console.log("connected to mongodb");
+    app.listen(PORT, () => {
+      console.log(`Server running on port ${PORT}`);
+      console.log(`Environment: ${process.env.NODE_ENV}`);
+      console.log('Allowed origins:', allowedOrigins);
+    });
+  } catch (err) {
+    console.error('Database connection error:', err);
+    process.exit(1);
+  }
+})();
 
-});

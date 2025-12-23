@@ -10,8 +10,8 @@ exports.getMyCommunities = async (req, res, next) => {
       'members.user': req.user.id,
       isActive: true
     })
-    .select('name description banner membersCount isPrivate')
-    .sort({ createdAt: -1 });
+      .select('name description banner membersCount isPrivate')
+      .sort({ createdAt: -1 });
 
     res.status(200).json({
       success: true,
@@ -32,8 +32,8 @@ exports.getMyCreatedCommunities = async (req, res, next) => {
       'creator': req.user.id,
       isActive: true
     })
-    .select('name description banner membersCount isPrivate')
-    .sort({ createdAt: -1 });
+      .select('name description banner membersCount isPrivate')
+      .sort({ createdAt: -1 });
 
     res.status(200).json({
       success: true,
@@ -52,8 +52,8 @@ exports.getMyAdminCommunities = async (req, res, next) => {
       'admin': req.user.id,
       isActive: true
     })
-    .select('name description banner membersCount isPrivate')
-    .sort({ createdAt: -1 });
+      .select('name description banner membersCount isPrivate')
+      .sort({ createdAt: -1 });
 
     res.status(200).json({
       success: true,

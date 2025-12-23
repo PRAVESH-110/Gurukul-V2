@@ -164,7 +164,7 @@ const checkCommunityMembership = async (req, res, next) => {
     }
 
     // Check if user is a member or creator
-    const isMember = community.members.includes(req.user._id);
+    const isMember = community.members(req.user._id);
     const isCreator = community.creator.toString() === req.user._id.toString();
     const isAdmin = req.user.role === 'admin';
 

@@ -1,4 +1,5 @@
-import React from 'react';
+'use-client';
+import React, { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useAuth } from '@/context/AuthContext';
 import {
@@ -12,11 +13,44 @@ import {
   Globe,
   Clock
 } from 'lucide-react';
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/UI/accordion"
+import './flow.css';
+import Image from 'next/image';
 
 import CursorDotsAnimation from '@/components/UI/CursorDotsAnimation';
 
 const Home = () => {
   const { user } = useAuth();
+  const [isFeaturesVisible, setIsFeaturesVisible] = useState(false);
+  const featuresRef = useRef(null);
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setIsFeaturesVisible(true);
+          observer.disconnect();
+        }
+      },
+      { threshold: 0.4 }
+    );
+
+    const currentRef = featuresRef.current;
+    if (currentRef) {
+      observer.observe(currentRef);
+    }
+
+    return () => {
+      if (currentRef) {
+        observer.unobserve(currentRef);
+      }
+    };
+  }, []);
 
   const features = [
     {
@@ -48,6 +82,32 @@ const Home = () => {
     { number: '50+', label: 'Communities' }
   ];
 
+  const featuredCourses = [
+    {
+      name: " Web Development course",
+      description: "Learn full-stack web development from scratch with modern technologies including React, Node.js, and more.",
+      rating: 4.9,
+      audience: "1.2k",
+      time: "40hrs",
+      cost: "$30"
+    },
+    {
+      name: " AI course",
+      description: "Learn full-stack web development from scratch with modern technologies including React, Node.js, and more.",
+      rating: 4.9,
+      audience: "1.2k",
+      time: "25hrs",
+      cost: "$12"
+    },
+    {
+      name: " Data Science course",
+      description: "Learn full-stack web development from scratch with modern technologies including React, Node.js, and more.",
+      rating: 4.9,
+      audience: "1.2k",
+      time: "40hrs",
+      cost: "$300"
+    }
+  ];
   return (
     <div className="min-h-screen bg-gray-50/50 font-sans relative">
       <CursorDotsAnimation />
@@ -57,31 +117,31 @@ const Home = () => {
         <div className="absolute top-0 right-0 -mt-20 -mr-20 w-96 h-96 bg-primary-100 rounded-full blur-3xl opacity-30 animate-pulse"></div>
         <div className="absolute bottom-0 left-0 -mb-20 -ml-20 w-96 h-96 bg-blue-100 rounded-full blur-3xl opacity-30 animate-pulse" style={{ animationDelay: '1s' }}></div>
 
-        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-32 pb-20 lg:pt-40 lg:pb-28">
+        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-20 pb-20 lg:pt-30 lg:pb-28">
           <div className="text-center max-w-4xl mx-auto">
             <div className="inline-flex items-center px-4 py-2 rounded-full bg-white/80 backdrop-blur-sm border border-primary-100 text-primary-700 text-sm font-medium mb-8 animate-fade-in">
               <Star className="w-4 h-4 mr-2 fill-current" />
               Trusted by 10,000+ Students
             </div>
             <h1 className="text-5xl md:text-7xl font-heading font-bold tracking-tight text-gray-900 mb-8 animate-slide-up">
-              Learn Without <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary-600 to-primary-500">Limits</span>
+              Learn /<span className="text-transparent bg-clip-text bg-gradient-to-r from-primary-600 to-primary-500">Create</span>
             </h1>
             <p className="text-xl md:text-2xl text-gray-600 mb-10 max-w-2xl mx-auto leading-relaxed animate-slide-up" style={{ animationDelay: '0.1s' }}>
-              Join Gurukul, the ultimate learning platform where knowledge meets community.
-              Access thousands of courses and connect with learners worldwide.
+              Gurukul- a community platform for learners and creators
+              Start learning from a wide range of courses or start creating your own courses and get paid, no matter how small your audience
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center animate-slide-up" style={{ animationDelay: '0.2s' }}>
               {!user ? (
                 <>
                   <Link
                     href="/register"
-                    className="btn-primary px-8 py-4 text-lg shadow-xl shadow-primary/20 hover:shadow-primary/30 hover:-translate-y-1"
+                    className="btn-primary px-5 py-2 text-lg shadow-xl shadow-primary/20 hover:shadow-primary/20"
                   >
                     Get Started Free
                   </Link>
                   <Link
                     href="/courses"
-                    className="px-8 py-4 rounded-xl font-semibold text-gray-700 bg-white/80 backdrop-blur-sm border border-gray-200 hover:bg-white hover:border-gray-300 transition-all duration-200 shadow-sm hover:shadow-md"
+                    className="px-5 py-2 rounded-xl font-semibold text-gray-700 bg-white/80 backdrop-blur-sm border border-gray-300 hover:bg-white hover:border-gray-400  shadow-sm hover:shadow-md"
                   >
                     Browse Courses
                   </Link>
@@ -89,7 +149,7 @@ const Home = () => {
               ) : (
                 <Link
                   href="/dashboard"
-                  className="btn-primary px-8 py-4 text-lg shadow-xl shadow-primary/20 hover:shadow-primary/30 hover:-translate-y-1 inline-flex items-center"
+                  className="btn-primary px-5 py-2 text-lg shadow-xl shadow-primary/20 hover:shadow-primary/30 hover:-translate-y-1 inline-flex items-center"
                 >
                   Go to Dashboard
                   <ArrowRight className="ml-2 h-5 w-5" />
@@ -116,8 +176,61 @@ const Home = () => {
         </div>
       </section>
 
+      {/* flow diagram */}
+      <div className="border-black border-2 p-6 bg-white rounded-xl w-[90%] lg:w-[80%] mx-auto flex flex-col items-center gap-6">
+        <div className="flow-wrapper w-full flex justify-center items-center gap-8 min-h-[50vh]">
+          {/* Social Icons */}
+          <div className="social-icons">
+            <i className="fa-brands fa-youtube"></i>
+            <i className="fa-brands fa-instagram"></i>
+            <i className="fa-brands fa-facebook"></i>
+            <i className="fa-brands fa-tiktok"></i>
+            <i className="fa-solid fa-envelope"></i>
+          </div>
+
+          <div className="flex flex-col items-center gap-2">
+            <h3 className="text-center text-sm font-medium">Gather audience</h3>
+            <i className="fa-solid fa-arrow-right arrow hidden md:block"></i>
+          </div>
+
+          {/* Uploadable Main Image */}
+          <div className="main-image flex flex-col items-center">
+            <h3 className="w-full pb-2 text-center text-md font-medium">Create what you love</h3>
+            <Image
+              src="/monetizehobby.png"
+              alt="Main"
+              width={300}
+              height={400}
+            />
+          </div>
+
+          <div className="flex flex-col items-center gap-2">
+            <h3 className="text-center text-sm font-medium">Start selling</h3>
+            <i className="fa-solid fa-arrow-right arrow hidden md:block"></i>
+          </div>
+
+          {/* Profiles */}
+          <div className="flex flex-col items-center">
+            <div className="profiles flex flex-row gap-2">
+              <Image src="/stud2.jpg" alt="" width={50} height={50} />
+              <Image src="/stud3.jpg" alt="" width={50} height={50} />
+              <Image src="/stud4.webp" alt="" width={50} height={50} />
+              <Image src="/stud1.webp" alt="" width={50} height={50} />
+            </div>
+          </div>
+        </div>
+
+        {/* Down Arrow pointing to income */}
+        <i className="fa-solid fa-arrow-down text-5xl h-20 text-[#4f4b4b]"></i>
+
+        {/* Income */}
+        <div className="income-box w-fit min-w-[max-content] px-8 border border-gray-100  bg-yellow-300">
+          <h3 className="font-bold">Get paid</h3>
+        </div>
+      </div>
+
       {/* Features Section */}
-      <section className="py-24">
+      <section className="py-24" ref={featuresRef}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
             <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
@@ -132,7 +245,15 @@ const Home = () => {
             {features.map((feature, index) => {
               const Icon = feature.icon;
               return (
-                <div key={index} className="group bg-white/80 backdrop-blur-sm p-8 rounded-2xl shadow-sm border border-gray-100 hover:shadow-xl hover:border-primary-100 transition-all duration-300 hover:-translate-y-1">
+                <div
+                  key={index}
+                  className={`group bg-white/80 backdrop-blur-sm p-8 rounded-2xl shadow-sm border border-gray-100 hover:shadow-xl hover:border-primary-100 transition-all duration-300 hover:-translate-y-1 ${isFeaturesVisible ? 'animate-slide-up' : 'opacity-0'
+                    } `}
+                  style={{
+                    animationDelay: `${index * 400}ms`,
+                    animationFillMode: 'both'
+                  }}
+                >
                   <div className="w-14 h-14 bg-primary-50 rounded-xl flex items-center justify-center mb-6 group-hover:bg-primary-600 transition-colors duration-300">
                     <Icon className="h-7 w-7 text-primary-600 group-hover:text-white transition-colors duration-300" />
                   </div>
@@ -171,8 +292,8 @@ const Home = () => {
           </div>
 
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {[1, 2, 3].map((course) => (
-              <div key={course} className="group bg-white rounded-2xl border border-gray-100 overflow-hidden hover:shadow-xl hover:border-primary-100 transition-all duration-300 hover:-translate-y-1">
+            {featuredCourses.map((featuredCourse, index) => (
+              <div key={index} className="group bg-white rounded-2xl border border-gray-100 overflow-hidden hover:shadow-xl hover:border-primary-100 transition-all duration-300 hover:-translate-y-1">
                 <div className="relative aspect-video overflow-hidden">
                   <div className="absolute inset-0 bg-gradient-to-br from-gray-900/20 to-gray-900/60 z-10 group-hover:opacity-0 transition-opacity duration-300"></div>
                   <div className="w-full h-full bg-gradient-to-br from-primary-500 to-blue-600 flex items-center justify-center group-hover:scale-105 transition-transform duration-500">
@@ -186,10 +307,10 @@ const Home = () => {
                 </div>
                 <div className="p-6">
                   <h3 className="text-xl font-bold text-gray-900 mb-2 line-clamp-2 group-hover:text-primary-600 transition-colors">
-                    Complete Web Development Bootcamp 2024
+                    {featuredCourse.name}
                   </h3>
                   <p className="text-gray-600 mb-4 line-clamp-2 text-sm">
-                    Learn full-stack web development from scratch with modern technologies including React, Node.js, and more.
+                    {featuredCourse.description}
                   </p>
                   <div className="flex items-center justify-between mb-6">
                     <div className="flex items-center space-x-1">
@@ -199,11 +320,11 @@ const Home = () => {
                     </div>
                     <div className="flex items-center text-sm text-gray-500">
                       <Clock className="h-4 w-4 mr-1.5" />
-                      40h 30m
+                      {featuredCourse.time}
                     </div>
                   </div>
                   <div className="flex items-center justify-between pt-4 border-t border-gray-100">
-                    <span className="text-2xl font-bold text-gray-900">$49</span>
+                    <span className="text-2xl font-bold text-gray-900">{featuredCourse.cost}</span>
                     <Link
                       href="/courses/1"
                       className="text-sm font-semibold text-primary-600 hover:text-primary-700 transition-colors"
@@ -228,38 +349,58 @@ const Home = () => {
       </section>
 
       {/* CTA Section */}
-      <section className="py-24 relative overflow-hidden">
-        <div className="absolute inset-0 bg-primary-600">
-          <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20"></div>
-          <div className="absolute top-0 right-0 -mt-20 -mr-20 w-96 h-96 bg-primary-500 rounded-full blur-3xl opacity-50"></div>
-          <div className="absolute bottom-0 left-0 -mb-20 -ml-20 w-96 h-96 bg-primary-700 rounded-full blur-3xl opacity-50"></div>
-        </div>
+      <section className="p-20 relative mb-10 p-20 font-sm w-[60%] border rounded-xl border-2 bg-gray-100">
+        <Accordion
+          type="single"
+          collapsible
+          className="w-full"
+          defaultValue="item-1" 
+        >
+          <AccordionItem value="item-1">
+            <AccordionTrigger>Product Information</AccordionTrigger>
+            <AccordionContent className="flex flex-col gap-4 text-balance">
+              <p>
+                Our flagship product combines cutting-edge technology with sleek
+                design. Built with premium materials, it offers unparalleled
+                performance and reliability.
+              </p>
+              <p>
+                Key features include advanced processing capabilities, and an
+                intuitive user interface designed for both beginners and experts.
+              </p>
+            </AccordionContent>
+          </AccordionItem>
+          <AccordionItem value="item-2">
+            <AccordionTrigger>Shipping Details</AccordionTrigger>
+            <AccordionContent className="flex flex-col gap-4 text-balance">
+              <p>
+                We offer worldwide shipping through trusted courier partners.
+                Standard delivery takes 3-5 business days, while express shipping
+                ensures delivery within 1-2 business days.
+              </p>
+              <p>
+                All orders are carefully packaged and fully insured. Track your
+                shipment in real-time through our dedicated tracking portal.
+              </p>
+            </AccordionContent>
+          </AccordionItem>
+          <AccordionItem value="item-3">
+            <AccordionTrigger>Return Policy</AccordionTrigger>
+            <AccordionContent className="flex flex-col gap-4 text-balance">
+              <p>
+                We stand behind our products with a comprehensive 30-day return
+                policy. If you&apos;re not completely satisfied, simply return the
+                item in its original condition.
+              </p>
+              <p>
+                Our hassle-free return process includes free return shipping and
+                full refunds processed within 48 hours of receiving the returned
+                item.
+              </p>
+            </AccordionContent>
+          </AccordionItem>
+        </Accordion>
 
-        <div className="relative max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <h2 className="text-4xl md:text-5xl font-bold text-white mb-6 tracking-tight">
-            Ready to Start Learning?
-          </h2>
-          <p className="text-xl text-primary-100 mb-10 max-w-2xl mx-auto leading-relaxed">
-            Join thousands of learners who are already advancing their careers with Gurukul.
-            Start your journey today.
-          </p>
-          {!user && (
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Link
-                href="/register"
-                className="btn bg-white text-primary-600 hover:bg-gray-50 border-transparent px-8 py-4 text-lg shadow-xl shadow-black/10"
-              >
-                Start Learning Now
-              </Link>
-              <Link
-                href="/login"
-                className="btn bg-primary-700 text-white hover:bg-primary-800 border-transparent px-8 py-4 text-lg shadow-xl shadow-black/10"
-              >
-                Sign In
-              </Link>
-            </div>
-          )}
-        </div>
       </section>
 
       {/* Footer */}
