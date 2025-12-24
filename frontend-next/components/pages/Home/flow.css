@@ -74,3 +74,16 @@
         flex-direction: row;
     }
 }
+@media (max-width: 700px) {
+    .faqsai {
+        flex-direction: column;
+    }
+    .faq{
+        width: 100%;
+        height: auto;
+    }
+    .ai{
+        width: 100%;
+        height: auto;
+    }
+}

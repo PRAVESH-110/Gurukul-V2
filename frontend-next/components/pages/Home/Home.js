@@ -395,9 +395,9 @@ const Home = () => {
       </section>
 
       {/* CTA Section */}
-      <div className="flex justify-center gap-10">
+      <div id="faq-ai" className="faqsai flex justify-center gap-10 scroll-mt-24">
 
-        <section className="p-20 relative mb-10 p-20 font-sm w-[60%] border rounded-xl border-2 bg-gray-100">
+        <section className=" faq p-20 relative mb-10 p-20 font-sm w-[60%] border rounded-xl border-2 bg-gray-100">
           <h1 className="text-2xl font-bold mb-6">FAQ'S</h1>
           <Accordion
             type="single"
@@ -439,7 +439,7 @@ const Home = () => {
           </Accordion>
         </section>
 
-        <section className="relative mb-10 font-sm w-[30%] h-[500px] flex flex-col p-6 bg-white rounded-2xl border border-gray-200 shadow-xl overflow-hidden">
+        <section className=" ai relative mb-10 font-sm w-[30%] h-[500px] flex flex-col p-6 bg-white rounded-2xl border border-gray-200 shadow-xl overflow-hidden">
           <div className="flex items-center gap-3 mb-6 pb-4 border-b border-gray-100">
             <div className="w-10 h-10 bg-gradient-to-tr from-primary-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg shadow-purple-500/20">
               <Sparkles className="w-5 h-5 text-white" />
@@ -522,20 +522,31 @@ const Home = () => {
             </div>
 
             <div>
-              <h3 className="text-white font-semibold text-lg mb-6">Platform</h3>
+              <h3 className="text-white font-semibold text-lg mb-6">Platforms</h3>
               <ul className="space-y-4">
-                <li><Link href="/courses" className="hover:text-primary-400 transition-colors">Browse Courses</Link></li>
-                <li><Link href="/communities" className="hover:text-primary-400 transition-colors">Communities</Link></li>
-                <li><a href="#" className="hover:text-primary-400 transition-colors">Pricing Plans</a></li>
-                <li><a href="#" className="hover:text-primary-400 transition-colors">For Business</a></li>
+                <li>
+                  <a href="https://www.linkedin.com/in/pravesh-dhakal/" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 hover:text-primary-400 transition-colors cursor-pointer">
+                    <i className="fa-brands fa-linkedin text-xl"></i> <span>LinkedIn</span>
+                  </a>
+                </li>
+                <li>
+                  <a href="https://github.com/PRAVESH-110/Gurukul-V2" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 hover:text-primary-400 transition-colors cursor-pointer">
+                    <i className="fa-brands fa-github text-xl"></i> <span>GitHub</span>
+                  </a>
+                </li>
+                <li>
+                  <a href="https://www.gmail.com/" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 hover:text-primary-400 transition-colors cursor-pointer">
+                    <i className="fa-solid fa-envelope text-xl"></i> <span>Gmail</span>
+                  </a>
+                </li>
               </ul>
             </div>
 
             <div>
               <h3 className="text-white font-semibold text-lg mb-6">Support</h3>
               <ul className="space-y-4">
-                <li><a href="#" className="hover:text-primary-400 transition-colors">Help Center</a></li>
-                <li><a href="#" className="hover:text-primary-400 transition-colors">Contact Us</a></li>
+                <li><a href="#faq-ai" className="hover:text-primary-400 transition-colors cursor-pointer">Help Center</a></li>
+                <li><a href="https://www.gmail.com/" className="hover:text-primary-400 transition-colors">Contact Us</a></li>
                 <li><a href="#" className="hover:text-primary-400 transition-colors">Terms of Service</a></li>
                 <li><a href="#" className="hover:text-primary-400 transition-colors">Privacy Policy</a></li>
               </ul>
@@ -559,11 +570,7 @@ const Home = () => {
 
           <div className="border-t border-gray-800 mt-16 pt-8 flex flex-col md:flex-row justify-between items-center gap-4 text-sm text-gray-500">
             <p>&copy; 2024 Gurukul Platform. All rights reserved.</p>
-            <div className="flex space-x-6">
-              <a href="#" className="hover:text-white transition-colors">Privacy</a>
-              <a href="#" className="hover:text-white transition-colors">Terms</a>
-              <a href="#" className="hover:text-white transition-colors">Cookies</a>
-            </div>
+      
           </div>
         </div>
       </footer>
