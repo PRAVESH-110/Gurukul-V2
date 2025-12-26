@@ -188,6 +188,11 @@ app.use("/api/chat", chatRoutes);
 
 
 // Health check endpoint
+// Health check endpoint
+app.get('/health', (req, res) => {
+  res.status(200).json({ ok: true });
+});
+
 app.get('/api/health', (req, res) => {
   res.status(200).json({
     success: true,
@@ -195,6 +200,7 @@ app.get('/api/health', (req, res) => {
     timestamp: new Date().toISOString()
   });
 });
+
 
 // 404 handler
 app.use('*', (req, res) => {

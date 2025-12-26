@@ -121,13 +121,6 @@ const Home = () => {
     }
   ];
 
-  const stats = [
-    { number: '10,000+', label: 'Students' },
-    { number: '500+', label: 'Courses' },
-    { number: '100+', label: 'Instructors' },
-    { number: '50+', label: 'Communities' }
-  ];
-
   const featuredCourses = [
     {
       name: " Web Development course",
@@ -164,10 +157,10 @@ const Home = () => {
         <div className="absolute bottom-0 left-0 -mb-20 -ml-20 w-96 h-96 bg-blue-100 rounded-full blur-3xl opacity-30 animate-pulse" style={{ animationDelay: '1s' }}></div>
 
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-20 pb-20 lg:pt-30 lg:pb-28">
-          <div className="text-center max-w-4xl mx-auto">
-            <div className="inline-flex items-center px-4 py-2 rounded-full bg-white/80 backdrop-blur-sm border border-primary-100 text-primary-700 text-sm font-medium mb-8 animate-fade-in">
-              <Star className="w-4 h-4 mr-2 fill-current" />
-              Trusted by 10,000+ Students
+          <div className="text-center max-w-4xl mx-auto ">
+            <div className="inline-flex items-center px-4 py-2 rounded-full bg-yellow-50 backdrop-blur-sm border border-black border-2 text-black text-sm font-medium mb-8 animate-fade-in">
+              <Star className="w-4 h-4 mr-2 fill-current text-yellow-500 " />
+              Your trusted creator community partner
             </div>
             <h1 className="text-5xl md:text-7xl font-heading font-bold tracking-tight text-gray-900 mb-8 animate-slide-up">
               Learn /<span className="text-transparent bg-clip-text bg-gradient-to-r from-primary-600 to-primary-500">Create</span>
@@ -181,13 +174,13 @@ const Home = () => {
                 <>
                   <Link
                     href="/register"
-                    className="btn-primary px-5 py-2 text-lg shadow-xl shadow-primary/20 hover:shadow-primary/20"
+                    className="btn-primary px-5 py-2 text-lg "
                   >
                     Get Started Free
                   </Link>
                   <Link
                     href="/courses"
-                    className="px-5 py-2 rounded-xl font-semibold text-gray-700 bg-white/80 backdrop-blur-sm border border-gray-300 hover:bg-white hover:border-gray-400  shadow-sm hover:shadow-md"
+                    className="px-5 py-2 rounded-xl font-semibold text-gray-700 bg-white/80 border border-gray-300 hover:bg-white hover:border-gray-400  shadow-sm hover:shadow-md"
                   >
                     Browse Courses
                   </Link>
@@ -195,7 +188,7 @@ const Home = () => {
               ) : (
                 <Link
                   href="/dashboard"
-                  className="btn-primary px-5 py-2 text-lg shadow-xl shadow-primary/20 hover:shadow-primary/30 hover:-translate-y-1 inline-flex items-center"
+                  className="btn-primary px-5 py-2 text-lg hover:-translate-y-1 inline-flex items-center"
                 >
                   Go to Dashboard
                   <ArrowRight className="ml-2 h-5 w-5" />
@@ -206,24 +199,8 @@ const Home = () => {
         </div>
       </section>
 
-      {/* Stats Section */}
-      <section className="py-12 border-y border-gray-100/50 backdrop-blur-sm bg-white/30">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
-            {stats.map((stat, index) => (
-              <div key={index} className="text-center group hover:-translate-y-1 transition-transform duration-300">
-                <div className="text-4xl md:text-5xl font-bold text-gray-900 mb-2 group-hover:text-primary-600 transition-colors">
-                  {stat.number}
-                </div>
-                <div className="text-sm font-medium text-gray-500 uppercase tracking-wider">{stat.label}</div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
       {/* flow diagram */}
-      <div className="border-black border-2 p-6 bg-white rounded-xl w-[90%] lg:w-[80%] mx-auto flex flex-col items-center gap-6">
+      <div className="border-black border-2 p-6 bg-white rounded-xl w-[90%] lg:w-[80%] mx-auto flex flex-col items-center gap-6 mt-10">
         <div className="flow-wrapper w-full flex justify-center items-center gap-8 min-h-[50vh]">
           {/* Social Icons */}
           <div className="social-icons">
@@ -516,61 +493,60 @@ const Home = () => {
               <p className="text-gray-400 leading-relaxed">
                 Empowering learners worldwide with quality education, interactive courses, and a supportive community.
               </p>
-              <div className="flex space-x-4">
-                {/* Social Icons could go here */}
+            </div>
+
+            <div className="md:col-span-3 flex flex-col md:flex-row gap-8 w-full">
+              <div className="flex-1">
+                <h3 className="text-white font-semibold text-lg mb-6">Platforms</h3>
+                <ul className="space-y-4">
+                  <li>
+                    <a href="https://www.linkedin.com/in/pravesh-dhakal/" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 hover:text-primary-400 transition-colors cursor-pointer">
+                      <i className="fa-brands fa-linkedin text-xl"></i> <span>LinkedIn</span>
+                    </a>
+                  </li>
+                  <li>
+                    <a href="https://github.com/PRAVESH-110/Gurukul-V2" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 hover:text-primary-400 transition-colors cursor-pointer">
+                      <i className="fa-brands fa-github text-xl"></i> <span>GitHub</span>
+                    </a>
+                  </li>
+                  <li>
+                    <a href="https://www.gmail.com/" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 hover:text-primary-400 transition-colors cursor-pointer">
+                      <i className="fa-solid fa-envelope text-xl"></i> <span>Gmail</span>
+                    </a>
+                  </li>
+                </ul>
               </div>
-            </div>
 
-            <div>
-              <h3 className="text-white font-semibold text-lg mb-6">Platforms</h3>
-              <ul className="space-y-4">
-                <li>
-                  <a href="https://www.linkedin.com/in/pravesh-dhakal/" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 hover:text-primary-400 transition-colors cursor-pointer">
-                    <i className="fa-brands fa-linkedin text-xl"></i> <span>LinkedIn</span>
-                  </a>
-                </li>
-                <li>
-                  <a href="https://github.com/PRAVESH-110/Gurukul-V2" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 hover:text-primary-400 transition-colors cursor-pointer">
-                    <i className="fa-brands fa-github text-xl"></i> <span>GitHub</span>
-                  </a>
-                </li>
-                <li>
-                  <a href="https://www.gmail.com/" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 hover:text-primary-400 transition-colors cursor-pointer">
-                    <i className="fa-solid fa-envelope text-xl"></i> <span>Gmail</span>
-                  </a>
-                </li>
-              </ul>
-            </div>
+              <div className="flex-1">
+                <h3 className="text-white font-semibold text-lg mb-6">Support</h3>
+                <ul className="space-y-4">
+                  <li><a href="#faq-ai" className="hover:text-primary-400 transition-colors cursor-pointer">Help Center</a></li>
+                  <li><a href="https://www.gmail.com/" className="hover:text-primary-400 transition-colors">Contact Us</a></li>
+                  <li><a href="#" className="hover:text-primary-400 transition-colors">Terms of Service</a></li>
+                  <li><a href="#" className="hover:text-primary-400 transition-colors">Privacy Policy</a></li>
+                </ul>
+              </div>
 
-            <div>
-              <h3 className="text-white font-semibold text-lg mb-6">Support</h3>
-              <ul className="space-y-4">
-                <li><a href="#faq-ai" className="hover:text-primary-400 transition-colors cursor-pointer">Help Center</a></li>
-                <li><a href="https://www.gmail.com/" className="hover:text-primary-400 transition-colors">Contact Us</a></li>
-                <li><a href="#" className="hover:text-primary-400 transition-colors">Terms of Service</a></li>
-                <li><a href="#" className="hover:text-primary-400 transition-colors">Privacy Policy</a></li>
-              </ul>
-            </div>
-
-            <div>
-              <h3 className="text-white font-semibold text-lg mb-6">Stay Updated</h3>
-              <p className="text-gray-400 mb-4">Subscribe to our newsletter for the latest updates.</p>
-              <form className="flex gap-2">
-                <input
-                  type="email"
-                  placeholder="Enter your email"
-                  className="bg-gray-800 border-gray-700 text-white rounded-lg px-4 py-2 w-full focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none transition-all"
-                />
-                <button className="bg-primary-600 hover:bg-primary-700 text-white px-4 py-2 rounded-lg transition-colors">
-                  <ArrowRight className="w-5 h-5" />
-                </button>
-              </form>
+              <div className="flex-1">
+                <h3 className="text-white font-semibold text-lg mb-6">Stay Updated</h3>
+                <p className="text-gray-400 mb-4">Subscribe to our newsletter for the latest updates.</p>
+                <form className="flex gap-2">
+                  <input
+                    type="email"
+                    placeholder="Enter your email"
+                    className="bg-gray-800 border-gray-700 text-white rounded-lg px-4 py-2 w-full focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none transition-all"
+                  />
+                  <button className="bg-primary-600 hover:bg-primary-700 text-white px-4 py-2 rounded-lg transition-colors">
+                    <ArrowRight className="w-5 h-5" />
+                  </button>
+                </form>
+              </div>
             </div>
           </div>
 
           <div className="border-t border-gray-800 mt-16 pt-8 flex flex-col md:flex-row justify-between items-center gap-4 text-sm text-gray-500">
             <p>&copy; 2024 Gurukul Platform. All rights reserved.</p>
-      
+
           </div>
         </div>
       </footer>

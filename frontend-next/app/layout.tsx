@@ -22,11 +22,16 @@ export const metadata: Metadata = {
   description: "The ultimate learning platform where knowledge meets community.",
 };
 
-export default function RootLayout({
+import { warmUpBackend } from "@/lib/warmup";
+
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  // Warm up backend to prevent cold start issues on Render free tier
+  await warmUpBackend();
+
   return (
     <html lang="en">
       <body
