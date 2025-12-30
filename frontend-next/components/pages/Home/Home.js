@@ -148,7 +148,7 @@ const Home = () => {
     }
   ];
   return (
-    <div className="min-h-screen bg-gray-50/50 font-sans relative">
+    <div className="min-h-screen bg-gray-50/50 font-sans relative mt-12">
       <CursorDotsAnimation />
       {/* Hero Section */}
       <section className="relative overflow-hidden">
@@ -156,14 +156,20 @@ const Home = () => {
         <div className="absolute top-0 right-0 -mt-20 -mr-20 w-96 h-96 bg-primary-100 rounded-full blur-3xl opacity-30 animate-pulse"></div>
         <div className="absolute bottom-0 left-0 -mb-20 -ml-20 w-96 h-96 bg-blue-100 rounded-full blur-3xl opacity-30 animate-pulse" style={{ animationDelay: '1s' }}></div>
 
-        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-20 pb-20 lg:pt-30 lg:pb-28">
+        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-20 pb-15 lg:pt-30 lg:pb-28">
           <div className="text-center max-w-4xl mx-auto ">
             <div className="inline-flex items-center px-4 py-2 rounded-full bg-yellow-50 backdrop-blur-sm border border-black border-2 text-black text-sm font-medium mb-8 animate-fade-in">
               <Star className="w-4 h-4 mr-2 fill-current text-yellow-500 " />
               Your trusted creator community partner
             </div>
             <h1 className="text-5xl md:text-7xl font-heading font-bold tracking-tight text-gray-900 mb-8 animate-slide-up">
-              Learn /<span className="text-transparent bg-clip-text bg-gradient-to-r from-primary-600 to-primary-500">Create</span>
+              Learn
+              <nbsp></nbsp>
+              <i className="fa-solid fa-arrow-right  hidden sm:block"></i>
+
+              <nbsp></nbsp> <nbsp></nbsp>
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary-600 to-primary-500">Create</span>
+
             </h1>
             <p className="text-xl md:text-2xl text-gray-600 mb-10 max-w-2xl mx-auto leading-relaxed animate-slide-up" style={{ animationDelay: '0.1s' }}>
               Gurukul- a community platform for learners and creators

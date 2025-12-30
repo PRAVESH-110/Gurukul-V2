@@ -1,7 +1,7 @@
 'use client';
 import React, { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import {
   Search,
@@ -21,6 +21,8 @@ import Image from 'next/image';
 const Header = ({ toggleSidebar }) => {
   const { user, logout } = useAuth();
   const router = useRouter();
+  const pathname = usePathname();
+  const isHomePage = pathname === '/';
   const [searchQuery, setSearchQuery] = useState('');
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [showMobileMenu, setShowMobileMenu] = useState(false);
@@ -53,7 +55,7 @@ const Header = ({ toggleSidebar }) => {
   };
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b border-white/10 bg-white/80 backdrop-blur-xl shadow-sm transition-all duration-300">
+    <header className={`${isHomePage ? 'absolute' : 'sticky bg-white/80 backdrop-blur-md border-b border-gray-100'} top-0 z-50 w-full transition-all duration-300`}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           {/* Logo and Brand */}
@@ -96,13 +98,13 @@ const Header = ({ toggleSidebar }) => {
               <div className="flex items-center space-x-2 sm:space-x-4">
                 <Link
                   href="/courses"
-                  className="hidden sm:block text-gray-600 hover:text-gray-900 px-3 py-2 rounded-lg text-sm font-medium transition-colors hover:bg-gray-50"
+                  className="hidden sm:block text-gray-600 hover:text-black px-3 py-2 text-sm font-medium transition-colors hover:bg-gray-50 border border-transparent hover:border-gray-400 rounded-3xl"
                 >
                   Courses
                 </Link>
                 <Link
                   href="/communities"
-                  className="hidden sm:block text-gray-600 hover:text-gray-900 px-3 py-2 rounded-lg text-sm font-medium transition-colors hover:bg-gray-50"
+                  className="hidden sm:block text-gray-600 hover:text-black px-3 py-2 text-sm font-medium transition-colors hover:bg-gray-50 border border-transparent hover:border-gray-400 rounded-3xl"
                 >
                   Communities
                 </Link>

@@ -142,7 +142,7 @@ api.interceptors.response.use(
 
       // Log detailed error in development
       if (process.env.NODE_ENV === 'development') {
-        console.error('API Error:', {
+        console.log('API Error:', {
           url: error.config.url,
           status: error.response.status,
           data: error.response.data,
