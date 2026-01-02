@@ -148,11 +148,11 @@ const Home = () => {
     }
   ];
   return (
-    <div className="min-h-screen bg-yellow-50/50 font-sans relative mt-12">
+    <div className="min-h-screen bg-gray-60/50 font-sans relative mt-12">
       <CursorDotsAnimation />
       {/* Hero Section */}
       <section className="relative overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-primary-50/50 via-transparent to-blue-50/50 opacity-70"></div>
+        <div className="absolute inset-0 bg-gradient-to-br from-yellow-100/50 via-transparent to-blue-100/70 opacity-80"></div>
         <div className="absolute top-0 right-0 -mt-20 -mr-20 w-96 h-96 bg-primary-100 rounded-full blur-3xl opacity-30 animate-pulse"></div>
         <div className="absolute bottom-0 left-0 -mb-20 -ml-20 w-96 h-96 bg-blue-100 rounded-full blur-3xl opacity-30 animate-pulse" style={{ animationDelay: '1s' }}></div>
 
