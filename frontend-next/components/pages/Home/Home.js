@@ -148,7 +148,7 @@ const Home = () => {
     }
   ];
   return (
-    <div className="min-h-screen bg-gray-50/50 font-sans relative mt-12">
+    <div className="min-h-screen bg-yellow-50/50 font-sans relative mt-12">
       <CursorDotsAnimation />
       {/* Hero Section */}
       <section className="relative overflow-hidden">
@@ -158,35 +158,33 @@ const Home = () => {
 
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-20 pb-15 lg:pt-30 lg:pb-28">
           <div className="text-center max-w-4xl mx-auto ">
-            <div className="inline-flex items-center px-4 py-2 rounded-full bg-yellow-50 backdrop-blur-sm border border-black border-2 text-black text-sm font-medium mb-8 animate-fade-in">
+            <div className="inline-flex items-center px-4 py-2 rounded-full bg-yellow-50 backdrop-blur-sm border-black border-2 text-black text-sm font-medium mb-8 animate-fade-in">
               <Star className="w-4 h-4 mr-2 fill-current text-yellow-500 " />
               Your trusted creator community partner
             </div>
-            <h1 className="text-5xl md:text-7xl font-heading font-bold tracking-tight text-gray-900 mb-8 animate-slide-up">
-              Learn
-              <nbsp></nbsp>
-              <i className="fa-solid fa-arrow-right  hidden sm:block"></i>
-
-              <nbsp></nbsp> <nbsp></nbsp>
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary-600 to-primary-500">Create</span>
-
+                         
+           <h1 className="text-transparent bg-clip-text text-5xl md:text-6xl font-bold tracking-tight bg-gradient-to-r from-primary-600 to-primary-500">Create <nbsp></nbsp>
+            
+            <span className="text-5xl md:text-6xl font-heading font-bold tracking-tight text-gray-900 mb-10 animate-slide-up">
+              what you love and start earning
+            </span>
+            
             </h1>
-            <p className="text-xl md:text-2xl text-gray-600 mb-10 max-w-2xl mx-auto leading-relaxed animate-slide-up" style={{ animationDelay: '0.1s' }}>
-              Gurukul- a community platform for learners and creators
-              Start learning from a wide range of courses or start creating your own courses and get paid, no matter how small your audience
+            <p className="text-xl md:text-xl text-gray-600 mt-5 mb-10 max-w-5xl mx-auto leading-relaxed animate-slide-up" style={{ animationDelay: '0.1s' }}>
+              Learn from a wide range of courses or start creating your own courses and get paid, no matter how small your audience
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center animate-slide-up" style={{ animationDelay: '0.2s' }}>
               {!user ? (
                 <>
                   <Link
                     href="/register"
-                    className="btn-primary px-5 py-2 text-lg "
+                    className="btn-primary px-5 py-2 text-md "
                   >
                     Get Started Free
                   </Link>
                   <Link
                     href="/courses"
-                    className="px-5 py-2 rounded-xl font-semibold text-gray-700 bg-white/80 border border-gray-300 hover:bg-white hover:border-gray-400  shadow-sm hover:shadow-md"
+                    className="btn-primary px-5 py-2 text-md text-gray-700 bg-white/80 border border-gray-300 hover:bg-white hover:border-gray-400  shadow-sm hover:shadow-md"
                   >
                     Browse Courses
                   </Link>
