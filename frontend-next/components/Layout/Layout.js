@@ -7,21 +7,17 @@ import { useAuth } from '@/context/AuthContext';
 
 import { Toaster } from 'react-hot-toast';
 
-const Layout = ({ children }) => {
+const Layout = ({ children, isOpen }) => {
   const { user } = useAuth();
   const [isMobile, setIsMobile] = React.useState(false);
-  const [isSidebarOpen, setIsSidebarOpen] = React.useState(true);
+  const [isSidebarOpen, setIsSidebarOpen] = React.useState(false);
   const [sidebarWidth, setSidebarWidth] = React.useState(256);
 
   React.useEffect(() => {
     const handleResize = () => {
       const mobile = window.innerWidth < 768;
       setIsMobile(mobile);
-      if (mobile) {
-        setIsSidebarOpen(false);
-      } else {
-        setIsSidebarOpen(true);
-      }
+
     };
 
     // Initial check
@@ -54,7 +50,8 @@ const Layout = ({ children }) => {
             marginLeft: user && isSidebarOpen && !isMobile ? `${sidebarWidth}px` : '0'
           }}
         >
-          <div className="p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto w-full">
+          <div className={`p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto w-full ${isSidebarOpen ? "pointer-events-none" : ""
+            }`}>
             {children}
           </div>
         </main>

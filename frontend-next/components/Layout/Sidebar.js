@@ -22,6 +22,7 @@ const Sidebar = ({ isOpen, onClose, width = 256, setWidth }) => {
   const pathname = usePathname();
   const isResizing = useRef(false);
   const sidebarRef = useRef(null);
+  const isHomePage = pathname === '/';
 
   const startResizing = React.useCallback((e) => {
     isResizing.current = true;
@@ -82,27 +83,46 @@ const Sidebar = ({ isOpen, onClose, width = 256, setWidth }) => {
 
   const navItems = user?.role === 'creator' ? creatorNavItems : studentNavItems;
 
+  useEffect(() => {
+    if (isOpen) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "";
+    }
+
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [isOpen]);
   return (
     <>
       {/* Mobile Backdrop */}
       {isOpen && (
         <div
-          className="fixed inset-0 bg-black/20 backdrop-blur-sm z-30 md:hidden"
+          className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[60] top-16 md:hidden pointer-events-auto"
           onClick={onClose}
         />
       )}
       <div
         ref={sidebarRef}
-        className={`fixed left-0 top-16 h-[calc(100vh-4rem)] bg-white border-r border-gray-100 overflow-y-auto custom-scrollbar transition-transform duration-300 ease-in-out z-40 ${isOpen ? 'translate-x-0' : '-translate-x-full'}`}
-        style={{ width: isOpen ? `${width}px` : '0px' }}
+        className={`${isHomePage ? 'absolute' : 'sticky'} pointer-events-auto fixed left-0 top-16 h-[calc(80vh-4rem)] bg-white border-r border-gray-100 overflow-y-auto custom-scrollbar transition-transform duration-300 ease-in-out z-[70] ${isOpen ? 'translate-x-0' : '-translate-x-full'} `}
+        style={{ width: isOpen ? `${width}px ` : '0px' }}
       >
         <div className="px-4 py-6 relative h-full">
           <nav className="space-y-1">
             {navItems.map((item) => {
               const Icon = item.icon;
               const active = isActive(item.path);
+
               return (
                 <Link
+                  onClick={() => {
+                    if (window.innerWidth < 768) {
+                      setTimeout(() => {
+                        onClose();
+                      }, 1000)
+                    }
+                  }}
                   key={item.path}
                   href={item.path}
                   className={`flex items-center space-x-3 px-3.5 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 group ${active

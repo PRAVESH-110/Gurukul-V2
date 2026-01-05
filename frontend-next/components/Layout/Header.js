@@ -25,7 +25,6 @@ const Header = ({ toggleSidebar }) => {
   const isHomePage = pathname === '/';
   const [searchQuery, setSearchQuery] = useState('');
   const [showUserMenu, setShowUserMenu] = useState(false);
-  const [showMobileMenu, setShowMobileMenu] = useState(false);
   const userMenuRef = useRef(null);
 
   useEffect(() => {
@@ -208,137 +207,24 @@ const Header = ({ toggleSidebar }) => {
                       </div>
                     </div>
                   )}
+
                 </div>
 
-                {/* Mobile Menu Button */}
-                <button
-                  onClick={() => setShowMobileMenu(!showMobileMenu)}
-                  className="md:hidden p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
-                >
-                  {showMobileMenu ? (
-                    <X className="h-6 w-6" />
-                  ) : (
-                    <Menu className="h-6 w-6" />
-                  )}
-                </button>
               </>
             )}
           </div>
         </div>
 
         {/* Mobile Menu */}
-        {showMobileMenu && (
-          <div className="md:hidden border-t border-gray-100 py-4 animate-slide-up bg-white absolute left-0 right-0 px-4 shadow-lg rounded-b-2xl">
-            <div className="space-y-2">
-              {/* Mobile Search */}
-              <form onSubmit={handleSearch} className="mb-4 relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-                <input
-                  type="text"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="Search..."
-                  className="w-full pl-10 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary-500/20"
-                />
-              </form>
 
-              {user ? (
-                <>
-                  <Link
-                    href="/dashboard"
-                    className="flex items-center px-4 py-3 text-sm font-medium text-gray-700 hover:bg-gray-50 rounded-xl"
-                    onClick={() => setShowMobileMenu(false)}
-                  >
-                    <Home className="w-4 h-4 mr-3 text-gray-400" />
-                    Dashboard
-                  </Link>
-                  {user.role === 'student' && (
-                    <>
-                      <Link
-                        href="/my-courses"
-                        className="flex items-center px-4 py-3 text-sm font-medium text-gray-700 hover:bg-gray-50 rounded-xl"
-                        onClick={() => setShowMobileMenu(false)}
-                      >
-                        <BookOpen className="w-4 h-4 mr-3 text-gray-400" />
-                        My Courses
-                      </Link>
-                      <Link
-                        href="/my-communities"
-                        className="flex items-center px-4 py-3 text-sm font-medium text-gray-700 hover:bg-gray-50 rounded-xl"
-                        onClick={() => setShowMobileMenu(false)}
-                      >
-                        <Users className="w-4 h-4 mr-3 text-gray-400" />
-                        My Communities
-                      </Link>
-                    </>
-                  )}
-                  {(user.role === 'creator' || user.role === 'admin') && (
-                    <>
-                      <Link
-                        href="/manage-courses"
-                        className="flex items-center px-4 py-3 text-sm font-medium text-gray-700 hover:bg-gray-50 rounded-xl"
-                        onClick={() => setShowMobileMenu(false)}
-                      >
-                        <BookOpen className="w-4 h-4 mr-3 text-gray-400" />
-                        Manage Courses
-                      </Link>
-                      <Link
-                        href="/manage-communities"
-                        className="flex items-center px-4 py-3 text-sm font-medium text-gray-700 hover:bg-gray-50 rounded-xl"
-                        onClick={() => setShowMobileMenu(false)}
-                      >
-                        <Users className="w-4 h-4 mr-3 text-gray-400" />
-                        Manage Communities
-                      </Link>
-                    </>
-                  )}
-                </>
-              ) : (
-                <>
-                  <Link
-                    href="/courses"
-                    className="block px-4 py-3 text-sm font-medium text-gray-700 hover:bg-gray-50 rounded-xl"
-                    onClick={() => setShowMobileMenu(false)}
-                  >
-                    Courses
-                  </Link>
-                  <Link
-                    href="/communities"
-                    className="block px-4 py-3 text-sm font-medium text-gray-700 hover:bg-gray-50 rounded-xl"
-                    onClick={() => setShowMobileMenu(false)}
-                  >
-                    Communities
-                  </Link>
-                  <div className="pt-4 grid grid-cols-2 gap-3">
-                    <Link
-                      href="/login"
-                      className="flex justify-center px-4 py-2.5 border border-gray-200 rounded-xl text-sm font-medium text-gray-700 hover:bg-gray-50"
-                      onClick={() => setShowMobileMenu(false)}
-                    >
-                      Sign In
-                    </Link>
-                    <Link
-                      href="/register"
-                      className="flex justify-center px-4 py-2.5 bg-primary-600 text-white rounded-xl text-sm font-medium hover:bg-primary-700"
-                      onClick={() => setShowMobileMenu(false)}
-                    >
-                      Get Started
-                    </Link>
-                  </div>
-                </>
-              )}
-            </div>
-          </div>
-        )}
       </div>
 
       {/* Click outside to close menus */}
-      {(showUserMenu || showMobileMenu) && (
+      {showUserMenu && (
         <div
           className="fixed inset-0 z-40 bg-black/20 backdrop-blur-sm md:hidden"
           onClick={() => {
             setShowUserMenu(false);
-            setShowMobileMenu(false);
           }}
         />
       )}
