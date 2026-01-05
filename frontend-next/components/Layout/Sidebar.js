@@ -99,13 +99,13 @@ const Sidebar = ({ isOpen, onClose, width = 256, setWidth }) => {
       {/* Mobile Backdrop */}
       {isOpen && (
         <div
-          className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[60] top-16 md:hidden pointer-events-auto"
+          className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[60] top-16  pointer-events-auto"
           onClick={onClose}
         />
       )}
       <div
         ref={sidebarRef}
-        className={`${isHomePage ? 'absolute' : 'sticky'} pointer-events-auto fixed left-0 top-16 h-[calc(80vh-4rem)] bg-white border-r border-gray-100 overflow-y-auto custom-scrollbar transition-transform duration-300 ease-in-out z-[70] ${isOpen ? 'translate-x-0' : '-translate-x-full'} `}
+        className={`${isHomePage ? 'absolute' : 'sticky'} pointer-events-auto fixed left-0 top-16 h-[calc(100vh-4rem)] bg-white border-r border-gray-100 overflow-y-auto custom-scrollbar transition-transform duration-300 ease-in-out z-[70] ${isOpen ? 'translate-x-0' : '-translate-x-full'} `}
         style={{ width: isOpen ? `${width}px ` : '0px' }}
       >
         <div className="px-4 py-6 relative h-full">
