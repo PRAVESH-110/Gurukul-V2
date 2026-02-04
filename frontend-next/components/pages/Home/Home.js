@@ -152,7 +152,7 @@ const Home = () => {
       <CursorDotsAnimation />
       {/* Hero Section */}
       <section className="relative overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-yellow-100/50 via-transparent to-blue-100/70 opacity-80"></div>
+        <div className="absolute inset-0 bg-cover bg-center bg-no-repeat opacity-30" style={{ backgroundImage: "url('/assets/moneywallpaper.jpg')" }}></div>
         <div className="absolute top-0 right-0 -mt-20 -mr-20 w-96 h-96 bg-primary-100 rounded-full blur-3xl opacity-30 animate-pulse"></div>
         <div className="absolute bottom-0 left-0 -mb-20 -ml-20 w-96 h-96 bg-blue-100 rounded-full blur-3xl opacity-30 animate-pulse" style={{ animationDelay: '1s' }}></div>
 
@@ -162,13 +162,13 @@ const Home = () => {
               <Star className="w-4 h-4 mr-2 fill-current text-yellow-500 " />
               Your trusted creator community partner
             </div>
-                         
-           <h1 className="text-transparent bg-clip-text text-5xl md:text-6xl font-bold tracking-tight bg-gradient-to-r from-primary-600 to-primary-500">Create <nbsp></nbsp>
-            
-            <span className="text-5xl md:text-6xl font-heading font-bold tracking-tight text-gray-900 mb-10 animate-slide-up">
-              what you love and start earning
-            </span>
-            
+
+            <h1 className="text-transparent bg-clip-text text-5xl md:text-6xl font-bold tracking-tight bg-gradient-to-r from-primary-600 to-primary-500">Create <nbsp></nbsp>
+
+              <span className="text-5xl md:text-6xl font-heading font-bold tracking-tight text-gray-900 mb-10 animate-slide-up">
+                what you love and start earning
+              </span>
+
             </h1>
             <p className="text-xl md:text-xl text-gray-600 mt-5 mb-10 max-w-5xl mx-auto leading-relaxed animate-slide-up" style={{ animationDelay: '0.1s' }}>
               Learn from a wide range of courses or start creating your own courses and get paid, no matter how small your audience
@@ -257,8 +257,9 @@ const Home = () => {
       </div>
 
       {/* Features Section */}
-      <section className="py-24" ref={featuresRef}>
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      {/* Features Section */}
+      <section className="py-24 bg-gradient-to-b from-white via-blue-50/30 to-white relative overflow-hidden" ref={featuresRef}>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
           <div className="text-center mb-16">
             <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
               Why Choose Gurukul?
@@ -268,28 +269,39 @@ const Home = () => {
             </p>
           </div>
 
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
+          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
             {features.map((feature, index) => {
               const Icon = feature.icon;
               return (
                 <div
                   key={index}
-                  className={`group bg-white/80 backdrop-blur-sm p-8 rounded-2xl shadow-sm border border-gray-100 hover:shadow-xl hover:border-primary-100 transition-all duration-300 hover:-translate-y-1 ${isFeaturesVisible ? 'animate-slide-up' : 'opacity-0'
-                    } `}
+                  className={`group relative p-[1px] rounded-2xl transition-all duration-300 hover:-translate-y-2 ${isFeaturesVisible ? 'animate-slide-up' : 'opacity-0'}`}
                   style={{
-                    animationDelay: `${index * 400}ms`,
+                    animationDelay: `${index * 150}ms`,
                     animationFillMode: 'both'
                   }}
                 >
-                  <div className="w-14 h-14 bg-primary-50 rounded-xl flex items-center justify-center mb-6 group-hover:bg-primary-600 transition-colors duration-300">
-                    <Icon className="h-7 w-7 text-primary-600 group-hover:text-white transition-colors duration-300" />
+                  {/* Card Border Gradient - Blue/Black Theme */}
+                  <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-gray-200 via-gray-300 to-gray-200 group-hover:from-primary-600 group-hover:via-blue-600 group-hover:to-black transition-all duration-500 shadow-sm group-hover:shadow-xl"></div>
+
+                  {/* Card Content */}
+                  <div className="relative h-full bg-[#0A0F1C] rounded-2xl p-6 md:p-8 flex flex-col justify-between overflow-hidden group-hover:bg-[#05080F] transition-colors duration-300">
+                    {/* Blue Glow Effect */}
+                    <div className="absolute -top-10 -right-10 w-24 h-24 bg-primary-500/10 rounded-full blur-2xl group-hover:bg-primary-500/20 transition-all duration-500"></div>
+                    <div className="absolute bottom-0 left-0 w-full h-1/2 bg-gradient-to-t from-blue-900/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+
+                    <div>
+                      <div className="w-12 h-12 rounded-xl border border-gray-800 bg-gray-900/50 flex items-center justify-center mb-6 group-hover:border-primary-500/50 group-hover:bg-primary-900/20 group-hover:shadow-[0_0_15px_rgba(37,99,235,0.3)] transition-all duration-300">
+                        <Icon className="h-6 w-6 text-gray-300 group-hover:text-blue-400 transition-colors duration-300" />
+                      </div>
+                      <h3 className="text-xl font-bold text-white mb-3 tracking-tight group-hover:text-blue-50 transition-colors">
+                        {feature.title}
+                      </h3>
+                      <p className="text-gray-400 text-sm leading-relaxed group-hover:text-gray-300">
+                        {feature.description}
+                      </p>
+                    </div>
                   </div>
-                  <h3 className="text-xl font-bold text-gray-900 mb-3">
-                    {feature.title}
-                  </h3>
-                  <p className="text-gray-600 leading-relaxed">
-                    {feature.description}
-                  </p>
                 </div>
               );
             })}

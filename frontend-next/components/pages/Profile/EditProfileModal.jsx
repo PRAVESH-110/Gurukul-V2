@@ -39,7 +39,7 @@ const EditProfile = ({ user, onCancel, onSuccess, setIsModalOpen }) => {
 
       // Extract user data from axios response (response.data contains the API response)
       // Axios wraps the API response in response.data
-      const responseData = response?.data || response;
+      const responseData = response?.data || response;s
       const updatedUser = responseData?.user;
 
       console.log('Extracted updatedUser:', updatedUser);
