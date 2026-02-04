@@ -7,7 +7,7 @@ import { useAuth } from '@/context/AuthContext';
 
 import { Toaster } from 'react-hot-toast';
 
-const Layout = ({ children, isOpen }) => {
+const Layout = ({ children }) => {
   const { user } = useAuth();
   const [isMobile, setIsMobile] = React.useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = React.useState(false);
