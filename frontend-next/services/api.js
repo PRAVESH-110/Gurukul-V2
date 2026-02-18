@@ -84,9 +84,26 @@ api.interceptors.request.use(
   }
 );
 
+// ─── Server Warm State (client-side only) ────────────────────────────────────
+// Tracks whether we've had at least one successful response this session.
+// Used to silently swallow the first request failure on Render free tier cold starts.
+const isServerWarm = () => {
+  if (typeof window === 'undefined') return true; // SSR: assume warm
+  return !!sessionStorage.getItem('server_warm');
+};
+
+const markServerWarm = () => {
+  if (typeof window !== 'undefined') {
+    sessionStorage.setItem('server_warm', 'true');
+  }
+};
+
 // Response interceptor to handle responses and errors
 api.interceptors.response.use(
   (response) => {
+    // Mark server as warm on any successful response
+    markServerWarm();
+
     // Handle successful responses
     if (process.env.NEXT_PUBLIC_ENABLE_DEBUG_LOGS === 'true') {
       console.log(
@@ -120,6 +137,15 @@ api.interceptors.response.use(
       // The request was made and the server responded with a status code
       // that falls out of the range of 2xx
       const { status, data } = error.response;
+
+      // ── Cold-start silent failure ──────────────────────────────────────────
+      // If server hasn't warmed up yet AND this is a server-side error (5xx),
+      // fail silently so the user can retry without scary error messages.
+      // Auth/validation errors (4xx) always show immediately.
+      if (!isServerWarm() && status >= 500) {
+        console.warn('First request failed (server warming up), suppressing error silently:', error.config?.url);
+        return Promise.reject({ silent: true, status, message: 'Server warming up, please retry.' });
+      }
 
       if (status === 401) {
         // Unauthorized - redirect to login
@@ -156,7 +182,13 @@ api.interceptors.response.use(
         errors: data.errors,
       });
     } else if (error.request) {
-      // The request was made but no response was received
+      // The request was made but no response was received (network error / timeout)
+      // ── Cold-start silent failure ──────────────────────────────────────────
+      // Network errors on the first request are almost always a cold start.
+      if (!isServerWarm()) {
+        console.warn('First request got no response (server cold start), suppressing error silently:', error.config?.url);
+        return Promise.reject({ silent: true, message: 'Server warming up, please retry.' });
+      }
       console.error('No response from server:', error.request);
       toast.error('Unable to connect to the server. Please check your internet connection.');
     } else {

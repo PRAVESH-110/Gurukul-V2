@@ -1,18 +1,27 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { useForm } from 'react-hook-form';
 import { Eye, EyeOff, BookOpen, User, UserCheck } from 'lucide-react';
 import LoadingSpinner from '@/components/UI/LoadingSpinner';
+import WarmupLoader from '@/components/UI/WarmupLoader';
 
 const Register = () => {
   const { register: registerUser } = useAuth();
   const router = useRouter();
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  // Track if this is the first server request this session (cold start handling)
+  const [isFirstAttempt, setIsFirstAttempt] = useState(true);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined' && sessionStorage.getItem('server_warm')) {
+      setIsFirstAttempt(false);
+    }
+  }, []);
 
   const {
     register,
@@ -29,12 +38,22 @@ const Register = () => {
     try {
       const result = await registerUser(data);
       if (result.success) {
+        // Mark server as warm on success
+        sessionStorage.setItem('server_warm', 'true');
+        setIsFirstAttempt(false);
         router.push('/dashboard');
       } else {
+        setIsFirstAttempt(false); // Validation error — not a cold start
         setError('root', { message: result.message });
       }
     } catch (error) {
-      setError('root', { message: 'An unexpected error occurred' });
+      if (isFirstAttempt && error?.silent) {
+        // Silent cold-start failure — just reset so user can retry
+        console.warn('Register cold-start failure, suppressed.');
+        setIsFirstAttempt(false);
+      } else {
+        setError('root', { message: 'An unexpected error occurred' });
+      }
     } finally {
       setIsLoading(false);
     }
@@ -248,7 +267,9 @@ const Register = () => {
               disabled={isLoading}
               className="btn-primary w-full py-3 text-base shadow-lg shadow-primary/25 hover:shadow-primary/40 hover:-translate-y-0.5 transition-all duration-200"
             >
-              {isLoading ? (
+              {isLoading && isFirstAttempt ? (
+                <WarmupLoader label="Creating account..." />
+              ) : isLoading ? (
                 <>
                   <LoadingSpinner size="sm" className="mr-2" />
                   Creating account...

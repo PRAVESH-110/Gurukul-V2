@@ -1,12 +1,13 @@
 "use client";
 
-import React, { useState, Suspense } from "react";
+import React, { useState, useEffect, Suspense } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import { useForm } from "react-hook-form";
 import { Eye, EyeOff, BookOpen } from "lucide-react";
 import LoadingSpinner from "@/components/UI/LoadingSpinner";
+import WarmupLoader from "@/components/UI/WarmupLoader";
 
 function LoginInner() {
   const { login } = useAuth();
@@ -14,6 +15,14 @@ function LoginInner() {
   const searchParams = useSearchParams();
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  // Track if this is the first server request this session (cold start handling)
+  const [isFirstAttempt, setIsFirstAttempt] = useState(true);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined' && sessionStorage.getItem('server_warm')) {
+      setIsFirstAttempt(false);
+    }
+  }, []);
 
   const {
     register,
@@ -29,14 +38,24 @@ function LoginInner() {
     try {
       const result = await login(data.email, data.password);
       if (result.success) {
+        // Mark server as warm on success
+        sessionStorage.setItem('server_warm', 'true');
+        setIsFirstAttempt(false);
         router.push(from);
       } else {
+        setIsFirstAttempt(false); // Validation error — not a cold start
         setError("root", { message: result.message || "Invalid credentials" });
       }
     } catch (error) {
-      setError("root", {
-        message: error.message || "An unexpected error occurred",
-      });
+      if (isFirstAttempt && error?.silent) {
+        // Silent cold-start failure — just reset so user can retry
+        console.warn('Login cold-start failure, suppressed.');
+        setIsFirstAttempt(false);
+      } else {
+        setError("root", {
+          message: error.message || "An unexpected error occurred",
+        });
+      }
     } finally {
       setIsLoading(false);
     }
@@ -160,7 +179,9 @@ function LoginInner() {
               disabled={isLoading}
               className="btn-primary w-full py-3 text-base shadow-lg shadow-primary/25 hover:shadow-primary/40 hover:-translate-y-0.5 transition-all duration-200"
             >
-              {isLoading ? (
+              {isLoading && isFirstAttempt ? (
+                <WarmupLoader label="Signing in..." />
+              ) : isLoading ? (
                 <>
                   <LoadingSpinner size="sm" className="mr-2" />
                   Signing in...

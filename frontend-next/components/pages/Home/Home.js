@@ -1,4 +1,4 @@
-'use-client';
+'use client';
 import React, { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useAuth } from '@/context/AuthContext';
@@ -40,7 +40,14 @@ const Home = () => {
   ]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [isFirstChatRequest, setIsFirstChatRequest] = useState(true);
   const scrollRef = useRef(null);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined' && sessionStorage.getItem('server_warm')) {
+      setIsFirstChatRequest(false);
+    }
+  }, []);
 
   useEffect(() => {
     if (scrollRef.current) {
@@ -62,14 +69,27 @@ const Home = () => {
         messages: [...messages, userMessage].map(({ role, content }) => ({ role, content })),
       });
 
+      // Mark server as warm on success
+      sessionStorage.setItem('server_warm', 'true');
+      setIsFirstChatRequest(false);
+
       const botMessage = {
         role: 'assistant',
         content: response.data.reply || "I'm having trouble connecting right now."
       };
       setMessages((prev) => [...prev, botMessage]);
     } catch (error) {
-      console.error("Chat error:", error);
-      setMessages((prev) => [...prev, { role: 'assistant', content: "Sorry, something went wrong. Please try again." }]);
+      if (isFirstChatRequest && error?.silent) {
+        // Cold-start: show a friendly warmup message in chat instead of an error
+        setIsFirstChatRequest(false);
+        setMessages((prev) => [...prev, {
+          role: 'assistant',
+          content: '⏳ The server is warming up (this can take 30–60 seconds on first load). Please send your message again in a moment!'
+        }]);
+      } else {
+        console.error("Chat error:", error);
+        setMessages((prev) => [...prev, { role: 'assistant', content: "Sorry, something went wrong. Please try again." }]);
+      }
     } finally {
       setIsLoading(false);
     }
