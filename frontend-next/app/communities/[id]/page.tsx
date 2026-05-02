@@ -14,9 +14,10 @@ interface Community {
 interface CommunityResponse { data: { community: Community } }
 interface PostsResponse { data: { posts: unknown[] } }
 
-interface PageProps { params: { id: string } }
+interface PageProps { params: Promise<{ id: string }> }
 
-export default async function CommunityDetailPage({ params }: PageProps) {
+export default async function CommunityDetailPage(props: PageProps) {
+    const params = await props.params;
     const data = await serverGet<CommunityResponse>(`/communities/${params.id}`, { revalidate: 60 });
     const community = data?.data?.community;
     if (!community) notFound();
