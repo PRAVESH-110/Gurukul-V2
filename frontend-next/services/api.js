@@ -23,7 +23,7 @@ const api = axios.create({
     'X-Requested-With': 'XMLHttpRequest'
   },
   withCredentials: true,
-  xsrfCookieName: 'XSRF-TOKEN',
+  xsrfCookieName: 'XSRF-TOKEN', //send the XSRF token as header (store in cookies)
   xsrfHeaderName: 'X-XSRF-TOKEN',
   validateStatus: (status) => status >= 200 && status < 500, // Resolve only if the status code is less than 500
   crossDomain: true,

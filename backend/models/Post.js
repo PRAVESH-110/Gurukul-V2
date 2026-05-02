@@ -43,7 +43,7 @@ const postSchema = new mongoose.Schema({
       default: Date.now
     },
     likes: [{
-      type: mongoose.Schema.Types.ObjectId,
+      type: mongoose.Schema.Types.ObjectId, 
       ref: 'User'
     }]
   }],
@@ -73,19 +73,19 @@ postSchema.index({ author: 1 });
 postSchema.index({ isPinned: -1, createdAt: -1 });
 
 // Update counts before saving
-postSchema.pre('save', function(next) {
+postSchema.pre('save', function (next) {
   this.likeCount = this.likes.length;
   this.commentCount = this.comments.length;
   next();
 });
 
 // Check if user has liked post
-postSchema.methods.hasLiked = function(userId) {
+postSchema.methods.hasLiked = function (userId) {
   return this.likes.some(likeId => likeId.toString() === userId.toString());
 };
 
 // Toggle like
-postSchema.methods.toggleLike = function(userId) {
+postSchema.methods.toggleLike = function (userId) {
   const hasLiked = this.hasLiked(userId);
   if (hasLiked) {
     this.likes = this.likes.filter(likeId => likeId.toString() !== userId.toString());
@@ -96,7 +96,7 @@ postSchema.methods.toggleLike = function(userId) {
 };
 
 // Add comment
-postSchema.methods.addComment = function(userId, content) {
+postSchema.methods.addComment = function (userId, content) {
   this.comments.push({
     author: userId,
     content: content,

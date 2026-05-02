@@ -11,7 +11,7 @@ require('dotenv').config();
 const app = express();
 
 // Trust first proxy (important if behind a reverse proxy like nginx)
-// This helps with rate limiting behind proxies
+// This helps with rate limitin;g behind proxies
 app.set('trust proxy', 1);
 
 // Import routes
@@ -36,7 +36,6 @@ const errorHandler = require('./middleware/errorHandler');
 app.use(helmet());
 app.use(compression());
 
-// Rate limiting - temporarily disabled for development
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
   max: 1000, // Increased limit for development
@@ -71,7 +70,9 @@ const allowedOrigins = [
   'http://localhost:5173',
   process.env.FRONTEND_URL,
   process.env.FRONTEND_URL2
-].filter(Boolean);
+].
+  //removing all "falsy" values from an array
+  filter(Boolean); //to ensure that the array only contains valid, existing strings
 
 // Create CORS options
 const corsOptions = {
@@ -92,6 +93,7 @@ const corsOptions = {
   },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS', 'HEAD'],
+  //allowed headers after the preflight
   allowedHeaders: [
     'Content-Type',
     'Authorization',
@@ -107,6 +109,7 @@ const corsOptions = {
     'X-Auth-Token'
   ],
   exposedHeaders: [
+    //determines which HTTP headers frontend is allowed to read from backend's res
     'Content-Range',
     'X-Content-Range',
     'X-Total-Count',
@@ -114,7 +117,8 @@ const corsOptions = {
     'X-XSRF-TOKEN',
     'X-Auth-Token'
   ],
-  maxAge: 3600, // 1 hour
+  maxAge: 3600, // caching the request meaning that-  your backend is telling the browser: "Yes, you are allowed to make this request.
+  // And you don't need to ask me again for the next 3600 seconds
   preflightContinue: false,
   optionsSuccessStatus: 204
 };

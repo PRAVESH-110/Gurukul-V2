@@ -17,9 +17,9 @@ const getCommunityPosts = async (req, res, next) => {
     const { page = 1, limit = 10 } = req.query;
     const { communityId } = req.params;
 
-    const posts = await Post.find({ 
-      community: communityId, 
-      isActive: true 
+    const posts = await Post.find({
+      community: communityId,
+      isActive: true
     })
       .populate('author', 'firstName lastName avatar')
       .populate('comments.author', 'firstName lastName avatar')
@@ -27,9 +27,9 @@ const getCommunityPosts = async (req, res, next) => {
       .limit(limit * 1)
       .skip((page - 1) * limit);
 
-    const total = await Post.countDocuments({ 
-      community: communityId, 
-      isActive: true 
+    const total = await Post.countDocuments({
+      community: communityId,
+      isActive: true
     });
 
     res.status(200).json({
@@ -55,7 +55,7 @@ const createPost = async (req, res, next) => {
   try {
     console.log('Request body:', req.body);
     console.log('Request file:', req.file);
-    
+
     const { title, content } = req.body;
     const { communityId } = req.params;
     const community = req.community; // Set by checkCommunityMembership middleware
@@ -86,12 +86,12 @@ const createPost = async (req, res, next) => {
         if (!fs.existsSync(uploadDir)) {
           fs.mkdirSync(uploadDir, { recursive: true });
         }
-        
+
         // Move the file to the uploads directory
         const fileExt = path.extname(req.file.originalname);
         const fileName = `post-${Date.now()}${fileExt}`;
         const filePath = path.join(uploadDir, fileName);
-        
+
         await fs.promises.rename(req.file.path, filePath);
         imageUrl = `/uploads/images/${fileName}`;
         console.log('File saved successfully:', imageUrl);
@@ -112,14 +112,14 @@ const createPost = async (req, res, next) => {
       author: req.user._id,
       community: communityId
     };
-    
+
     console.log('Creating post with data:', postData);
-    
+
     const post = await Post.create(postData);
     await post.populate('author', 'firstName lastName avatar');
 
     console.log('Post created successfully:', post);
-    
+
     res.status(201).json({
       success: true,
       message: 'Post created successfully',

@@ -35,7 +35,7 @@ const validateUserRegistration = [
     .isLength({ min: 6 })
     .withMessage('Password must be at least 6 characters long'),
   body('role')
-    .isIn(['student', 'creator','admin'])
+    .isIn(['student', 'creator', 'admin'])
     .withMessage('Role must be either student or creator or admin'),
   handleValidationErrors
 ];

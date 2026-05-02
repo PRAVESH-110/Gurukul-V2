@@ -16,6 +16,7 @@ const createTransporter = async () => {
 
   oauth2Client.setCredentials({
     refresh_token: process.env.GOOGLE_REFRESH_TOKEN
+    //loading daved refresh token from .env
   });
 
   const accessToken = await new Promise((resolve, reject) => {
@@ -66,7 +67,7 @@ const sendEmail = async (options) => {
     }
 
     const transporter = await createTransporter();
-    
+
     const mailOptions = {
       from: `"${process.env.EMAIL_FROM_NAME || 'Gurukul Platform'}" <${process.env.EMAIL_FROM || process.env.EMAIL_USERNAME}>`,
       to: options.to,

@@ -1,172 +1,53 @@
 'use client';
-import React, { useEffect, useRef, useState } from 'react';
+import React from 'react';
 import Link from 'next/link';
 import { useAuth } from '@/context/AuthContext';
 import {
   BookOpen,
-  Users,
-  Video,
   Star,
   ArrowRight,
   Play,
-  Award,
   Globe,
   Clock,
-  Send,
-  Sparkles
 } from 'lucide-react';
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from "@/components/UI/accordion"
 import './flow.css';
 import Image from 'next/image';
 
 import CursorDotsAnimation from '@/components/UI/CursorDotsAnimation';
-import { chatAPI } from '@/services/api';
+import AnimatedFeatures from './AnimatedFeatures';
+import ChatAssistant from './ChatAssistant';
+import HomeFAQSection from './HomeFAQSection';
+
+const featuredCourses = [
+  {
+    name: " Web Development course",
+    description: "Learn full-stack web development from scratch with modern technologies including React, Node.js, and more.",
+    rating: 4.9,
+    audience: "1.2k",
+    time: "40hrs",
+    cost: "$30"
+  },
+  {
+    name: " AI course",
+    description: "Learn full-stack web development from scratch with modern technologies including React, Node.js, and more.",
+    rating: 4.9,
+    audience: "1.2k",
+    time: "25hrs",
+    cost: "$12"
+  },
+  {
+    name: " Data Science course",
+    description: "Learn full-stack web development from scratch with modern technologies including React, Node.js, and more.",
+    rating: 4.9,
+    audience: "1.2k",
+    time: "40hrs",
+    cost: "$300"
+  }
+];
 
 const Home = () => {
   const { user } = useAuth();
-  const [isFeaturesVisible, setIsFeaturesVisible] = useState(false);
-  const featuresRef = useRef(null);
 
-  const [messages, setMessages] = useState([
-    {
-      role: 'assistant',
-      content: "Hi! I'm your Gurukul guide. Ask me anything about learning or creating courses!"
-    }
-  ]);
-  const [input, setInput] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
-  const [isFirstChatRequest, setIsFirstChatRequest] = useState(true);
-  const scrollRef = useRef(null);
-
-  useEffect(() => {
-    if (typeof window !== 'undefined' && sessionStorage.getItem('server_warm')) {
-      setIsFirstChatRequest(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    if (scrollRef.current) {
-      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
-    }
-  }, [messages]);
-
-  const askagent = async () => {
-    if (!input.trim()) return;
-
-    const userMessage = { role: 'user', content: input };
-    setMessages((prev) => [...prev, userMessage]);
-    const currentInput = input; // Capture input for API call
-    setInput(''); // Clear input immediately
-    setIsLoading(true);
-
-    try {
-      const response = await chatAPI.chat({
-        messages: [...messages, userMessage].map(({ role, content }) => ({ role, content })),
-      });
-
-      // Mark server as warm on success
-      sessionStorage.setItem('server_warm', 'true');
-      setIsFirstChatRequest(false);
-
-      const botMessage = {
-        role: 'assistant',
-        content: response.data.reply || "I'm having trouble connecting right now."
-      };
-      setMessages((prev) => [...prev, botMessage]);
-    } catch (error) {
-      if (isFirstChatRequest && error?.silent) {
-        // Cold-start: show a friendly warmup message in chat instead of an error
-        setIsFirstChatRequest(false);
-        setMessages((prev) => [...prev, {
-          role: 'assistant',
-          content: '⏳ The server is warming up (this can take 30–60 seconds on first load). Please send your message again in a moment!'
-        }]);
-      } else {
-        console.error("Chat error:", error);
-        setMessages((prev) => [...prev, { role: 'assistant', content: "Sorry, something went wrong. Please try again." }]);
-      }
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting) {
-          setIsFeaturesVisible(true);
-          observer.disconnect();
-        }
-      },
-      { threshold: 0.4 }
-    );
-
-    const currentRef = featuresRef.current;
-    if (currentRef) {
-      observer.observe(currentRef);
-    }
-
-    return () => {
-      if (currentRef) {
-        observer.unobserve(currentRef);
-      }
-    };
-  }, []);
-
-  const features = [
-    {
-      icon: BookOpen,
-      title: 'Interactive Courses',
-      description: 'Learn from comprehensive video courses created by expert instructors'
-    },
-    {
-      icon: Users,
-      title: 'Learning Communities',
-      description: 'Join communities to connect with peers and share knowledge'
-    },
-    {
-      icon: Video,
-      title: 'HD Video Content',
-      description: 'High-quality video lectures optimized for the best learning experience'
-    },
-    {
-      icon: Award,
-      title: 'Certificates',
-      description: 'Earn certificates upon course completion to showcase your skills'
-    }
-  ];
-
-  const featuredCourses = [
-    {
-      name: " Web Development course",
-      description: "Learn full-stack web development from scratch with modern technologies including React, Node.js, and more.",
-      rating: 4.9,
-      audience: "1.2k",
-      time: "40hrs",
-      cost: "$30"
-    },
-    {
-      name: " AI course",
-      description: "Learn full-stack web development from scratch with modern technologies including React, Node.js, and more.",
-      rating: 4.9,
-      audience: "1.2k",
-      time: "25hrs",
-      cost: "$12"
-    },
-    {
-      name: " Data Science course",
-      description: "Learn full-stack web development from scratch with modern technologies including React, Node.js, and more.",
-      rating: 4.9,
-      audience: "1.2k",
-      time: "40hrs",
-      cost: "$300"
-    }
-  ];
   return (
     <div className="min-h-screen bg-gray-60/50 font-sans relative mt-12">
       <CursorDotsAnimation />
@@ -183,7 +64,7 @@ const Home = () => {
               Your trusted creator community partner
             </div>
 
-            <h1 className="text-transparent bg-clip-text text-5xl md:text-6xl font-bold tracking-tight bg-gradient-to-r from-primary-600 to-primary-500">Create <nbsp></nbsp>
+            <h1 className="text-transparent bg-clip-text text-5xl md:text-6xl font-bold tracking-tight bg-gradient-to-r from-primary-600 to-primary-500">Create &nbsp;
 
               <span className="text-5xl md:text-6xl font-heading font-bold tracking-tight text-gray-900 mb-10 animate-slide-up">
                 what you love and start earning
@@ -276,58 +157,8 @@ const Home = () => {
         </div>
       </div>
 
-      {/* Features Section */}
-      {/* Features Section */}
-      <section className="py-24 bg-gradient-to-b from-white via-blue-50/30 to-white relative overflow-hidden" ref={featuresRef}>
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
-              Why Choose Gurukul?
-            </h2>
-            <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-              We provide everything you need for an exceptional learning experience
-            </p>
-          </div>
-
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {features.map((feature, index) => {
-              const Icon = feature.icon;
-              return (
-                <div
-                  key={index}
-                  className={`group relative p-[1px] rounded-2xl transition-all duration-300 hover:-translate-y-2 ${isFeaturesVisible ? 'animate-slide-up' : 'opacity-0'}`}
-                  style={{
-                    animationDelay: `${index * 150}ms`,
-                    animationFillMode: 'both'
-                  }}
-                >
-                  {/* Card Border Gradient - Blue/Black Theme */}
-                  <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-gray-200 via-gray-300 to-gray-200 group-hover:from-primary-600 group-hover:via-blue-600 group-hover:to-black transition-all duration-500 shadow-sm group-hover:shadow-xl"></div>
-
-                  {/* Card Content */}
-                  <div className="relative h-full bg-[#0A0F1C] rounded-2xl p-6 md:p-8 flex flex-col justify-between overflow-hidden group-hover:bg-[#05080F] transition-colors duration-300">
-                    {/* Blue Glow Effect */}
-                    <div className="absolute -top-10 -right-10 w-24 h-24 bg-primary-500/10 rounded-full blur-2xl group-hover:bg-primary-500/20 transition-all duration-500"></div>
-                    <div className="absolute bottom-0 left-0 w-full h-1/2 bg-gradient-to-t from-blue-900/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
-
-                    <div>
-                      <div className="w-12 h-12 rounded-xl border border-gray-800 bg-gray-900/50 flex items-center justify-center mb-6 group-hover:border-primary-500/50 group-hover:bg-primary-900/20 group-hover:shadow-[0_0_15px_rgba(37,99,235,0.3)] transition-all duration-300">
-                        <Icon className="h-6 w-6 text-gray-300 group-hover:text-blue-400 transition-colors duration-300" />
-                      </div>
-                      <h3 className="text-xl font-bold text-white mb-3 tracking-tight group-hover:text-blue-50 transition-colors">
-                        {feature.title}
-                      </h3>
-                      <p className="text-gray-400 text-sm leading-relaxed group-hover:text-gray-300">
-                        {feature.description}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      </section>
+      {/* Features Section — client island */}
+      <AnimatedFeatures />
 
       {/* Featured Courses Section */}
       <section className="py-24">
@@ -407,112 +238,10 @@ const Home = () => {
         </div>
       </section>
 
-      {/* CTA Section */}
+      {/* FAQ + AI Chat — client islands */}
       <div id="faq-ai" className="faqsai flex justify-center gap-10 scroll-mt-24">
-
-        <section className=" faq p-20 relative mb-10 p-20 font-sm w-[60%] border rounded-xl border-2 bg-gray-100">
-          <h1 className="text-2xl font-bold mb-6">FAQ'S</h1>
-          <Accordion
-            type="single"
-            collapsible
-            className="w-full"
-            defaultValue="item-1"
-          >
-            <AccordionItem value="item-1">
-              <AccordionTrigger>What is Gurukul?</AccordionTrigger>
-              <AccordionContent className="flex flex-col gap-4 text-balance">
-                <p>
-                  Gurukul is a platform that provides online courses and resources for students to learn and grow.
-                </p>
-              </AccordionContent>
-            </AccordionItem>
-            <AccordionItem value="item-2">
-              <AccordionTrigger>What do I need to start creating on Gurukul</AccordionTrigger>
-              <AccordionContent className="flex flex-col gap-4 text-balance">
-                <p>
-                  If you already have an existing audience, you can start creating on Gurukul by creating a course and adding your content.
-                </p>
-                <p>
-                  Even if you dont have an already existing audience, you can start creating on Gurukul and build your audience over time.
-                </p>
-              </AccordionContent>
-            </AccordionItem>
-            <AccordionItem value="item-3">
-              <AccordionTrigger>How much does it cost to start creating on Gurukul?</AccordionTrigger>
-              <AccordionContent className="flex flex-col gap-4 text-balance">
-                <p>
-                  You will need to pay a very minimal amount to get started on Gurukul.
-                </p>
-                <p>
-                  As your audience and the courses grow, you will need to based on the course you create.
-                  Courses are still free to create and publish initially
-                </p>
-              </AccordionContent>
-            </AccordionItem>
-          </Accordion>
-        </section>
-
-        <section className=" ai relative mb-10 font-sm w-[30%] h-[500px] flex flex-col p-6 bg-white rounded-2xl border border-gray-200 shadow-xl overflow-hidden">
-          <div className="flex items-center gap-3 mb-6 pb-4 border-b border-gray-100">
-            <div className="w-10 h-10 bg-gradient-to-tr from-primary-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg shadow-purple-500/20">
-              <Sparkles className="w-5 h-5 text-white" />
-            </div>
-            <div>
-              <h3 className="font-bold text-gray-900">Gurukul Assistant</h3>
-              <p className="text-xs text-gray-500">Ask me anything!</p>
-            </div>
-          </div>
-
-          <div ref={scrollRef} className="flex-1 overflow-y-auto mb-4 space-y-4 pr-2">
-            {messages.map((msg, index) => (
-              <div key={index} className={`flex gap-3 ${msg.role === 'user' ? 'justify-end' : ''}`}>
-                {msg.role !== 'user' && (
-                  <div className=" h-8 bg-gray-100 rounded-full flex items-center justify-center shrink-0">
-                    <Sparkles className="w-4 h-4 text-gray-500" />
-                  </div>
-                )}
-                <div
-                  className={`p-3 rounded-2xl text-sm max-w-[85%] ${msg.role === 'user'
-                    ? 'bg-primary-600 text-white rounded-tr-none'
-                    : 'bg-gray-100 text-gray-700 rounded-tl-none'
-                    }`}
-                >
-                  {msg.content}
-                </div>
-              </div>
-            ))}
-            {isLoading && (
-              <div className="flex gap-3">
-                <div className="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center shrink-0">
-                  <Sparkles className="w-4 h-4 text-gray-500" />
-                </div>
-                <div className="bg-gray-100 p-3 rounded-2xl rounded-tl-none text-sm text-gray-700 flex items-center gap-1">
-                  <div className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce"></div>
-                  <div className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce delay-100"></div>
-                  <div className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce delay-200"></div>
-                </div>
-              </div>
-            )}
-          </div>
-
-          <div className="relative">
-            <input
-              type="text"
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && askagent()}
-              placeholder="Type your question..."
-              className="w-full bg-gray-50 border border-gray-200 rounded-xl py-3 pl-4 pr-12 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-all"
-            />
-            <button
-              onClick={askagent}
-              disabled={!input.trim() || isLoading}
-              className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 bg-primary-600 hover:bg-primary-700 text-white rounded-lg transition-colors shadow-md shadow-primary/20 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              <Send className="w-4 h-4" />
-            </button>
-          </div>
-        </section>
+        <HomeFAQSection />
+        <ChatAssistant />
       </div>
 
       {/* Footer */}
@@ -582,7 +311,6 @@ const Home = () => {
 
           <div className="border-t border-gray-800 mt-16 pt-8 flex flex-col md:flex-row justify-between items-center gap-4 text-sm text-gray-500">
             <p>&copy; 2024 Gurukul Platform. All rights reserved.</p>
-
           </div>
         </div>
       </footer>
@@ -591,4 +319,3 @@ const Home = () => {
 };
 
 export default Home;
-

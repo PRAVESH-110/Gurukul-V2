@@ -15,9 +15,9 @@ const getCommunityEvents = async (req, res, next) => {
     const { page = 1, limit = 10, upcoming = true } = req.query;
     const { communityId } = req.params;
 
-    const query = { 
-      community: communityId, 
-      isActive: true 
+    const query = {
+      community: communityId,
+      isActive: true
     };
 
     // Filter for upcoming events
