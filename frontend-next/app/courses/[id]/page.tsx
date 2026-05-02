@@ -17,10 +17,11 @@ interface CourseResponse { data: { course: Course } }
 interface VideosResponse { data: { data: Video[]; count: number } }
 
 interface PageProps {
-    params: { id: string };
+    params: Promise<{ id: string }>;
 }
 
-export default async function CourseDetailPage({ params }: PageProps) {
+export default async function CourseDetailPage(props: PageProps) {
+    const params = await props.params;
     const [courseRes, videosRes] = await Promise.all([
         serverGet<CourseResponse>(`/courses/${params.id}`, { revalidate: 60 }),
         serverGet<VideosResponse>(`/videos/course/${params.id}`, { revalidate: 60 }),
