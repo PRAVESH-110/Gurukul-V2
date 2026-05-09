@@ -14,14 +14,14 @@ const router = express.Router();
 const getUsers = async (req, res, next) => {
   try {
     const { page = 1, limit = 10, role, search } = req.query;
-    
+
     const query = { isActive: true };
-    
+
     // Add role filter
     if (role && ['student', 'creator'].includes(role)) {
       query.role = role;
     }
-    
+
     // Add search filter
     if (search) {
       query.$or = [
@@ -275,9 +275,9 @@ const getUserCourses = async (req, res, next) => {
 
       // Dynamically count videos for accuracy
       const Video = require('../models/Video');
-      const videoCount = await Video.countDocuments({ 
-        course: course._id, 
-        isActive: true 
+      const videoCount = await Video.countDocuments({
+        course: course._id,
+        isActive: true
       });
 
       return {
