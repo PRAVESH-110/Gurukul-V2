@@ -179,8 +179,8 @@ const createCourse = async (req, res, next) => {
       requirements: parsedRequirements,
       learningOutcomes: parsedLearningOutcomes,
       language: language || 'English',
-      isPublished: isPublished === 'true' || isPublished === true,
-      visibility: visibility || (isPublished === 'true' || isPublished === true ? 'public' : 'private'),
+      isPublished: isPublished !== 'false' && isPublished !== false,
+      visibility: visibility || (isPublished !== 'false' && isPublished !== false ? 'public' : 'private'),
       allowComments: allowComments !== 'false' && allowComments !== false
     };
 

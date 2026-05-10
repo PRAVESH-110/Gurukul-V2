@@ -8,11 +8,11 @@ interface Community {
     category?: string; memberCount?: number;
     creator?: { firstName?: string; lastName?: string; avatar?: string };
 }
-interface CommunitiesResponse { data: { communities: Community[] } }
+interface CommunitiesResponse { communities: Community[] }
 
 export default async function CommunitiesPage() {
     const data = await serverGet<CommunitiesResponse>('/communities', { revalidate: 60 });
-    const communities = data?.data?.communities ?? [];
+    const communities = data?.communities ?? [];
 
     return (
         <div className="min-h-screen bg-gray-50/50 font-sans">

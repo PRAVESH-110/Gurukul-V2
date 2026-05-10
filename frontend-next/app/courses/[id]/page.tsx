@@ -13,8 +13,8 @@ interface Course {
     creator?: { firstName?: string; lastName?: string; avatar?: string };
     updatedAt?: string; createdAt?: string;
 }
-interface CourseResponse { data: { course: Course } }
-interface VideosResponse { data: { data: Video[]; count: number } }
+interface CourseResponse { course: Course }
+interface VideosResponse { videos: Video[] }
 
 interface PageProps {
     params: Promise<{ id: string }>;
@@ -24,14 +24,14 @@ export default async function CourseDetailPage(props: PageProps) {
     const params = await props.params;
     const [courseRes, videosRes] = await Promise.all([
         serverGet<CourseResponse>(`/courses/${params.id}`, { revalidate: 60 }),
-        serverGet<VideosResponse>(`/videos/course/${params.id}`, { revalidate: 60 }),
+        serverGet<VideosResponse>(`/courses/${params.id}/videos`, { revalidate: 60 }),
     ]);
 
-    const course = courseRes?.data?.course;
+    const course = courseRes?.course;
     if (!course) notFound();
 
-    const videos = videosRes?.data?.data ?? [];
-    const videoCount = videosRes?.data?.count ?? videos.length;
+    const videos = videosRes?.videos ?? [];
+    const videoCount = videos.length;
 
     return (
         <div className="min-h-screen bg-gray-50/50 font-sans pb-12">

@@ -11,15 +11,15 @@ interface Community {
     creator?: { _id?: string; firstName?: string; lastName?: string; avatar?: string };
     members?: Member[];
 }
-interface CommunityResponse { data: { community: Community } }
-interface PostsResponse { data: { posts: unknown[] } }
+interface CommunityResponse { community: Community }
+interface PostsResponse { posts: unknown[] }
 
 interface PageProps { params: Promise<{ id: string }> }
 
 export default async function CommunityDetailPage(props: PageProps) {
     const params = await props.params;
     const data = await serverGet<CommunityResponse>(`/communities/${params.id}`, { revalidate: 60 });
-    const community = data?.data?.community;
+    const community = data?.community;
     if (!community) notFound();
 
     return (

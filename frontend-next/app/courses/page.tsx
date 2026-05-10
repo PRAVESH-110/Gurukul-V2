@@ -6,7 +6,7 @@ import { getImageUrl } from '@/utils/imageUtils';
 import CourseFilters from '@/components/pages/Courses/CourseFilters';
 
 interface PageProps {
-    searchParams: { search?: string; category?: string; sort?: string };
+    searchParams: Promise<{ search?: string; category?: string; sort?: string }>;
 }
 
 interface Course {
@@ -21,8 +21,9 @@ interface Course {
     duration?: string;
 }
 
-export default async function CoursesPage({ searchParams }: PageProps) {
-    const data = await serverGet<{ data: { courses: Course[] } }>('/courses', {
+export default async function CoursesPage(props: PageProps) {
+    const searchParams = await props.searchParams;
+    const data = await serverGet<{ courses: Course[] }>('/courses', {
         params: {
             search: searchParams.search,
             category: searchParams.category,
@@ -31,7 +32,7 @@ export default async function CoursesPage({ searchParams }: PageProps) {
         revalidate: 60, // ISR: revalidate every 60 seconds
     });
 
-    const courses = data?.data?.courses ?? [];
+    const courses = data?.courses ?? [];
 
     return (
         <div className="min-h-screen bg-gray-50/50 font-sans">

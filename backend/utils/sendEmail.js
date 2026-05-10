@@ -16,7 +16,7 @@ const createTransporter = async () => {
 
   oauth2Client.setCredentials({
     refresh_token: process.env.GOOGLE_REFRESH_TOKEN
-    //loading daved refresh token from .env
+    //loading saved refresh token from .env
   });
 
   const accessToken = await new Promise((resolve, reject) => {
