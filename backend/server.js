@@ -28,6 +28,7 @@ const dashboardRoutes = require('./routes/dashboard');
 const uploadRoutes = require('./routes/upload');
 const searchRoutes = require('./routes/search');
 const chatRoutes = require('./routes/chat');
+const notificationRoutes = require('./routes/notifications');
 
 // Import middleware
 const errorHandler = require('./middleware/errorHandler');
@@ -183,6 +184,7 @@ app.use('/api/events', eventRoutes);
 app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/upload', uploadRoutes); // Upload routes with CORS
 app.use('/api/search', searchRoutes);
+app.use('/api/notifications', notificationRoutes);
 app.use('/api/posts', postRoutes); // Mount posts routes for /posts/:id
 app.use('/api', postRoutes); // Mount for community posts routes (/communities/:communityId/posts) - LAST to avoid conflicts
 app.use('/api/communities/:communityId/events', require('./routes/events'));
