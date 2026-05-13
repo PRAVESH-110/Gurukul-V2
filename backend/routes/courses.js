@@ -3,6 +3,7 @@ const path = require('path');
 const Course = require('../models/Course');
 const Video = require('../models/Video');
 const User = require('../models/User');
+const Notification = require('../models/Notification');
 const { protect, authorize, checkCourseEnrollment, optionalProtect } = require('../middleware/auth');
 const { validateCourse, validateObjectId } = require('../middleware/validation');
 const { upload, handleUploadErrors } = require('../middleware/upload');
@@ -323,6 +324,7 @@ const deleteCourse = async (req, res, next) => {
   }
 };
 
+
 // @desc    Enroll in course
 // @route   POST /api/courses/:id/enroll
 // @access  Private
@@ -358,6 +360,18 @@ const enrollInCourse = async (req, res, next) => {
     await User.findByIdAndUpdate(req.user._id, {
       $addToSet: { enrolledCourses: course._id }
     });
+
+    // 1. Create the permanent notification in MongoDB
+    const newNotif = await Notification.create({
+      recipient: req.user._id,
+      type: 'ENROLLMENT',
+      content: `You have successfully enrolled in ${course.title}!`
+    });
+
+    // 2. Push it instantly to the user via WebSocket
+    if (req.app.get('io')) {
+      req.app.get('io').to(req.user._id.toString()).emit('new_notification', newNotif);
+    }
 
     res.status(200).json({
       success: true,

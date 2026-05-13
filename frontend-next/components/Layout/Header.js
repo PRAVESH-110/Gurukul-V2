@@ -17,6 +17,8 @@ import {
 } from 'lucide-react';
 import logo from '@/assets/logo.png';
 import Image from 'next/image';
+import { io } from 'socket.io-client';
+import api from '@/services/api';
 
 const Header = ({ toggleSidebar }) => {
   const { user, logout } = useAuth();
@@ -25,7 +27,43 @@ const Header = ({ toggleSidebar }) => {
   const isHomePage = pathname === '/';
   const [searchQuery, setSearchQuery] = useState('');
   const [showUserMenu, setShowUserMenu] = useState(false);
+  const [unreadCount, setUnreadCount] = useState(0);
   const userMenuRef = useRef(null);
+
+  // WebSocket connection for real-time notifications
+  useEffect(() => {
+    if (!user) return;
+
+    // 1. Fetch initial unread count via standard HTTP API
+    const fetchUnreadCount = async () => {
+      try {
+        const res = await api.get('/notifications/unread-count');
+        setUnreadCount(res.data.count);
+      } catch (err) {
+        console.error('Failed to fetch unread notifications', err);
+      }
+    };
+    fetchUnreadCount();
+
+    // 2. Connect to the WebSocket Server
+    const socketUrl = process.env.NEXT_PUBLIC_API_URL?.replace('/api', '') || 'http://localhost:5001';
+    const socket = io(socketUrl);
+
+    // 3. Join the personal user room
+    socket.emit('join', user._id);
+
+    // 4. Listen for real-time push events from the backend!
+    socket.on('new_notification', (notification) => {
+      console.log('🔴 Real-time Notification received:', notification);
+      setUnreadCount(prev => prev + 1);
+      // Optional: You could trigger a toast here too!
+    });
+
+    // Cleanup: Disconnect when the user logs out or leaves the site
+    return () => {
+      socket.disconnect();
+    };
+  }, [user]);
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -127,7 +165,11 @@ const Header = ({ toggleSidebar }) => {
                 {/* Notifications */}
                 <button className="p-2.5 text-gray-500 hover:text-primary-600 hover:bg-primary-50 rounded-xl transition-all duration-200 relative group">
                   <Bell className="h-5 w-5" />
-                  <span className="absolute top-2.5 right-2.5 block h-2 w-2 rounded-full bg-red-500 ring-2 ring-white group-hover:scale-110 transition-transform"></span>
+                  {unreadCount > 0 && (
+                    <span className="absolute top-1.5 right-1.5 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 ring-2 ring-white text-[10px] font-bold text-white group-hover:scale-110 transition-transform shadow-sm">
+                      {unreadCount > 9 ? '9+' : unreadCount}
+                    </span>
+                  )}
                 </button>
 
                 {/* User Menu */}
