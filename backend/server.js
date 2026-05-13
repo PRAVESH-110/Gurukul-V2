@@ -219,13 +219,43 @@ app.use('*', (req, res) => {
 // Error handling middleware
 app.use(errorHandler);
 
+const http = require('http');
+const { Server } = require('socket.io');
+
 const PORT = process.env.PORT || 5000;
+
+const server = http.createServer(app);
+const io = new Server(server, {
+  cors: {
+    origin: allowedOrigins,
+    methods: ["GET", "POST", "PUT", "DELETE"]
+  }
+});
+
+// Store io in the Express app so we can use it in our API routes!
+// Example: req.app.get('io').to(userId).emit('notification', newNotif);
+app.set('io', io);
+
+io.on('connection', (socket) => {
+  console.log('🟢 User connected to WebSocket:', socket.id);
+
+  // When a user logs in on the frontend, they will emit a 'join' event with their User ID
+  socket.on('join', (userId) => {
+    socket.join(userId);
+    console.log(`👤 User ${userId} joined their personal notification room.`);
+  });
+
+  socket.on('disconnect', () => {
+    console.log('🔴 User disconnected:', socket.id);
+  });
+});
 
 (async () => {
   try {
     await connectDB();
     console.log("connected to mongodb");
-    app.listen(PORT, () => {
+    // VERY IMPORTANT: Use server.listen, not app.listen!
+    server.listen(PORT, () => {
       console.log(`Server running on port ${PORT}`);
       console.log(`Environment: ${process.env.NODE_ENV}`);
       console.log('Allowed origins:', allowedOrigins);
