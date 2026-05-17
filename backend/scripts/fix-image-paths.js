@@ -16,48 +16,48 @@ async function fixImagePaths() {
       useNewUrlParser: true,
       useUnifiedTopology: true,
     });
-    
+
     console.log('✅ Connected to MongoDB');
-    
+
     // Fix Course thumbnails
     const courses = await Course.find({
       thumbnail: { $regex: /^\/uploads\/image-/ }
     });
-    
+
     console.log(`📚 Found ${courses.length} courses with old thumbnail paths`);
-    
+
     for (const course of courses) {
       const oldPath = course.thumbnail;
       // Extract filename and add subdirectory
       const filename = oldPath.replace('/uploads/', '');
       const newPath = `/uploads/image/${filename}`;
-      
+
       course.thumbnail = newPath;
       await course.save();
-      
+
       console.log(`  ✓ Updated course "${course.title}": ${oldPath} → ${newPath}`);
     }
-    
+
     // Fix Community cover images
     const communities = await Community.find({
       coverImage: { $regex: /^\/uploads\/image-/ }
     });
-    
+
     console.log(`\n🏘️  Found ${communities.length} communities with old cover image paths`);
-    
+
     for (const community of communities) {
       const oldPath = community.coverImage;
       const filename = oldPath.replace('/uploads/', '');
       const newPath = `/uploads/image/${filename}`;
-      
+
       community.coverImage = newPath;
       await community.save();
-      
+
       console.log(`  ✓ Updated community "${community.name}": ${oldPath} → ${newPath}`);
     }
-    
+
     console.log('\n✅ All image paths fixed!');
-    
+
   } catch (error) {
     console.error('❌ Error:', error);
   } finally {

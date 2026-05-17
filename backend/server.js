@@ -35,6 +35,7 @@ const errorHandler = require('./middleware/errorHandler');
 
 // Security middleware
 app.use(helmet());
+//compress the size uoto 70% of original
 app.use(compression());
 
 const limiter = rateLimit({
@@ -118,7 +119,7 @@ const corsOptions = {
     'X-XSRF-TOKEN',
     'X-Auth-Token'
   ],
-  maxAge: 3600, // caching the request meaning that-  your backend is telling the browser: "Yes, you are allowed to make this request.
+  maxAge: 3600, // caching the request meaning that-  your backend is telling the browser: "Yes, you are allowed to make this complex request with preflight
   // And you don't need to ask me again for the next 3600 seconds
   preflightContinue: false,
   optionsSuccessStatus: 204
