@@ -7,7 +7,7 @@ const errorHandler = (err, req, res, next) => {
     statusCode: err.statusCode || 500,
     message: err.message || 'Internal Server Error',
     errorCode: err.errorCode || 'INTERNAL_SERVER_ERROR',
-    ...(process.env.NODE_ENV === 'development' && { 
+    ...(process.env.NODE_ENV === 'development' && {
       stack: err.stack,
       originalError: {
         name: err.name,

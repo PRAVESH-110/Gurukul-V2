@@ -11,22 +11,22 @@ const { protect, authorize } = require('../middleware/auth');
 router.get('/me', protect, async (req, res, next) => {
   try {
     const { search, status = 'all', sort = 'newest' } = req.query;
-    
+
     // For creators, get communities they created
     if (req.user.role === 'creator' || req.user.role === 'admin') {
       let query = { creator: req.user._id };
-      
+
       // Add status filter
       if (status !== 'all') {
         if (status === 'active') query.isActive = true;
         if (status === 'inactive') query.isActive = false;
       }
-      
+
       // Add search filter
       if (search) {
         query.$text = { $search: search };
       }
-      
+
       // Sort options
       let sortOption = {};
       switch (sort) {
@@ -42,18 +42,18 @@ router.get('/me', protect, async (req, res, next) => {
         default:
           sortOption = { createdAt: -1 };
       }
-      
+
       const communities = await Community.find(query)
         .sort(sortOption)
         .select('name description coverImage memberCount type isActive createdAt updatedAt');
-      
+
       // Add member stats for each community
       const communitiesWithStats = await Promise.all(
         communities.map(async (community) => {
           const totalMembers = community.members ? community.members.length : 0;
-          const activeMembers = community.members ? 
+          const activeMembers = community.members ?
             community.members.filter(member => member.isActive !== false).length : 0;
-          
+
           return {
             ...community.toObject(),
             stats: {
@@ -64,13 +64,13 @@ router.get('/me', protect, async (req, res, next) => {
           };
         })
       );
-      
+
       const stats = {
         totalCommunities: communities.length,
         activeCommunities: communities.filter(c => c.isActive).length,
         inactiveCommunities: communities.filter(c => !c.isActive).length
       };
-      
+
       res.status(200).json({
         success: true,
         count: communities.length,
@@ -82,18 +82,18 @@ router.get('/me', protect, async (req, res, next) => {
     } else if (req.user.role === 'admin') {
       // For admins, get all communities
       let query = {};
-      
+
       // Add status filter
       if (status !== 'all') {
         if (status === 'active') query.isActive = true;
         if (status === 'inactive') query.isActive = false;
       }
-      
+
       // Add search filter
       if (search) {
         query.$text = { $search: search };
       }
-      
+
       // Sort options
       let sortOption = {};
       switch (sort) {
@@ -109,19 +109,19 @@ router.get('/me', protect, async (req, res, next) => {
         default:
           sortOption = { createdAt: -1 };
       }
-      
+
       const communities = await Community.find(query)
         .populate('creator', 'firstName lastName avatar')
         .sort(sortOption)
         .select('name description coverImage memberCount type isActive createdAt updatedAt');
-      
+
       // Add member stats for each community
       const communitiesWithStats = await Promise.all(
         communities.map(async (community) => {
           const totalMembers = community.members ? community.members.length : 0;
-          const activeMembers = community.members ? 
+          const activeMembers = community.members ?
             community.members.filter(member => member.isActive !== false).length : 0;
-          
+
           return {
             ...community.toObject(),
             stats: {
@@ -132,13 +132,13 @@ router.get('/me', protect, async (req, res, next) => {
           };
         })
       );
-      
+
       const stats = {
         totalCommunities: communities.length,
         activeCommunities: communities.filter(c => c.isActive).length,
         inactiveCommunities: communities.filter(c => !c.isActive).length
       };
-      
+
       res.status(200).json({
         success: true,
         data: {
@@ -152,9 +152,9 @@ router.get('/me', protect, async (req, res, next) => {
         'members.user': req.user._id,
         isActive: true
       })
-      .populate('creator', 'firstName lastName avatar')
-      .select('name description coverImage memberCount type')
-      .sort({ createdAt: -1 });
+        .populate('creator', 'firstName lastName avatar')
+        .select('name description coverImage memberCount type')
+        .sort({ createdAt: -1 });
 
       res.status(200).json({
         success: true,

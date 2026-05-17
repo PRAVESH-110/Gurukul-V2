@@ -39,7 +39,7 @@ const communitySchema = new mongoose.Schema({
     },
     role: {
       type: String,
-      enum: ['admin', 'member','creator'],
+      enum: ['admin', 'member', 'creator'],
       default: 'member'
     }
   }],
@@ -71,24 +71,24 @@ communitySchema.index({ 'members.user': 1 });
 communitySchema.index({ name: 'text', description: 'text' });
 
 // Update member count before saving
-communitySchema.pre('save', function(next) {
+communitySchema.pre('save', function (next) {
   this.memberCount = this.members.length;
   next();
 });
 
 // Check if user is member
-communitySchema.methods.isMember = function(userId) {
+communitySchema.methods.isMember = function (userId) {
   return this.members.some(member => member.user.toString() === userId.toString());
 };
 
 // Check if user is admin
-communitySchema.methods.isAdmin = function(userId) {
+communitySchema.methods.isAdmin = function (userId) {
   const member = this.members.find(member => member.user.toString() === userId.toString());
   return member && member.role === 'admin';
 };
 
 // Add member method
-communitySchema.methods.addMember = function(userId, role = 'member') {
+communitySchema.methods.addMember = function (userId, role = 'member') {
   if (!this.isMember(userId)) {
     this.members.push({
       user: userId,
@@ -99,7 +99,7 @@ communitySchema.methods.addMember = function(userId, role = 'member') {
 };
 
 // Remove member method
-communitySchema.methods.removeMember = function(userId) {
+communitySchema.methods.removeMember = function (userId) {
   this.members = this.members.filter(member => member.user.toString() !== userId.toString());
 };
 
