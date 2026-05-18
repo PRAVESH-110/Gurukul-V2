@@ -219,7 +219,7 @@ const Home = () => {
                   <div className="flex items-center justify-between pt-4 border-t border-gray-100">
                     <span className="text-2xl font-bold text-gray-900">{featuredCourse.cost}</span>
                     <Link
-                      href="/courses/1"
+                      href="/courses"
                       className="text-sm font-semibold text-primary-600 hover:text-primary-700 transition-colors"
                     >
                       View Details
