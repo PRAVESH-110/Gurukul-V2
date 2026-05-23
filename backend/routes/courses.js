@@ -1,5 +1,13 @@
 const express = require('express');
 const path = require('path');
+const fs = require('fs');
+const ImageKit = require('imagekit');
+
+const imagekit = new ImageKit({
+  publicKey: process.env.IMAGEKIT_PUBLIC_KEY,
+  privateKey: process.env.IMAGEKIT_PRIVATE_KEY,
+  urlEndpoint: process.env.IMAGEKIT_URL_ENDPOINT
+});
 const Course = require('../models/Course');
 const Video = require('../models/Video');
 const User = require('../models/User');
@@ -153,18 +161,31 @@ const createCourse = async (req, res, next) => {
     // Handle thumbnail from file upload
     let thumbnailUrl = thumbnail;
     if (req.file) {
-      console.log('📁 File upload info:', {
-        filename: req.file.filename,
-        path: req.file.path,
-        destination: req.file.destination
-      });
+      console.log('📁 Uploading image to ImageKit...');
 
-      // Extract the type subdirectory from the file path
-      const pathParts = req.file.path.split(path.sep);
-      const typeDir = pathParts[pathParts.length - 2]; // Get the subdirectory name
-      thumbnailUrl = `/uploads/${typeDir}/${req.file.filename}`;
+      try {
+        const fileBuffer = fs.readFileSync(req.file.path);
+        const result = await new Promise((resolve, reject) => {
+          imagekit.upload({
+            file: fileBuffer.toString('base64'),
+            fileName: req.file.filename,
+            folder: 'gurukul/images',
+            useUniqueFileName: true
+          }, (error, result) => {
+            if (error) return reject(error);
+            resolve(result);
+          });
+        });
 
-      console.log('🖼️ Thumbnail URL constructed:', thumbnailUrl);
+        thumbnailUrl = result.url;
+        console.log('🖼️ Thumbnail URL from ImageKit:', thumbnailUrl);
+
+        // Clean up the local file so it doesn't waste server space
+        fs.unlinkSync(req.file.path);
+      } catch (uploadError) {
+        console.error('ImageKit upload failed:', uploadError);
+        return res.status(500).json({ success: false, message: 'Failed to upload image to CDN' });
+      }
     }
 
     const courseData = {
