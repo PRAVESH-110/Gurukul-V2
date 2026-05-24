@@ -10,9 +10,12 @@ router.post("/", async (req, res) => {
         const { messages } = req.body;
 
         const llm = new ChatOpenAI({
-            model: "gpt-4o-mini",
+            model: "gemini-2.5-flash",
             temperature: 0.2,
-            apiKey: process.env.OPENAI_API_KEY,
+            apiKey: process.env.GEMINI_API_KEY,
+            configuration: {
+                baseURL: "https://generativelanguage.googleapis.com/v1beta/openai/",
+            }
         });
 
         const systemPrompt = {
