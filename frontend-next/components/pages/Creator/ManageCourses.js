@@ -291,27 +291,32 @@ const ManageCourses = () => {
                   <tr key={course._id} className="hover:bg-gray-50">
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center">
-                        <div className="flex-shrink-0 h-12 w-12">
-                          {course.thumbnail ? (
-                            <img
-                              className="h-12 w-12 rounded-lg object-cover"
-                              src={getImageUrl(course.thumbnail)}
-                              alt={course.title}
-                            />
-                          ) : (
-                            <div className="h-12 w-12 bg-primary-100 rounded-lg flex items-center justify-center">
-                              <BookOpen className="h-6 w-6 text-primary-600" />
+                        <Link
+                          href={`/courses/${course._id}`}
+                          className="text-sm text-gray-900 hover:text-blue-600"
+                        >
+                          <div className="flex-shrink-0 h-12 w-12">
+                            {course.thumbnail ? (
+                              <img
+                                className="h-12 w-12 rounded-lg object-cover"
+                                src={getImageUrl(course.thumbnail)}
+                                alt={course.title}
+                              />
+                            ) : (
+                              <div className="h-12 w-12 bg-primary-100 rounded-lg flex items-center justify-center">
+                                <BookOpen className="h-6 w-6 text-primary-600" />
+                              </div>
+                            )}
+                          </div>
+                          <div className="ml-4">
+                            <div className="text-base font-medium">
+                              {course.title || 'Untitled Course'}
                             </div>
-                          )}
-                        </div>
-                        <div className="ml-4">
-                          <div className="text-sm font-medium text-gray-900">
-                            {course.title || 'Untitled Course'}
+                            <div className="text-sm text-gray-500">
+                              {course.category || 'General'} • {course.level || 'Beginner'}
+                            </div>
                           </div>
-                          <div className="text-sm text-gray-500">
-                            {course.category || 'General'} • {course.level || 'Beginner'}
-                          </div>
-                        </div>
+                        </Link>
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">

@@ -130,7 +130,7 @@ const Home = () => {
                 alt="Main"
                 width={300}
                 height={400}
-                className="object-cover"
+                className="object-cover border-2 border-black rounded-3xl"
               />
             </div>
           </div>
