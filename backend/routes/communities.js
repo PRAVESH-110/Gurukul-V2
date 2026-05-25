@@ -3,6 +3,7 @@ const Community = require('../models/Community');
 const User = require('../models/User');
 const Post = require('../models/Post');
 const Event = require('../models/Event');
+const Notification = require('../models/Notification');
 const { protect, authorize, checkOwnership } = require('../middleware/auth');
 const { validateCommunity, validateObjectId } = require('../middleware/validation');
 const { upload, handleUploadErrors } = require('../middleware/upload');
@@ -18,14 +19,14 @@ const router = express.Router();
 const getCommunities = async (req, res, next) => {
   try {
     const { page = 1, limit = 10, search, type } = req.query;
-    
+
     const query = { isActive: true };
-    
+
     // Add search filter
     if (search) {
       query.$text = { $search: search };
     }
-    
+
     // Add type filter
     if (type && ['public', 'private'].includes(type)) {
       query.type = type;
@@ -64,10 +65,10 @@ const createCommunity = async (req, res, next) => {
   try {
     console.log('Request body:', req.body);
     console.log('Request file:', req.file);
-    
+
     // Get data from request body
     const { name, description, type, tags } = req.body;
-    
+
     // Validate required fields
     const errors = [];
     if (!name) {
@@ -77,12 +78,12 @@ const createCommunity = async (req, res, next) => {
       errors.push({ msg: 'Description is required', param: 'description' });
     }
     if (!type || !['public', 'private'].includes(type)) {
-      errors.push({ 
-        msg: 'Type must be either public or private', 
-        param: 'type' 
+      errors.push({
+        msg: 'Type must be either public or private',
+        param: 'type'
       });
     }
-    
+
     if (errors.length > 0) {
       return res.status(400).json({
         success: false,
@@ -122,14 +123,14 @@ const createCommunity = async (req, res, next) => {
       creator: req.user._id,
       members: [{
         user: req.user._id,
-        role: 'admin', 
+        role: 'admin',
         joinedAt: new Date()
       }]
     });
 
     // Save the community to the database
     await community.save();
-    
+
     // Add community to user's joined communities
     await User.findByIdAndUpdate(req.user._id, {
       $addToSet: { joinedCommunities: community._id }
@@ -167,11 +168,11 @@ const getCommunity = async (req, res, next) => {
 
     // Check if private community and user is not a member
     if (community.type === 'private' && req.user) {
-      const isMember = community.members.some(member => 
+      const isMember = community.members.some(member =>
         member.user && member.user.toString() === req.user._id.toString()
       );
       const isCreator = community.creator._id.toString() === req.user._id.toString() || req.user.role === 'admin';
-      
+
       if (!isMember && !isCreator) {
         return res.status(403).json({
           success: false,
@@ -289,7 +290,7 @@ const joinCommunity = async (req, res, next) => {
     }
 
     // Check if already a member
-    const isMember = community.members.some(member => 
+    const isMember = community.members.some(member =>
       member.user && member.user.toString() === req.user._id.toString()
     );
     if (isMember) {
@@ -316,6 +317,27 @@ const joinCommunity = async (req, res, next) => {
       $addToSet: { joinedCommunities: community._id }
     });
 
+    // 1. Create notification for the student who joined
+    const studentNotif = await Notification.create({
+      recipient: req.user._id,
+      type: 'COMMUNITY_JOIN',
+      content: `You have successfully joined the community "${community.name}"!`
+    });
+
+    // 2. Create notification for the community creator
+    const creatorNotif = await Notification.create({
+      recipient: community.creator,
+      type: 'COMMUNITY_JOIN_CREATOR',
+      content: `👤 ${req.user.firstName} ${req.user.lastName} has joined your community "${community.name}"!`
+    });
+
+    // 3. Emit real-time WebSocket notifications
+    const io = req.app.get('io');
+    if (io) {
+      io.to(req.user._id.toString()).emit('new_notification', studentNotif);
+      io.to(community.creator.toString()).emit('new_notification', creatorNotif);
+    }
+
     res.status(200).json({
       success: true,
       message: 'Successfully joined the community'
@@ -340,7 +362,7 @@ const leaveCommunity = async (req, res, next) => {
     }
 
     // Check if user is a member
-    const isMember = community.members.some(member => 
+    const isMember = community.members.some(member =>
       member.user && member.user.toString() === req.user._id.toString()
     );
     if (!isMember) {
@@ -392,11 +414,11 @@ const getCommunityMembers = async (req, res, next) => {
     }
 
     // Check if user is a member or creator
-    const isMember = community.members.some(member => 
+    const isMember = community.members.some(member =>
       member.user && member.user.toString() === req.user._id.toString()
     );
     const isCreator = community.creator.toString() === req.user._id.toString();
-    const isAdmin=  req.user.role === 'admin';
+    const isAdmin = req.user.role === 'admin';
 
     if (!isMember && !isCreator && !isAdmin) {
       return res.status(403).json({
@@ -419,10 +441,10 @@ const getCommunityMembers = async (req, res, next) => {
 // @access  Private
 const getUserCommunities = async (req, res, next) => {
   try {
-    if (req.user.role === 'creator' ) {
+    if (req.user.role === 'creator') {
       return getCreatorCommunities(req, res, next);
     }
-    else if(req.user.role === 'admin'){
+    else if (req.user.role === 'admin') {
       return getAdminCommunities(req, res, next);
     }
     else {
@@ -439,16 +461,16 @@ const getUserCommunities = async (req, res, next) => {
 const getStudentCommunities = async (req, res, next) => {
   try {
     console.log('getStudentCommunities called by user:', req.user._id);
-    
-    const communities = await Community.find({ 
+
+    const communities = await Community.find({
       'members.user': req.user._id,
-      isActive: true 
+      isActive: true
     })
       .populate('creator', 'firstName lastName avatar')
       .sort({ 'members.joinedAt': -1 });
 
     console.log('Found joined communities:', communities.length);
-    
+
     // Add stats for each community
     const communitiesWithStats = communities.map(community => ({
       ...community.toObject(),
@@ -456,7 +478,7 @@ const getStudentCommunities = async (req, res, next) => {
       postCount: 0, // Can add actual count if needed
       eventCount: 0  // Can add actual count if needed
     }));
-    
+
     res.status(200).json({
       success: true,
       count: communities.length,
@@ -511,15 +533,15 @@ const getCreatorCommunities = async (req, res, next) => {
     // Create lookup maps
     const postCountMap = {};
     const eventCountMap = {};
-    
+
     postCounts.forEach(item => {
       postCountMap[item._id.toString()] = item.count;
     });
-    
+
     eventCounts.forEach(item => {
       eventCountMap[item._id.toString()] = item.count;
     });
-    
+
     // Add stats for each community
     const communitiesWithStats = communities.map(community => ({
       ...community.toObject(),
@@ -527,13 +549,13 @@ const getCreatorCommunities = async (req, res, next) => {
       postCount: postCountMap[community._id.toString()] || 0,
       eventCount: eventCountMap[community._id.toString()] || 0
     }));
-    
+
     // Calculate overall stats
     const totalCommunities = communities.length;
     const totalMembers = communities.reduce((sum, community) => sum + (community.members?.length || 0), 0);
     const totalPosts = Object.values(postCountMap).reduce((sum, count) => sum + count, 0);
     const totalEvents = Object.values(eventCountMap).reduce((sum, count) => sum + count, 0);
-    
+
     res.status(200).json({
       success: true,
       count: communities.length,
@@ -559,13 +581,13 @@ const getCreatorCommunities = async (req, res, next) => {
 const getAdminCommunities = async (req, res, next) => {
   try {
     console.log('getAdminCommunities called by user:', req.user._id);
-    
+
     const communities = await Community.find({ isActive: true })
       .populate('creator', 'firstName lastName avatar')
       .sort({ createdAt: -1 });
 
     console.log('Found communities:', communities.length);
-    
+
     // Get additional stats from other collections
     const communityIds = communities.map(c => c._id);
 
@@ -580,19 +602,19 @@ const getAdminCommunities = async (req, res, next) => {
       { $match: { community: { $in: communityIds }, isActive: true } },
       { $group: { _id: '$community', count: { $sum: 1 } } }
     ]);
-    
+
     // Create lookup maps
     const postCountMap = {};
     const eventCountMap = {};
-    
+
     postCounts.forEach(item => {
       postCountMap[item._id.toString()] = item.count;
     });
-    
+
     eventCounts.forEach(item => {
       eventCountMap[item._id.toString()] = item.count;
     });
-    
+
     // Add stats for each community
     const communitiesWithStats = communities.map(community => ({
       ...community.toObject(),
@@ -600,13 +622,13 @@ const getAdminCommunities = async (req, res, next) => {
       postCount: postCountMap[community._id.toString()] || 0,
       eventCount: eventCountMap[community._id.toString()] || 0
     }));
-    
+
     // Calculate overall stats
     const totalCommunities = communities.length;
     const totalMembers = communities.reduce((sum, community) => sum + (community.members?.length || 0), 0);
     const totalPosts = Object.values(postCountMap).reduce((sum, count) => sum + count, 0);
     const totalEvents = Object.values(eventCountMap).reduce((sum, count) => sum + count, 0);
-    
+
     res.status(200).json({
       success: true,
       count: communities.length,

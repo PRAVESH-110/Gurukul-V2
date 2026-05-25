@@ -211,6 +211,25 @@ const createCourse = async (req, res, next) => {
     const course = await Course.create(courseData);
     await course.populate('creator', 'firstName lastName avatar');
 
+    // 1. Create a persistent notification for the creator themselves
+    const creatorNotif = await Notification.create({
+      recipient: req.user._id,
+      type: 'COURSE_CREATION',
+      content: `Your course "${course.title}" has been successfully created!`
+    });
+
+    const io = req.app.get('io');
+    if (io) {
+      // Send real-time push to the creator
+      io.to(req.user._id.toString()).emit('new_notification', creatorNotif);
+
+      // Broadcast new course announcement to everyone online
+      io.emit('new_notification', {
+        type: 'NEW_COURSE',
+        content: `🎉 New Course: "${course.title}" has just been published by ${req.user.firstName} ${req.user.lastName}! Check it out!`
+      });
+    }
+
     res.status(201).json({
       success: true,
       message: 'Course created successfully',
@@ -382,16 +401,25 @@ const enrollInCourse = async (req, res, next) => {
       $addToSet: { enrolledCourses: course._id }
     });
 
-    // 1. Create the permanent notification in MongoDB
+    // 1. Create the permanent notification in MongoDB for the enrolling student
     const newNotif = await Notification.create({
       recipient: req.user._id,
       type: 'ENROLLMENT',
       content: `You have successfully enrolled in ${course.title}!`
     });
 
-    // 2. Push it instantly to the user via WebSocket
-    if (req.app.get('io')) {
-      req.app.get('io').to(req.user._id.toString()).emit('new_notification', newNotif);
+    // 2. Create the permanent notification for the course creator
+    const creatorNotif = await Notification.create({
+      recipient: course.creator,
+      type: 'ENROLLMENT_CREATOR',
+      content: `👤 ${req.user.firstName} ${req.user.lastName} has enrolled in your course "${course.title}"!`
+    });
+
+    // 3. Push them instantly to their respective Socket.io rooms
+    const io = req.app.get('io');
+    if (io) {
+      io.to(req.user._id.toString()).emit('new_notification', newNotif);
+      io.to(course.creator.toString()).emit('new_notification', creatorNotif);
     }
 
     res.status(200).json({
