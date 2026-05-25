@@ -64,7 +64,8 @@ const Home = () => {
               Your trusted creator community partner
             </div>
 
-            <h1 className="text-transparent bg-clip-text text-5xl md:text-6xl font-bold tracking-tight bg-gradient-to-r from-primary-600 to-primary-500">Create &nbsp;
+            <h1 className="text-yellow-300 bg-clip-text text-5xl md:text-6xl font-bold tracking-tight bg-gradient-to-r from-primary-600 to-primary-500">
+              <span style={{ filter: 'drop-shadow(5px 5px 5px rgba(0, 0, 0, 0.75))' }}>Create &nbsp;</span>
 
               <span className="text-5xl md:text-6xl font-heading font-bold tracking-tight text-gray-900 mb-10 animate-slide-up">
                 what you love and start earning
