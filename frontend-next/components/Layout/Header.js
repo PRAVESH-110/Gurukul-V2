@@ -19,6 +19,8 @@ import logo from '@/assets/logo.png';
 import Image from 'next/image';
 import { io } from 'socket.io-client';
 import api from '@/services/api';
+import toast from 'react-hot-toast';
+import NotificationModal from '../Notifications/Notificationdropdown';
 
 const Header = ({ toggleSidebar }) => {
   const { user, logout } = useAuth();
@@ -27,8 +29,10 @@ const Header = ({ toggleSidebar }) => {
   const isHomePage = pathname === '/';
   const [searchQuery, setSearchQuery] = useState('');
   const [showUserMenu, setShowUserMenu] = useState(false);
+  const [showNotifications, setShowNotifications] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
   const userMenuRef = useRef(null);
+  const notificationRef = useRef(null);
 
   // WebSocket connection for real-time notifications
   useEffect(() => {
@@ -56,7 +60,12 @@ const Header = ({ toggleSidebar }) => {
     socket.on('new_notification', (notification) => {
       console.log('🔴 Real-time Notification received:', notification);
       setUnreadCount(prev => prev + 1);
-      // Optional: You could trigger a toast here too!
+
+      // Trigger a beautiful visual popup toast
+      toast(notification.content, {
+        icon: '🔔',
+        duration: 4000
+      });
     });
 
     // Cleanup: Disconnect when the user logs out or leaves the site
@@ -65,6 +74,7 @@ const Header = ({ toggleSidebar }) => {
     };
   }, [user]);
 
+  //outside click for user menu
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (showUserMenu && userMenuRef.current && !userMenuRef.current.contains(event.target)) {
@@ -77,6 +87,21 @@ const Header = ({ toggleSidebar }) => {
       document.removeEventListener('mousedown', handleClickOutside);
     };
   }, [showUserMenu]);
+
+  //outside click for notifications
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (showNotifications && notificationRef.current && !notificationRef.current.contains(event.target)) {
+        setShowNotifications(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [showNotifications]);
+
 
   const handleSearch = (e) => {
     e.preventDefault();
@@ -163,19 +188,37 @@ const Header = ({ toggleSidebar }) => {
               // Authenticated User Navigation
               <>
                 {/* Notifications */}
-                <button className="p-2.5 text-gray-500 hover:text-primary-600 hover:bg-primary-50 rounded-xl transition-all duration-200 relative group">
-                  <Bell className="h-5 w-5" />
-                  {unreadCount > 0 && (
-                    <span className="absolute top-1.5 right-1.5 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 ring-2 ring-white text-[10px] font-bold text-white group-hover:scale-110 transition-transform shadow-sm">
-                      {unreadCount > 9 ? '9+' : unreadCount}
-                    </span>
-                  )}
-                </button>
+                <div className="relative" ref={notificationRef}>
+                  <button
+                    onClick={() => {
+                      setShowNotifications(!showNotifications);
+                      setShowUserMenu(false); // Close user menu if open
+                    }}
+                    className="p-2.5 text-gray-500 hover:text-primary-600 hover:bg-primary-50 rounded-xl transition-all duration-200 relative group"
+                  >
+                    <Bell className="h-5 w-5" />
+                    {unreadCount > 0 && (
+                      <span className="absolute top-1.5 right-1.5 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 ring-2 ring-white text-[10px] font-bold text-white group-hover:scale-110 transition-transform shadow-sm">
+                        {unreadCount > 9 ? '9+' : unreadCount}
+                      </span>
+                    )}
+                  </button>
+
+                  <NotificationModal
+                    isOpen={showNotifications}
+                    onClose={() => setShowNotifications(false)}
+                    unreadCount={unreadCount}
+                    setUnreadCount={setUnreadCount}
+                  />
+                </div>
 
                 {/* User Menu */}
                 <div className="relative ml-2" ref={userMenuRef}>
                   <button
-                    onClick={() => setShowUserMenu(!showUserMenu)}
+                    onClick={() => {
+                      setShowUserMenu(!showUserMenu);
+                      setShowNotifications(false); // Close notifications if open
+                    }}
                     className="flex items-center space-x-3 p-1.5 pr-3 rounded-xl hover:bg-gray-50 border border-transparent hover:border-gray-100 transition-all duration-200"
                   >
                     {user.avatar ? (
@@ -249,28 +292,28 @@ const Header = ({ toggleSidebar }) => {
                       </div>
                     </div>
                   )}
-
                 </div>
-
               </>
             )}
           </div>
-        </div>
+        </div >
 
         {/* Mobile Menu */}
 
-      </div>
+      </div >
 
       {/* Click outside to close menus */}
-      {showUserMenu && (
-        <div
-          className="fixed inset-0 z-40 bg-black/20 backdrop-blur-sm md:hidden"
-          onClick={() => {
-            setShowUserMenu(false);
-          }}
-        />
-      )}
-    </header>
+      {
+        showUserMenu && (
+          <div
+            className="fixed inset-0 z-40 bg-black/20 backdrop-blur-sm md:hidden"
+            onClick={() => {
+              setShowUserMenu(false);
+            }}
+          />
+        )
+      }
+    </header >
   );
 };
 

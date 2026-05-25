@@ -396,6 +396,15 @@ export const searchAPI = {
   globalSearch: (params) => api.get('/search/global', { params }),
 };
 
+// Notification API
+export const notificationAPI = {
+  getNotifications: () => api.get('/notifications'),
+  getUnreadCount: () => api.get('/notifications/unread-count'),
+  markAsRead: (id) => api.put(`/notifications/${id}/read`),
+  markAllAsRead: () => api.put('/notifications/read-all'),
+  deleteNotification: (id) => api.delete(`/notifications/${id}`),
+};
+
 //chat api
 export const chatAPI = {
   chat: (data) => api.post('/chat', data),

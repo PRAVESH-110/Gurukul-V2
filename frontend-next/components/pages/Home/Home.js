@@ -122,7 +122,7 @@ const Home = () => {
           </div>
 
           {/* Uploadable Main Image */}
-          <div className="main-image flex flex-col items-center border-2 border-gray-200 rounded-3xl overflow-hidden shadow-sm">
+          <div className="main-image flex flex-col items-center  rounded-3xl overflow-hidden shadow-sm">
             <h3 className="w-full py-3 text-center text-md font-bold bg-gray-50 border-b border-gray-200">Create what you love</h3>
             <div className="w-full bg-white flex justify-center">
               <Image
