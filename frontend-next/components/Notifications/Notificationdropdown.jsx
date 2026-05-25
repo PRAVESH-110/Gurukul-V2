@@ -38,6 +38,59 @@ const NotificationDropdown = ({ isOpen, onClose, unreadCount, setUnreadCount }) 
         }
     };
 
+    // Automatically mark notifications as read when scrolled into view
+    useEffect(() => {
+        if (!isOpen || notifications.length === 0) return;
+
+        // Select all unread notification DOM elements inside the dropdown
+        const unreadElements = document.querySelectorAll('[data-notification-unread="true"]');
+        if (unreadElements.length === 0) return;
+
+        const timers = {}; // To store setTimeout timers for each notification
+
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                const id = entry.target.getAttribute('data-id');
+                if (entry.isIntersecting) {
+                    // Trigger mark read after 1 seconds of static visibility
+                    timers[id] = setTimeout(() => {
+                        autoMarkAsRead(id);
+                    }, 1000);
+                } else {
+                    // Cancel timer if it leaves viewport before the delay expires
+                    if (timers[id]) {
+                        clearTimeout(timers[id]);
+                        delete timers[id];
+                    }
+                }
+            });
+        }, {
+            root: document.querySelector('.max-h-96'), // Observe relative to the scrollable wrapper
+            threshold: 0.8 // Require 80% visibility to trigger
+        });
+
+        unreadElements.forEach(el => observer.observe(el));
+
+        return () => {
+            observer.disconnect();
+            Object.values(timers).forEach(clearTimeout);
+        };
+    }, [notifications, isOpen]);
+
+    const autoMarkAsRead = async (id) => {
+        try {
+            const res = await notificationAPI.markAsRead(id);
+            if (res.data && res.data.success) {
+                setNotifications(prev =>
+                    prev.map(notif => notif._id === id ? { ...notif, isRead: true } : notif)
+                );
+                setUnreadCount(prev => Math.max(0, prev - 1));
+            }
+        } catch (err) {
+            console.error('Failed to auto-mark notification as read:', err);
+        }
+    };
+
     const handleMarkAsRead = async (id, e) => {
         e.stopPropagation(); // Avoid triggering any parent click
         try {
@@ -175,6 +228,8 @@ const NotificationDropdown = ({ isOpen, onClose, unreadCount, setUnreadCount }) 
                         {notifications.map((notif) => (
                             <div
                                 key={notif._id}
+                                data-id={notif._id}
+                                data-notification-unread={!notif.isRead}
                                 className={`flex items-start p-4 hover:bg-gray-50/80 transition-colors group relative ${!notif.isRead ? 'bg-primary-50/30' : ''}`}
                             >
                                 {/* Left Side Icon */}
