@@ -15,29 +15,29 @@ A modern, full-featured online learning platform that connects educators and stu
 - **Video Learning**: Stream videos with progress tracking
 - **Community Features**: Posts, events, discussions
 
-## ✨ Key Features
+## Key Features
 
-### 👨‍🎓 For Students
+### For Students
 - **Course Enrollment**: Browse and enroll in published courses
 - **Video Learning**: Watch course videos with progress tracking
 - **Community Participation**: Join communities, participate in discussions
 - **Progress Tracking**: Track course completion and learning progress
 - **Dashboard**: Personalized student dashboard with analytics
 
-### 👩‍🏫 For Creators
+###  For Creators
 - **Course Management**: Create, edit, and manage courses
 - **Video Upload**: Upload and organize course videos
 - **Community Building**: Create and manage learning communities
 - **Analytics**: Real-time statistics on enrollments, revenue, and engagement
 - **Content Organization**: Structure courses with videos and resources
 
-### 🏘️ Community Features
+###  Community Features
 - **Public/Private Communities**: Create open or invitation-only communities
 - **Posts & Discussions**: Rich text posts with image uploads
 - **Events Management**: Schedule and manage community events
 - **Member Management**: Role-based permissions and moderation
 
-## 🏗️ System Architecture
+##  System Architecture
 
 ```mermaid
 graph TB
