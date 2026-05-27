@@ -1,4 +1,4 @@
-# 🎓 Gurukul Learning Platform
+# Gurukul Learning Platform
 
 A modern, full-featured online learning platform that connects educators and students through courses, communities, and interactive content. Built with the MERN stack for scalability and performance.
 
@@ -8,7 +8,7 @@ A modern, full-featured online learning platform that connects educators and stu
 ![MongoDB](https://img.shields.io/badge/MongoDB-6.x-brightgreen)
 ![License](https://img.shields.io/badge/License-MIT-yellow)
 
-## 🚀 Live Demo
+## Live Demo
 
 - **Student Dashboard**: Browse courses, join communities, track progress
 - **Creator Dashboard**: Manage courses, upload videos, build communities
