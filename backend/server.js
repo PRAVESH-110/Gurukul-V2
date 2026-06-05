@@ -131,7 +131,7 @@ app.use(cors(corsOptions));
 // Handle preflight requests for all routes
 app.options('*', cors(corsOptions));
 
-// Add CORS headers to all responses
+// Add CORS headers to all responses  
 app.use((req, res, next) => {
   const origin = req.headers.origin;
 
