@@ -25,7 +25,6 @@ const Profile = () => {
     };
 
 
-
     if (isModalOpen) {
       document.addEventListener('keydown', handleKeyDown);
     }

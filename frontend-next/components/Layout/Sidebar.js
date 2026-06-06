@@ -117,11 +117,11 @@ const Sidebar = ({ isOpen, onClose, width = 256, setWidth }) => {
               return (
                 <Link
                   onClick={() => {
-                    if (window.innerWidth < 768) {
-                      setTimeout(() => {
-                        onClose();
-                      }, 1000)
-                    }
+                    // if (window.innerWidth < 768) {
+                    setTimeout(() => {
+                      onClose();
+                    }, 0)
+                    // }
                   }}
                   key={item.path}
                   href={item.path}
