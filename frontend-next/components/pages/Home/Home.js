@@ -60,8 +60,15 @@ const Home = () => {
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-20 pb-15 lg:pt-30 lg:pb-28">
           <div className="text-center max-w-4xl mx-auto ">
             <div className="inline-flex items-center px-4 py-2 rounded-full bg-yellow-50 backdrop-blur-sm border-black border-2 text-black text-sm font-medium mb-8 animate-fade-in">
-              <Star className="w-4 h-4 mr-2 fill-current text-yellow-500 " />
-              Your trusted creator community partner
+              5.0 &nbsp;
+                <Star className="w-4 h-4 mr-2 fill-current text-yellow-500 " />
+              <div className="flex content-fit border-1 border-black gap-1 rounded-full overflow-hidden">
+              <Image src="/stud2.jpg" alt="" width={20} height={20} />
+              <Image src="/stud3.jpg" alt="" width={20} height={20} />
+              <Image src="/stud4.webp" alt="" width={20} height={20} />
+              <Image src="/stud1.webp" alt="" width={20} height={20} />
+            </div>
+              50+ reviews
             </div>
 
             <h1 className="text-yellow-300 bg-clip-text text-5xl md:text-6xl font-bold tracking-tight bg-gradient-to-r from-primary-600 to-primary-500">
@@ -125,14 +132,16 @@ const Home = () => {
           {/* Uploadable Main Image */}
           <div className="main-image flex flex-col items-center  rounded-3xl overflow-hidden shadow-sm">
             <h3 className="w-full py-3 text-center text-md font-bold bg-gray-50 border-b border-gray-200">Create what you love</h3>
-            <div className="w-full bg-white flex justify-center">
-              <Image
-                src="/monetizehobby.png"
-                alt="Main"
-                width={300}
-                height={400}
-                className="object-cover border-2 border-black rounded-3xl"
-              />
+            <div className="w-full bg-white flex justify-center p-4">
+              <div className="border-2 rounded-2xl overflow-hidden" style={{ borderColor: 'black' }}>
+                <Image
+                  src="/monetizehobby.png"
+                  alt="Main"
+                  width={300}
+                  height={400}
+                  className="object-cover"
+                />
+              </div>
             </div>
           </div>
 
