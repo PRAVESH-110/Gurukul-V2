@@ -1,42 +1,99 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/context/AuthContext';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQueryClient, useQuery } from '@tanstack/react-query';
 import { userAPI } from '@/services/api';
 import { toast } from 'react-hot-toast';
 import { User, Bell, Shield, Palette, Save } from 'lucide-react';
 import { useRouter } from 'next/navigation';
+import LoadingSpinner from '@/components/UI/LoadingSpinner';
 
 const Settings = () => {
-  const { user } = useAuth();
+  const { user, updateUser } = useAuth();
   const queryClient = useQueryClient();
   const router = useRouter();
 
+  const userId = user?._id || user?.id;
+
+  const { data: profileData, isLoading } = useQuery({
+    queryKey: ['userProfile', userId],
+    queryFn: () => userAPI.getUser(userId),
+    enabled: !!userId,
+  });
+
+  const profile = profileData?.user || user;
+
   const [settings, setSettings] = useState({
-    name: user?.name || '',
-    email: user?.email || '',
-    bio: user?.bio || '',
-    location: user?.location || '',
-    notifications: user?.notifications || {
+    name: '',
+    email: '',
+    bio: '',
+    location: '',
+    notifications: {
       email: true,
       push: false,
       courseUpdates: true
     },
-    privacy: user?.privacy || {
+    privacy: {
       profileVisibility: 'public',
       emailVisibility: 'private',
       activityStatus: 'public'
     }
   });
 
-  const updateProfileMutation = useMutation({
-    mutationFn: (data) => userAPI.updateUser(user?.id, data),
+  // Sync profile query data with state
+  useEffect(() => {
+    if (profile) {
+      setSettings({
+        name: `${profile.firstName || ''} ${profile.lastName || ''}`.trim() || profile.name || '',
+        email: profile.email || '',
+        bio: profile.bio || '',
+        location: profile.location || '',
+        notifications: profile.notifications || {
+          email: true,
+          push: false,
+          courseUpdates: true
+        },
+        privacy: profile.privacy || {
+          profileVisibility: 'public',
+          emailVisibility: 'private',
+          activityStatus: 'public'
+        }
+      });
+    }
+  }, [profile]);
 
-    onSuccess: () => {
+  const updateProfileMutation = useMutation({
+    mutationFn: (data) => userAPI.updateUser(userId, data),
+
+    onSuccess: (response) => {
       toast.success("Settings updated successfully");
 
-      queryClient.invalidateQueries(["userProfile"]);
+      // Extract user data from response
+      const responseData = response?.data || response;
+      const updatedUser = responseData?.user;
+
+      if (updatedUser) {
+        // Update query cache directly
+        queryClient.setQueryData(['userProfile', userId], (oldData) => {
+          if (oldData) {
+            return {
+              ...oldData,
+              user: { ...updatedUser }
+            };
+          }
+          return {
+            success: true,
+            user: { ...updatedUser }
+          };
+        });
+
+        // Update auth context
+        updateUser(updatedUser);
+      } else {
+        // Invalidate fallback
+        queryClient.invalidateQueries(["userProfile", userId]);
+      }
 
       router.push("/profile");
     },
@@ -47,12 +104,25 @@ const Settings = () => {
   });
 
   const handleSave = () => {
+    const nameParts = settings.name.trim().split(/\s+/);
+    const firstName = nameParts[0] || '';
+    const lastName = nameParts.slice(1).join(' ') || '';
+
     updateProfileMutation.mutate({
-      name: settings.name,
+      firstName,
+      lastName,
       bio: settings.bio,
       location: settings.location,
     });
   };
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <LoadingSpinner size="lg" />
+      </div>
+    );
+  }
 
   const handleInputChange = (field, value) => {
     setSettings(prev => ({
