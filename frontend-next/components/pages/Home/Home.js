@@ -14,18 +14,18 @@ import './flow.css';
 import Image from 'next/image';
 
 import CursorDotsAnimation from '@/components/UI/CursorDotsAnimation';
-import AnimatedFeatures from './AnimatedFeatures';
 import ChatAssistant from './ChatAssistant';
 import HomeFAQSection from './HomeFAQSection';
 
 const featuredCourses = [
   {
-    name: " Web Development course",
-    description: "Learn full-stack web development from scratch with modern technologies including React, Node.js, and more.",
+    name: " Fundamentals of Crypto",
+    description: "Crypto is a digital currency that’s secured by cryptography, making it nearly impossible to counterfeit or double-spend. Learn how it works.",
     rating: 4.9,
     audience: "1.2k",
-    time: "40hrs",
-    cost: "$30"
+    time: "2hrs",
+    cost: "$30",
+    image: "/assets/dex.jpeg"
   },
   {
     name: " AI course",
@@ -33,15 +33,17 @@ const featuredCourses = [
     rating: 4.9,
     audience: "1.2k",
     time: "25hrs",
-    cost: "$12"
+    cost: "$12",
+    image: "/assets/ai_banner.png"
   },
   {
-    name: " Data Science course",
-    description: "Learn full-stack web development from scratch with modern technologies including React, Node.js, and more.",
+    name: " Linkedin mastery",
+    description: "Learn how to use LinkedIn effectively to network, find jobs, and build your professional brand.",
     rating: 4.9,
     audience: "1.2k",
     time: "40hrs",
-    cost: "$300"
+    cost: "$300",
+    image: "/assets/PRAVESH DHAKAL.png"
   }
 ];
 
@@ -61,13 +63,13 @@ const Home = () => {
           <div className="text-center max-w-4xl mx-auto ">
             <div className="inline-flex items-center px-4 py-2 rounded-full bg-yellow-50 backdrop-blur-sm border-black border-2 text-black text-sm font-medium mb-8 animate-fade-in">
               5.0 &nbsp;
-                <Star className="w-4 h-4 mr-2 fill-current text-yellow-500 " />
-              <div className="flex content-fit border-1 border-black gap-1 rounded-full overflow-hidden">
-              <Image src="/stud2.jpg" alt="" width={20} height={20} />
-              <Image src="/stud3.jpg" alt="" width={20} height={20} />
-              <Image src="/stud4.webp" alt="" width={20} height={20} />
-              <Image src="/stud1.webp" alt="" width={20} height={20} />
-            </div>
+              <Star className="w-4 h-4 mr-2 fill-current text-yellow-500 " />
+              <div className="flex content-fit border-1 border-black gap-0 rounded-full overflow-hidden px-2">
+                <Image src="/stud2.jpg" alt="" width={20} height={20} className="rounded-full" />
+                <Image src="/stud3.jpg" alt="" width={20} height={20} className="rounded-full" />
+                <Image src="/stud4.webp" alt="" width={20} height={20} className="rounded-full" />
+                <Image src="/stud1.webp" alt="" width={20} height={20} className="rounded-full" />
+              </div>
               50+ reviews
             </div>
 
@@ -170,9 +172,6 @@ const Home = () => {
         </div>
       </div>
 
-      {/* Features Section — client island */}
-      <AnimatedFeatures />
-
       {/* Featured Courses Section */}
       <section className="py-24">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -187,7 +186,7 @@ const Home = () => {
             </div>
             <Link
               href="/courses"
-              className="hidden md:inline-flex items-center font-semibold text-primary-600 hover:text-primary-700 transition-colors"
+              className="hidden md:inline-flex items-center font-semibold text-black hover:text-primary-700 transition-colors"
             >
               View All Courses
               <ArrowRight className="ml-2 h-5 w-5" />
@@ -199,14 +198,18 @@ const Home = () => {
               <div key={index} className="group bg-white rounded-2xl border border-gray-100 overflow-hidden hover:shadow-xl hover:border-primary-100 transition-all duration-300 hover:-translate-y-1">
                 <div className="relative aspect-video overflow-hidden">
                   <div className="absolute inset-0 bg-gradient-to-br from-gray-900/20 to-gray-900/60 z-10 group-hover:opacity-0 transition-opacity duration-300"></div>
-                  <div className="w-full h-full bg-gradient-to-br from-primary-500 to-blue-600 flex items-center justify-center group-hover:scale-105 transition-transform duration-500">
-                    <Play className="h-16 w-16 text-white opacity-80" />
-                  </div>
-                  <div className="absolute top-4 left-4 z-20">
-                    <span className="px-3 py-1 rounded-full bg-white/90 backdrop-blur text-xs font-bold text-primary-700 shadow-sm">
-                      Featured
-                    </span>
-                  </div>
+                  {featuredCourse.image ? (
+                    <Image
+                      src={featuredCourse.image}
+                      alt={featuredCourse.name}
+                      fill
+                      className="object-cover image-fit group-hover:scale-105 transition-transform duration-500"
+                    />
+                  ) : (
+                    <div className="w-full h-full bg-gradient-to-br from-blue-400 to-yellow-600 flex items-center justify-center group-hover:scale-105 transition-transform duration-500">
+                      <Play className="h-16 w-16 text-white opacity-80" />
+                    </div>
+                  )}
                 </div>
                 <div className="p-6">
                   <h3 className="text-xl font-bold text-gray-900 mb-2 line-clamp-2 group-hover:text-primary-600 transition-colors">
@@ -314,7 +317,7 @@ const Home = () => {
                     placeholder="Enter your email"
                     className="bg-gray-800 border-gray-700 text-white rounded-lg px-4 py-2 w-full focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none transition-all"
                   />
-                  <button className="bg-primary-600 hover:bg-primary-700 text-white px-4 py-2 rounded-lg transition-colors">
+                  <button className="bg-yellow-600 hover:bg-primary-700 text-white px-4 py-2 rounded-lg transition-colors">
                     <ArrowRight className="w-5 h-5" />
                   </button>
                 </form>
