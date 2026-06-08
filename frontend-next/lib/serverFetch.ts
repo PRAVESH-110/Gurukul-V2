@@ -4,6 +4,8 @@
  * Does NOT use axios, localStorage, or any browser API.
  */
 
+import { cookies } from 'next/headers';
+
 const getApiBase = () =>
     process.env.NODE_ENV === 'development'
         ? process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001/api'
@@ -33,7 +35,23 @@ export async function serverGet<T = unknown>(
             });
         }
 
+        const headers: Record<string, string> = {
+            'Accept': 'application/json',
+        };
+
+        try {
+            const cookieStore = await cookies();
+            const token = cookieStore.get('token')?.value;
+            if (token) {
+                headers['Cookie'] = `token=${token}`;
+            }
+        } catch (cookieErr) {
+            // cookies() can throw when evaluated during static pre-rendering build phase.
+            // We ignore it and perform the request anonymously.
+        }
+
         const res = await fetch(url.toString(), {
+            headers,
             // revalidate: 0 → no-store (always fresh)
             // revalidate: N → ISR every N seconds
             // undefined  → Next.js default (full-route cache)

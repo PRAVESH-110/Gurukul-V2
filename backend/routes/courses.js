@@ -748,7 +748,7 @@ router.get('/:id/students', protect, validateObjectId('id'), getEnrolledStudents
 router.post('/:id/review', protect, validateObjectId('id'), addCourseReview);
 
 // Generic routes that should come last
-router.get('/:id', validateObjectId('id'), getCourse);
+router.get('/:id', optionalProtect, validateObjectId('id'), getCourse);
 router.put('/:id', protect, validateObjectId('id'), updateCourse);
 router.delete('/:id', protect, validateObjectId('id'), deleteCourse);
 

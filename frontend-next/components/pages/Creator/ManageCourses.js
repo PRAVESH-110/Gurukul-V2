@@ -293,7 +293,7 @@ const ManageCourses = () => {
                       <div className="flex items-center">
                         <Link
                           href={`/courses/${course._id}`}
-                          className="text-sm text-gray-900 hover:text-blue-600"
+                          className="flex items-center text-sm text-gray-900 hover:text-blue-600"
                         >
                           <div className="flex-shrink-0 h-12 w-12">
                             {course.thumbnail ? (

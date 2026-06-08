@@ -12,6 +12,7 @@ interface Course {
     enrollmentCount?: number; rating?: { average?: number; count?: number };
     creator?: { firstName?: string; lastName?: string; avatar?: string };
     updatedAt?: string; createdAt?: string;
+    isEnrolled?: boolean;
 }
 interface CourseResponse { course: Course }
 interface VideosResponse { videos: Video[] }
@@ -22,28 +23,13 @@ interface PageProps {
 
 export default async function CourseDetailPage(props: PageProps) {
     const params = await props.params;
-    console.log("CourseDetailPage - Resolved params:", params);
     const [courseRes, videosRes] = await Promise.all([
-        serverGet<CourseResponse>(`/courses/${params.id}`, { revalidate: 60 }),
-        serverGet<VideosResponse>(`/courses/${params.id}/videos`, { revalidate: 60 }),
+        serverGet<CourseResponse>(`/courses/${params.id}`, { revalidate: 0 }),
+        serverGet<VideosResponse>(`/courses/${params.id}/videos`, { revalidate: 0 }),
     ]);
 
-    console.log("CourseDetailPage - courseRes:", courseRes);
-    console.log("CourseDetailPage - videosRes:", videosRes);
-
     const course = courseRes?.course;
-    if (!course) {
-        console.error("CourseDetailPage - Course not found, rendering notFound()");
-        // Let's return a debug view instead of notFound to see the details
-        return (
-            <div style={{ padding: 20 }}>
-                <h1>Debug Course Detail Page</h1>
-                <p>Params: {JSON.stringify(params)}</p>
-                <p>Course Response: {JSON.stringify(courseRes)}</p>
-                <p>Videos Response: {JSON.stringify(videosRes)}</p>
-            </div>
-        );
-    }
+    if (!course) notFound();
 
     const videos = videosRes?.videos ?? [];
     const videoCount = videos.length;
@@ -124,7 +110,7 @@ export default async function CourseDetailPage(props: PageProps) {
                                     {course.price && course.price > 0 ? <span className="text-gray-900">${course.price}</span> : <span className="text-green-600">Free</span>}
                                 </div>
                                 {/* Client island */}
-                                <EnrollButton courseId={course._id} isEnrolledInitial={false} variant="mobile" />
+                                <EnrollButton courseId={course._id} isEnrolledInitial={course.isEnrolled || false} variant="mobile" />
                             </div>
                         </div>
 
@@ -204,7 +190,7 @@ export default async function CourseDetailPage(props: PageProps) {
                                         {course.price && course.price > 0 ? <span className="text-gray-900">${course.price}</span> : <span className="text-green-600">Free</span>}
                                     </div>
                                     {/* Client island */}
-                                    <EnrollButton courseId={course._id} isEnrolledInitial={false} variant="sidebar" />
+                                    <EnrollButton courseId={course._id} isEnrolledInitial={course.isEnrolled || false} variant="sidebar" />
                                     <div className="mt-8 space-y-4">
                                         <h3 className="font-semibold text-gray-900">This course includes:</h3>
                                         <ul className="space-y-3 text-sm text-gray-600">
