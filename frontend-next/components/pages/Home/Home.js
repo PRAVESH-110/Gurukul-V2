@@ -193,6 +193,7 @@ const Home = () => {
             </Link>
           </div>
 
+
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
             {featuredCourses.map((featuredCourse, index) => (
               <div key={index} className="group bg-white rounded-2xl border border-gray-100 overflow-hidden hover:shadow-xl hover:border-primary-100 transition-all duration-300 hover:-translate-y-1">

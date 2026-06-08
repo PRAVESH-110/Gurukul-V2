@@ -219,7 +219,13 @@ const updateProfile = async (req, res, next) => {
 // @desc    Logout user
 // @route   POST /api/auth/logout
 // @access  Private
-const logout = (req, res) => {
+const logout = async (req, res, next) => {
+  res.cookie('token', 'none', {
+    expires: new Date(0), // Deletes the cookie immediately
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'lax'
+  });
   res.status(200).json({
     success: true,
     message: 'Logged out successfully'
