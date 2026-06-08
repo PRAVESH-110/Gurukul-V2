@@ -22,13 +22,28 @@ interface PageProps {
 
 export default async function CourseDetailPage(props: PageProps) {
     const params = await props.params;
+    console.log("CourseDetailPage - Resolved params:", params);
     const [courseRes, videosRes] = await Promise.all([
         serverGet<CourseResponse>(`/courses/${params.id}`, { revalidate: 60 }),
         serverGet<VideosResponse>(`/courses/${params.id}/videos`, { revalidate: 60 }),
     ]);
 
+    console.log("CourseDetailPage - courseRes:", courseRes);
+    console.log("CourseDetailPage - videosRes:", videosRes);
+
     const course = courseRes?.course;
-    if (!course) notFound();
+    if (!course) {
+        console.error("CourseDetailPage - Course not found, rendering notFound()");
+        // Let's return a debug view instead of notFound to see the details
+        return (
+            <div style={{ padding: 20 }}>
+                <h1>Debug Course Detail Page</h1>
+                <p>Params: {JSON.stringify(params)}</p>
+                <p>Course Response: {JSON.stringify(courseRes)}</p>
+                <p>Videos Response: {JSON.stringify(videosRes)}</p>
+            </div>
+        );
+    }
 
     const videos = videosRes?.videos ?? [];
     const videoCount = videos.length;
