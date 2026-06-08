@@ -17,6 +17,34 @@ const generateToken = (id) => {
   });
 };
 
+// Generate token, set cookie in response and send response
+const sendTokenResponse = (user, statusCode, res, message) => {
+  const token = generateToken(user._id);
+
+  const cookieExpireDays = parseInt(process.env.JWT_COOKIE_EXPIRE) || 30;
+  const options = {
+    expires: new Date(Date.now() + cookieExpireDays * 24 * 60 * 60 * 1000),
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'lax'
+  };
+
+  res.status(statusCode).cookie('token', token, options).json({
+    success: true,
+    message,
+    token,
+    user: {
+      _id: user._id,
+      firstName: user.firstName,
+      lastName: user.lastName,
+      email: user.email,
+      role: user.role,
+      avatar: user.avatar,
+      lastLoginAt: user.lastLoginAt
+    }
+  });
+};
+
 // @desc    Register userl̥
 // @route   POST /api/auth/register
 // @access  Public
@@ -57,9 +85,6 @@ const register = async (req, res, next) => {
       verificationExpires: Date.now() + 24 * 60 * 60 * 1000 // 24 hours
     });
 
-    // Generate token
-    const token = generateToken(user._id);
-
     // Send verification email
     try {
       const verificationUrl = `${process.env.CLIENT_URL}/verify-email?token=${user.verificationToken}`;
@@ -88,19 +113,7 @@ const register = async (req, res, next) => {
     user.verificationToken = undefined;
     user.verificationExpires = undefined;
 
-    res.status(201).json({
-      success: true,
-      message: 'Registration successful! Please check your email to verify your account.',
-      token,
-      user: {
-        _id: user._id,
-        firstName: user.firstName,
-        lastName: user.lastName,
-        email: user.email,
-        role: user.role,
-        avatar: user.avatar
-      }
-    });
+    sendTokenResponse(user, 201, res, 'Registration successful! Please check your email to verify your account.');
   } catch (error) {
     next(error);
   }
@@ -145,23 +158,7 @@ const login = async (req, res, next) => {
     user.lastLoginAt = new Date();
     await user.save();
 
-    // Generate token
-    const token = generateToken(user._id);
-
-    res.status(200).json({
-      success: true,
-      message: 'Login successful',
-      token,
-      user: {
-        _id: user._id,
-        firstName: user.firstName,
-        lastName: user.lastName,
-        email: user.email,
-        role: user.role,
-        avatar: user.avatar,
-        lastLoginAt: user.lastLoginAt
-      }
-    });
+    sendTokenResponse(user, 200, res, 'Login successful');
   } catch (error) {
     next(error);
   }
