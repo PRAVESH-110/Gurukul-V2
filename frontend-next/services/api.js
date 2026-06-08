@@ -57,15 +57,9 @@ api.interceptors.request.use(config => {
   return config;
 });
 
-// Request interceptor to add auth token and handle request logging
+// Request interceptor to handle request logging
 api.interceptors.request.use(
   (config) => {
-    // Add auth token if it exists
-    const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
-    }
-
     // Log request in development
     if (process.env.NEXT_PUBLIC_ENABLE_DEBUG_LOGS === 'true') {
       console.log(`%c ${config.method?.toUpperCase()} ${config.url}`,
@@ -115,10 +109,9 @@ api.interceptors.response.use(
 
     // Handle 401 Unauthorized
     if (response.status === 401) {
-      // Clear any existing token
-      if (typeof window !== 'undefined') {
-        localStorage.removeItem('token');
-        // Redirect to login or show unauthorized message
+      const isAuthMe = response.config?.url?.includes('/auth/me');
+      // Redirect to login or show unauthorized message (except for silent initial auth checks)
+      if (!isAuthMe && typeof window !== 'undefined') {
         if (window.location.pathname !== '/login') {
           window.location.href = '/login?sessionExpired=true';
         }
@@ -148,9 +141,9 @@ api.interceptors.response.use(
       }
 
       if (status === 401) {
-        // Unauthorized - redirect to login
-        if (typeof window !== 'undefined') {
-          localStorage.removeItem('token');
+        const isAuthMe = error.config?.url?.includes('/auth/me');
+        // Unauthorized - redirect to login (except for silent initial auth checks)
+        if (!isAuthMe && typeof window !== 'undefined') {
           if (window.location.pathname !== '/login') {
             window.location.href = '/login?sessionExpired=true';
           }

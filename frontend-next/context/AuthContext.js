@@ -16,17 +16,11 @@ export const useAuth = () => {
 export const AuthProvider = ({ children }) => {
     const [user, setUser] = useState(null);
     const [loading, setLoading] = useState(true);
-    const [token, setToken] = useState(typeof window !== 'undefined' ? localStorage.getItem('token') : null);
+    const [token, setToken] = useState(null);
 
-    // Set axios default header
+    // Set token in context state (cookie storage handled by browser)
     const setAuthToken = (token) => {
-        if (token) {
-            localStorage.setItem('token', token);
-            setToken(token);
-        } else {
-            localStorage.removeItem('token');
-            setToken(null);
-        }
+        setToken(token);
     };
 
     // Login function
@@ -111,20 +105,24 @@ export const AuthProvider = ({ children }) => {
     // Load user on app start
     useEffect(() => {
         const loadUser = async () => {
-            if (token) {
-                try {
-                    const response = await authAPI.getProfile();
+            try {
+                const response = await authAPI.getProfile();
+                if (response.data && response.data.success) {
                     setUser(response.data.user);
-                } catch (error) {
-                    // Token is invalid, remove it
-                    setAuthToken(null);
+                    if (response.data.token) {
+                        setToken(response.data.token);
+                    }
                 }
+            } catch (error) {
+                setUser(null);
+                setToken(null);
+            } finally {
+                setLoading(false);
             }
-            setLoading(false);
         };
 
         loadUser();
-    }, [token]);
+    }, []);
 
     const value = {
         user,
