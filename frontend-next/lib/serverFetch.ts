@@ -58,13 +58,9 @@ export async function serverGet<T = unknown>(
             next: revalidate !== undefined ? { revalidate } : undefined,
         });
 
-        if (!res.ok) {
-            console.error(`[serverGet] Non-ok status: ${res.status} ${res.statusText} for ${url.toString()}`);
-            return null;
-        }
+        if (!res.ok) return null;
         return (await res.json()) as T;
-    } catch (error) {
-        console.error(`[serverGet] Fetch failed for ${url.toString()}:`, error);
+    } catch {
         return null;
     }
 }
