@@ -8,7 +8,44 @@ import { communityAPI } from '@/services/api';
 import { useAuth } from '@/context/AuthContext';
 import toast from 'react-hot-toast';
 import ReactMarkdown from 'react-markdown';
-import Link from 'next/link';
+
+interface PostAuthor {
+    _id?: string;
+    firstName?: string;
+    lastName?: string;
+    avatar?: string;
+}
+
+interface Post {
+    _id: string;
+    title: string;
+    content: string;
+    author?: PostAuthor;
+    createdAt: string;
+    likeCount?: number;
+    commentCount?: number;
+}
+
+interface CommunityEvent {
+    _id: string;
+    title: string;
+    description?: string;
+    startDate: string;
+    location?: string;
+    attendeeCount?: number;
+}
+
+interface PostsResponse {
+    data?: {
+        posts?: Post[];
+    };
+}
+
+interface EventsResponse {
+    data?: {
+        events?: CommunityEvent[];
+    };
+}
 
 interface CommunityActionsProps {
     communityId: string;
@@ -36,14 +73,14 @@ const CommunityActions = ({
     const [joining, setJoining] = useState(false);
 
     // Posts
-    const { data: postsData } = useQuery({
+    const { data: postsData } = useQuery<PostsResponse>({
         queryKey: ['communityPosts', communityId],
         queryFn: () => communityAPI.getCommunityPosts(communityId),
         enabled: activeTab === 'posts',
     });
 
     // Events
-    const { data: eventsData } = useQuery({
+    const { data: eventsData } = useQuery<EventsResponse>({
         queryKey: ['communityEvents', communityId],
         queryFn: () => communityAPI.getCommunityEvents(communityId),
         enabled: activeTab === 'events',
@@ -57,14 +94,14 @@ const CommunityActions = ({
             queryClient.invalidateQueries({ queryKey: ['community', communityId] });
             toast.success('Successfully joined community!');
         },
-        onError: (error: any) => {
+        onError: (error: Error) => {
             setJoining(false);
-            toast.error(error?.message || 'Failed to join community');
+            toast.error(error.message || 'Failed to join community');
         },
     });
 
-    const posts = (postsData as any)?.data?.posts || [];
-    const events = (eventsData as any)?.data?.events || [];
+    const posts = postsData?.data?.posts || [];
+    const events = eventsData?.data?.events || [];
     const isCreator = user?._id === creatorId || user?.id === creatorId;
 
     return (
@@ -127,7 +164,7 @@ const CommunityActions = ({
                             </div>
                         </div>
                     )}
-                    {posts.length > 0 ? posts.map((post: any) => (
+                    {posts.length > 0 ? posts.map((post: Post) => (
                         <div key={post._id} className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 hover:shadow-md transition-shadow">
                             <div className="flex items-start justify-between mb-4">
                                 <div className="flex items-center gap-3">
@@ -181,7 +218,7 @@ const CommunityActions = ({
                             </button>
                         </div>
                     )}
-                    {events.length > 0 ? events.map((event: any) => (
+                    {events.length > 0 ? events.map((event: CommunityEvent) => (
                         <div key={event._id} className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-md transition-shadow flex flex-col md:flex-row">
                             <div className="md:w-48 bg-primary-50 flex flex-col items-center justify-center p-6 text-primary-700">
                                 <span className="text-3xl font-bold">{new Date(event.startDate).getDate()}</span>
