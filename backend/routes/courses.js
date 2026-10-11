@@ -12,6 +12,7 @@ const Course = require('../models/Course');
 const Video = require('../models/Video');
 const User = require('../models/User');
 const Notification = require('../models/Notification');
+const notificationService = require('../services/notifications.service');
 const { protect, authorize, checkCourseEnrollment, optionalProtect } = require('../middleware/auth');
 const { validateCourse, validateObjectId } = require('../middleware/validation');
 const { upload, handleUploadErrors } = require('../middleware/upload');
@@ -224,7 +225,7 @@ const createCourse = async (req, res, next) => {
       io.to(req.user._id.toString()).emit('new_notification', creatorNotif);
 
       // Broadcast new course announcement to everyone online
-      io.emit('new_notification', {
+      if (course.isPublished) await notificationService.notifyConnectedUsers(io, {
         type: 'NEW_COURSE',
         content: `🎉 New Course: "${course.title}" has just been published by ${req.user.firstName} ${req.user.lastName}! Check it out!`
       });

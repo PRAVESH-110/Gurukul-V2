@@ -10,10 +10,7 @@ import {
   LogOut,
   Settings,
   BookOpen,
-  Users,
   Menu,
-  X,
-  Home
 } from 'lucide-react';
 import logo from '@/assets/logo.png';
 import Image from 'next/image';
@@ -23,7 +20,7 @@ import toast from 'react-hot-toast';
 import NotificationModal from '../Notifications/Notificationdropdown';
 
 const Header = ({ toggleSidebar }) => {
-  const { user, logout } = useAuth();
+  const { user, token, logout } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
   const isHomePage = pathname === '/';
@@ -38,28 +35,28 @@ const Header = ({ toggleSidebar }) => {
   useEffect(() => {
     if (!user) return;
 
-    // 1. Fetch initial unread count via standard HTTP API
-    const fetchUnreadCount = async () => {
+    let unreadCountRequestId = 0;
+    const refreshUnreadCount = async () => {
+      const requestId = ++unreadCountRequestId;
       try {
         const res = await api.get('/notifications/unread-count');
-        setUnreadCount(res.data.count);
+        if (requestId === unreadCountRequestId && res.data?.success) {
+          setUnreadCount(res.data.count);
+        }
       } catch (err) {
         console.error('Failed to fetch unread notifications', err);
       }
     };
-    fetchUnreadCount();
-
-    // 2. Connect to the WebSocket Server
     const socketUrl = process.env.NEXT_PUBLIC_API_URL?.replace('/api', '') || 'http://localhost:5001';
-    const socket = io(socketUrl);
+    const socket = io(socketUrl, {
+      withCredentials: true,
+      auth: token ? { token } : {}
+    });
 
-    // 3. Join the personal user room
-    socket.emit('join', user._id);
-
-    // 4. Listen for real-time push events from the backend!
+    socket.on('connect', refreshUnreadCount);
     socket.on('new_notification', (notification) => {
       console.log('🔴 Real-time Notification received:', notification);
-      setUnreadCount(prev => prev + 1);
+      refreshUnreadCount();
 
       // Trigger a beautiful visual popup toast
       toast(notification.content, {
@@ -72,7 +69,7 @@ const Header = ({ toggleSidebar }) => {
     return () => {
       socket.disconnect();
     };
-  }, [user]);
+  }, [user, token]);
 
   //outside click for user menu
   useEffect(() => {

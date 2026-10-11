@@ -1,47 +1,28 @@
 const express = require('express');
-const jwt = require('jsonwebtoken');
 const rateLimit = require('express-rate-limit');
 const User = require('../models/User');
-const { protect, rateLimiter } = require('../middleware/auth');
+const RefreshToken = require('../models/RefreshToken');
+const { protect } = require('../middleware/auth');
 const { validateUserRegistration, validateUserLogin } = require('../middleware/validation');
 const { body, validationResult } = require('express-validator');
 const crypto = require('crypto');
 const sendEmail = require('../utils/sendEmail');
+const { requireCsrf, hasValidCsrf } = require('../middleware/csrf');
+const { verifyAuthOrigin } = require('../middleware/authOrigin');
+const authTokenService = require('../services/authToken.service');
 
 const router = express.Router();
 
-// Generate JWT token
-const generateToken = (id) => {
-  return jwt.sign({ id }, process.env.JWT_SECRET, {
-    expiresIn: process.env.JWT_EXPIRE || '24h'
-  });
-};
-
 // Generate token, set cookie in response and send response
-const sendTokenResponse = (user, statusCode, res, message) => {
-  const token = generateToken(user._id);
-
-  const cookieExpireDays = parseInt(process.env.JWT_COOKIE_EXPIRE) || 30;
-  const options = {
-    expires: new Date(Date.now() + cookieExpireDays * 24 * 60 * 60 * 1000),
-    httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: 'lax'
-  };
-
-  res.status(statusCode).cookie('token', token, options).json({
+const sendTokenResponse = async (user, statusCode, res, message) => {
+  const session = await authTokenService.createSession(user);
+  authTokenService.setSessionCookies(res, session);
+  return res.status(statusCode).json({
     success: true,
     message,
-    token,
-    user: {
-      _id: user._id,
-      firstName: user.firstName,
-      lastName: user.lastName,
-      email: user.email,
-      role: user.role,
-      avatar: user.avatar,
-      lastLoginAt: user.lastLoginAt
-    }
+    accessToken: session.accessToken,
+    csrfToken: session.csrfToken,
+    user: authTokenService.serializeUser(user)
   });
 };
 
@@ -113,7 +94,7 @@ const register = async (req, res, next) => {
     user.verificationToken = undefined;
     user.verificationExpires = undefined;
 
-    sendTokenResponse(user, 201, res, 'Registration successful! Please check your email to verify your account.');
+    await sendTokenResponse(user, 201, res, 'Registration successful! Please check your email to verify your account.');
   } catch (error) {
     next(error);
   }
@@ -158,7 +139,7 @@ const login = async (req, res, next) => {
     user.lastLoginAt = new Date();
     await user.save();
 
-    sendTokenResponse(user, 200, res, 'Login successful');
+    await sendTokenResponse(user, 200, res, 'Login successful');
   } catch (error) {
     next(error);
   }
@@ -217,16 +198,53 @@ const updateProfile = async (req, res, next) => {
 // @route   POST /api/auth/logout
 // @access  Private
 const logout = async (req, res, next) => {
-  res.cookie('token', 'none', {
-    expires: new Date(0), // Deletes the cookie immediately
-    httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: 'lax'
-  });
-  res.status(200).json({
-    success: true,
-    message: 'Logged out successfully'
-  });
+  try {
+    const refreshToken = req.cookies?.[authTokenService.REFRESH_COOKIE];
+    if (refreshToken && !hasValidCsrf(req)) {
+      authTokenService.clearSessionCookies(res);
+      return res.status(403).json({ success: false, error: 'CSRF_VALIDATION_FAILED', message: 'Invalid security token' });
+    }
+    await authTokenService.revokeSession(refreshToken);
+    authTokenService.clearSessionCookies(res);
+    return res.status(200).json({ success: true, message: 'Logged out successfully' });
+  } catch (error) {
+    return next(error);
+  }
+};
+
+const refreshSession = async (req, res, next) => {
+  try {
+    const session = await authTokenService.rotateSession(req.cookies?.[authTokenService.REFRESH_COOKIE]);
+    if (!session) {
+      authTokenService.clearSessionCookies(res);
+      return res.status(401).json({ success: false, message: 'Refresh session expired. Please log in again.' });
+    }
+
+    authTokenService.setSessionCookies(res, session);
+    return res.status(200).json({
+      success: true,
+      accessToken: session.accessToken,
+      csrfToken: session.csrfToken,
+      user: authTokenService.serializeUser(session.user)
+    });
+  } catch (error) {
+    return next(error);
+  }
+};
+
+const getCsrfToken = async (req, res, next) => {
+  try {
+    const refreshToken = req.cookies?.[authTokenService.REFRESH_COOKIE];
+    const csrfSession = await authTokenService.getCsrfForSession(refreshToken);
+    if (!csrfSession) {
+      return res.status(401).json({ success: false, message: 'No active refresh session' });
+    }
+
+    authTokenService.setCsrfCookie(res, csrfSession.csrfToken, csrfSession.expiresAt);
+    return res.status(200).json({ success: true, csrfToken: csrfSession.csrfToken });
+  } catch (error) {
+    return next(error);
+  }
 };
 
 // Additional auth routes
@@ -329,6 +347,7 @@ router.post('/reset-password', [
     user.resetPasswordToken = undefined;
     user.resetPasswordExpire = undefined;
     await user.save();
+    await RefreshToken.deleteMany({ userId: user._id });
 
     // Send confirmation email
     await sendEmail({
@@ -406,10 +425,12 @@ const authLimiter = rateLimit({
 });
 
 // Export the router and route handlers
-router.post('/register', [validateUserRegistration, authLimiter], register);
-router.post('/login', [validateUserLogin, authLimiter], login);
+router.post('/register', [verifyAuthOrigin, validateUserRegistration, authLimiter], register);
+router.post('/login', [verifyAuthOrigin, validateUserLogin, authLimiter], login);
+router.get('/csrf', getCsrfToken);
+router.post('/refresh', verifyAuthOrigin, requireCsrf, refreshSession);
 router.get('/me', protect, getMe);
 router.put('/profile', protect, updateProfile);
-router.post('/logout', protect, logout);
+router.post('/logout', verifyAuthOrigin, logout);
 
 module.exports = router;

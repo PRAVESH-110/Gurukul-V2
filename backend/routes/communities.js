@@ -4,7 +4,7 @@ const User = require('../models/User');
 const Post = require('../models/Post');
 const Event = require('../models/Event');
 const Notification = require('../models/Notification');
-const { protect, authorize, checkOwnership } = require('../middleware/auth');
+const { protect, authorize, checkOwnership, optionalProtect } = require('../middleware/auth');
 const { validateCommunity, validateObjectId } = require('../middleware/validation');
 const { upload, handleUploadErrors } = require('../middleware/upload');
 
@@ -166,8 +166,11 @@ const getCommunity = async (req, res, next) => {
       });
     }
 
-    // Check if private community and user is not a member
-    if (community.type === 'private' && req.user) {
+    // Private community details require an authenticated member, creator, or admin.
+    if (community.type === 'private') {
+      if (!req.user) {
+        return res.status(401).json({ success: false, message: 'Authentication required to view this community' });
+      }
       const isMember = community.members.some(member =>
         member.user && member.user.toString() === req.user._id.toString()
       );
@@ -659,7 +662,7 @@ router.post(
   validateCommunity,
   createCommunity
 );
-router.get('/:id', protect, validateObjectId('id'), getCommunity);
+router.get('/:id', optionalProtect, validateObjectId('id'), getCommunity);
 router.put(
   '/:id',
   protect,

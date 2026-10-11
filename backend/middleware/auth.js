@@ -13,19 +13,9 @@ const protect = async (req, res, next) => {
   try {
     let token;
 
-    // Check for token in headers, cookies, or query params
-    if (
-      req.headers.authorization &&
-      req.headers.authorization.startsWith('Bearer')
-    ) {
-      // Get token from header
+    // Protected API routes accept short-lived access tokens only.
+    if (req.headers.authorization && req.headers.authorization.startsWith('Bearer ')) {
       token = req.headers.authorization.split(' ')[1];
-    } else if (req.cookies && req.cookies.token) {
-      // Get token from cookie
-      token = req.cookies.token;
-    } else if (req.query && req.query.token) {
-      // Get token from query parameter (for email verification, etc.)
-      token = req.query.token;
     }
 
     if (!token) {
@@ -39,6 +29,13 @@ const protect = async (req, res, next) => {
     try {
       // Verify token
       const decoded = jwt.verify(token, process.env.JWT_SECRET);
+      if (decoded.type !== 'access') {
+        return res.status(401).json({
+          success: false,
+          error: 'INVALID_TOKEN_TYPE',
+          message: 'A valid access token is required.'
+        });
+      }
 
       // Check if token is blacklisted (for logout functionality)
       // This requires a TokenBlacklist model or Redis cache
@@ -220,15 +217,8 @@ const optionalProtect = async (req, res, next) => {
   try {
     let token;
 
-    if (
-      req.headers.authorization &&
-      req.headers.authorization.startsWith('Bearer')
-    ) {
+    if (req.headers.authorization && req.headers.authorization.startsWith('Bearer ')) {
       token = req.headers.authorization.split(' ')[1];
-    } else if (req.cookies && req.cookies.token) {
-      token = req.cookies.token;
-    } else if (req.query && req.query.token) {
-      token = req.query.token;
     }
 
     if (!token) {
@@ -237,6 +227,7 @@ const optionalProtect = async (req, res, next) => {
 
     try {
       const decoded = jwt.verify(token, process.env.JWT_SECRET);
+      if (decoded.type !== 'access') return next();
 
       const user = await User.findById(decoded.id)
         .select('-password -__v -resetPasswordToken -resetPasswordExpire');

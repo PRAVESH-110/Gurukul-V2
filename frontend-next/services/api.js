@@ -1,5 +1,8 @@
 import axios from 'axios';
 import { toast } from 'react-hot-toast';
+import store from '@/providers/store';
+import { clearCredentials, setAuthTokens } from '@/providers/store/authSlice';
+import { clearStoredTokens, persistCsrfToken, persistTokens, readStoredTokens } from '@/providers/authStorage';
 
 // Determine the base URL based on the environment
 const getBaseUrl = () => {
@@ -11,9 +14,65 @@ const getBaseUrl = () => {
   return process.env.NEXT_PUBLIC_API_URL_PROD || 'https://gurukul-04ad.onrender.com/api';
 };
 
+const baseURL = getBaseUrl();
+let refreshPromise = null;
+
+const isAuthEndpoint = (url = '') => /\/auth\/(login|register|refresh|csrf|logout)(\?|$)/.test(url);
+
+const tokenIsFresh = (token) => {
+  try {
+    const encoded = token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/');
+    const payload = JSON.parse(window.atob(encoded.padEnd(Math.ceil(encoded.length / 4) * 4, '=')));
+    return payload.exp * 1000 > Date.now() + 5000;
+  } catch {
+    return false;
+  }
+};
+
+const refreshAccessToken = async (failedAccessToken) => {
+  const rotate = async () => {
+    const latestAccessToken = readStoredTokens().accessToken;
+    if (latestAccessToken && latestAccessToken !== failedAccessToken && tokenIsFresh(latestAccessToken)) {
+      return latestAccessToken;
+    }
+
+    const rawClient = axios.create({ baseURL, withCredentials: true, timeout: 30000 });
+    let { csrfToken } = readStoredTokens();
+
+    if (!csrfToken) {
+      const csrfResponse = await rawClient.get('/auth/csrf');
+      csrfToken = csrfResponse.data?.csrfToken;
+      if (!csrfToken) throw new Error('Unable to initialize CSRF protection');
+      persistCsrfToken(csrfToken);
+    }
+
+    const response = await rawClient.post('/auth/refresh', {}, {
+      headers: { 'X-XSRF-TOKEN': csrfToken }
+    });
+    const { accessToken, csrfToken: rotatedCsrfToken } = response.data;
+    if (!accessToken || !rotatedCsrfToken) throw new Error('Invalid refresh response');
+
+    persistTokens(accessToken, rotatedCsrfToken);
+    store.dispatch(setAuthTokens({ accessToken, csrfToken: rotatedCsrfToken }));
+    return accessToken;
+  };
+
+  if (typeof navigator !== 'undefined' && navigator.locks?.request) {
+    return navigator.locks.request('gurukul-auth-refresh', rotate);
+  }
+  return rotate();
+};
+
+export const refreshAccessSession = () => {
+  if (!refreshPromise) {
+    refreshPromise = refreshAccessToken(null).finally(() => { refreshPromise = null; });
+  }
+  return refreshPromise;
+};
+
 // Create axios instance with default config
 const api = axios.create({
-  baseURL: getBaseUrl(),
+  baseURL,
   timeout: 30000,
   headers: {
     'Accept': 'application/json',
@@ -23,9 +82,7 @@ const api = axios.create({
     'X-Requested-With': 'XMLHttpRequest'
   },
   withCredentials: true,
-  xsrfCookieName: 'XSRF-TOKEN', //send the XSRF token as header (store in cookies)
-  xsrfHeaderName: 'X-XSRF-TOKEN',
-  validateStatus: (status) => status >= 200 && status < 500, // Resolve only if the status code is less than 500
+  validateStatus: (status) => status >= 200 && status < 500,
   crossDomain: true,
   withXSRFToken: true
 });
@@ -41,12 +98,8 @@ api.interceptors.request.use((config) => {
 
 // Add a request interceptor to handle credentials
 api.interceptors.request.use(config => {
-  // Get the CSRF token from cookies if it exists
-  const csrfToken = typeof document !== 'undefined' ? document.cookie
-    .split('; ')
-    .find(row => row.startsWith('XSRF-TOKEN='))
-    ?.split('=')[1] : null;
-
+  const { accessToken, csrfToken } = readStoredTokens();
+  if (accessToken) config.headers.Authorization = `Bearer ${accessToken}`;
   if (csrfToken) {
     config.headers['X-XSRF-TOKEN'] = csrfToken;
   }
@@ -94,7 +147,7 @@ const markServerWarm = () => {
 
 // Response interceptor to handle responses and errors
 api.interceptors.response.use(
-  (response) => {
+  async (response) => {
     // Mark server as warm on any successful response
     markServerWarm();
 
@@ -107,13 +160,26 @@ api.interceptors.response.use(
       );
     }
 
-    // Handle 401 Unauthorized
-    if (response.status === 401) {
-      const isAuthMe = response.config?.url?.includes('/auth/me');
-      // Redirect to login or show unauthorized message (except for silent initial auth checks)
-      if (!isAuthMe && typeof window !== 'undefined') {
-        if (window.location.pathname !== '/login') {
-          window.location.href = '/login?sessionExpired=true';
+    const requestConfig = response.config;
+    if (response.status === 401 && requestConfig && !requestConfig._authRetried && !isAuthEndpoint(requestConfig.url)) {
+      requestConfig._authRetried = true;
+      try {
+        const failedAccessToken = requestConfig.headers.Authorization || requestConfig.headers.get?.('Authorization');
+        if (!refreshPromise) {
+          refreshPromise = refreshAccessToken(failedAccessToken?.replace(/^Bearer\s+/i, '') || null).finally(() => {
+            refreshPromise = null;
+          });
+        }
+        const accessToken = await refreshPromise;
+        requestConfig.headers.Authorization = `Bearer ${accessToken}`;
+        return api.request(requestConfig);
+      } catch (refreshError) {
+        if ([401, 403].includes(refreshError.response?.status)) {
+          clearStoredTokens();
+          store.dispatch(clearCredentials());
+          if (typeof window !== 'undefined' && !['/login', '/register'].includes(window.location.pathname)) {
+            window.location.href = '/login?sessionExpired=true';
+          }
         }
       }
     }
@@ -199,6 +265,8 @@ export const authAPI = {
   login: (email, password) => api.post('/auth/login', { email, password }),
   register: (userData) => api.post('/auth/register', userData),
   logout: () => api.post('/auth/logout'),
+  refresh: () => api.post('/auth/refresh'),
+  getCsrf: () => api.get('/auth/csrf'),
   getProfile: () => api.get('/auth/me'),
   updateProfile: (data) => api.put('/auth/profile', data),
 };

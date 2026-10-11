@@ -1,10 +1,8 @@
 /**
  * Server-side fetch helper for RSC data fetching.
  * Only used in page.tsx server components — never in 'use client' files.
- * Does NOT use axios, localStorage, or any browser API.
+ * Does NOT use browser auth tokens. These calls are for public server-rendered data.
  */
-
-import { cookies } from 'next/headers';
 
 const getApiBase = () =>
     process.env.NODE_ENV === 'development'
@@ -38,17 +36,6 @@ export async function serverGet<T = unknown>(
         const headers: Record<string, string> = {
             'Accept': 'application/json',
         };
-
-        try {
-            const cookieStore = await cookies();
-            const token = cookieStore.get('token')?.value;
-            if (token) {
-                headers['Cookie'] = `token=${token}`;
-            }
-        } catch (cookieErr) {
-            // cookies() can throw when evaluated during static pre-rendering build phase.
-            // We ignore it and perform the request anonymously.
-        }
 
         const res = await fetch(url.toString(), {
             headers,

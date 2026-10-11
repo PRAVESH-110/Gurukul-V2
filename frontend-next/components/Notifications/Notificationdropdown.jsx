@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
     Bell,
     BookOpen,
@@ -13,96 +13,114 @@ import {
 import { notificationAPI } from '@/services/api';
 import toast from 'react-hot-toast';
 
-const NotificationDropdown = ({ isOpen, onClose, unreadCount, setUnreadCount }) => {
+const NotificationDropdown = ({ isOpen, unreadCount, setUnreadCount }) => {
     const [notifications, setNotifications] = useState([]);
     const [loading, setLoading] = useState(false);
+    const readRequests = useRef(new Set());
+    const unreadCountRequestId = useRef(0);
 
-    // Fetch notifications when dropdown opens
-    useEffect(() => {
-        if (isOpen) {
-            fetchNotifications();
+    const refreshUnreadCount = useCallback(async () => {
+        const requestId = ++unreadCountRequestId.current;
+        try {
+            const res = await notificationAPI.getUnreadCount();
+            if (requestId === unreadCountRequestId.current && res.data?.success) {
+                setUnreadCount(res.data.count);
+            }
+        } catch (err) {
+            console.error('Failed to refresh unread notification count:', err);
         }
-    }, [isOpen]);
+    }, [setUnreadCount]);
 
-    const fetchNotifications = async () => {
+    const fetchNotifications = useCallback(async () => {
         setLoading(true);
         try {
             const res = await notificationAPI.getNotifications();
             if (res.data && res.data.success) {
                 setNotifications(res.data.data);
+                await refreshUnreadCount();
             }
         } catch (err) {
             console.error('Failed to load notifications:', err);
         } finally {
             setLoading(false);
         }
-    };
+    }, [refreshUnreadCount]);
+
+    // Fetch notifications when dropdown opens
+    useEffect(() => {
+        // This starts an async network request; its state updates happen after the response.
+        // eslint-disable-next-line react-hooks/set-state-in-effect
+        if (isOpen) fetchNotifications();
+    }, [isOpen, fetchNotifications]);
+
+    const autoMarkAsRead = useCallback(async (id) => {
+        if (readRequests.current.has(id)) return;
+        readRequests.current.add(id);
+        try {
+            const res = await notificationAPI.markAsRead(id);
+            if (res.data && res.data.success) {
+                setNotifications(prev =>
+                    prev.map(notif => notif._id === id ? { ...notif, isRead: true } : notif)
+                );
+                await refreshUnreadCount();
+            }
+        } catch (err) {
+            console.error('Failed to auto-mark notification as read:', err);
+        } finally {
+            readRequests.current.delete(id);
+        }
+    }, [refreshUnreadCount]);
 
     // Automatically mark notifications as read when scrolled into view
     useEffect(() => {
         if (!isOpen || notifications.length === 0) return;
 
-        // Select all unread notification DOM elements inside the dropdown
         const unreadElements = document.querySelectorAll('[data-notification-unread="true"]');
         if (unreadElements.length === 0) return;
 
-        const timers = {}; // To store setTimeout timers for each notification
-
+        const timers = {};
         const observer = new IntersectionObserver((entries) => {
             entries.forEach(entry => {
                 const id = entry.target.getAttribute('data-id');
                 if (entry.isIntersecting) {
-                    // Trigger mark read after 1 seconds of static visibility
+                    if (timers[id]) clearTimeout(timers[id]);
                     timers[id] = setTimeout(() => {
+                        delete timers[id];
                         autoMarkAsRead(id);
                     }, 1000);
-                } else {
-                    // Cancel timer if it leaves viewport before the delay expires
-                    if (timers[id]) {
-                        clearTimeout(timers[id]);
-                        delete timers[id];
-                    }
+                } else if (timers[id]) {
+                    clearTimeout(timers[id]);
+                    delete timers[id];
                 }
             });
         }, {
-            root: document.querySelector('.max-h-96'), // Observe relative to the scrollable wrapper
-            threshold: 0.8 // Require 80% visibility to trigger
+            root: document.querySelector('.max-h-96'),
+            threshold: 0.8
         });
 
         unreadElements.forEach(el => observer.observe(el));
-
         return () => {
             observer.disconnect();
             Object.values(timers).forEach(clearTimeout);
         };
-    }, [notifications, isOpen]);
-
-    const autoMarkAsRead = async (id) => {
-        try {
-            const res = await notificationAPI.markAsRead(id);
-            if (res.data && res.data.success) {
-                setNotifications(prev =>
-                    prev.map(notif => notif._id === id ? { ...notif, isRead: true } : notif)
-                );
-                setUnreadCount(prev => Math.max(0, prev - 1));
-            }
-        } catch (err) {
-            console.error('Failed to auto-mark notification as read:', err);
-        }
-    };
+    }, [notifications, isOpen, autoMarkAsRead]);
 
     const handleMarkAsRead = async (id, e) => {
         e.stopPropagation(); // Avoid triggering any parent click
+        if (readRequests.current.has(id)) return;
+        readRequests.current.add(id);
         try {
             const res = await notificationAPI.markAsRead(id);
             if (res.data && res.data.success) {
                 setNotifications(prev =>
                     prev.map(notif => notif._id === id ? { ...notif, isRead: true } : notif)
                 );
-                setUnreadCount(prev => Math.max(0, prev - 1));
+                await refreshUnreadCount();
             }
         } catch (err) {
             console.error('Failed to mark notification as read:', err);
+        } finally {
+            readRequests.current.delete(id);
         }
     };
 
@@ -111,7 +129,7 @@ const NotificationDropdown = ({ isOpen, onClose, unreadCount, setUnreadCount }) 
             const res = await notificationAPI.markAllAsRead();
             if (res.data && res.data.success) {
                 setNotifications(prev => prev.map(notif => ({ ...notif, isRead: true })));
-                setUnreadCount(0);
+                await refreshUnreadCount();
                 toast.success('All notifications marked as read');
             }
         } catch (err) {
@@ -122,13 +140,10 @@ const NotificationDropdown = ({ isOpen, onClose, unreadCount, setUnreadCount }) 
     const handleDelete = async (id, e) => {
         e.stopPropagation();
         try {
-            const notifToDelete = notifications.find(n => n._id === id);
             const res = await notificationAPI.deleteNotification(id);
             if (res.data && res.data.success) {
                 setNotifications(prev => prev.filter(notif => notif._id !== id));
-                if (notifToDelete && !notifToDelete.isRead) {
-                    setUnreadCount(prev => Math.max(0, prev - 1));
-                }
+                await refreshUnreadCount();
                 toast.success('Notification deleted');
             }
         } catch (err) {

@@ -1,8 +1,7 @@
-import { notFound } from 'next/navigation';
-import Link from 'next/link';
-import { Globe, Lock, Users, MessageSquare, Calendar } from 'lucide-react';
+import { Globe, Lock, Users } from 'lucide-react';
 import { serverGet } from '@/lib/serverFetch';
 import CommunityActions from '@/components/pages/Communities/CommunityActions';
+import CommunityDetail from '@/components/pages/Communities/CommunityDetail';
 
 interface Member { user: string | { _id: string } }
 interface Community {
@@ -12,15 +11,13 @@ interface Community {
     members?: Member[];
 }
 interface CommunityResponse { community: Community }
-interface PostsResponse { posts: unknown[] }
-
 interface PageProps { params: Promise<{ id: string }> }
 
 export default async function CommunityDetailPage(props: PageProps) {
     const params = await props.params;
     const data = await serverGet<CommunityResponse>(`/communities/${params.id}`, { revalidate: 60 });
     const community = data?.community;
-    if (!community) notFound();
+    if (!community) return <CommunityDetail />;
 
     return (
         <div className="min-h-screen bg-gray-50/50 font-sans pb-12">
