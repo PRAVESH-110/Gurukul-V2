@@ -19,7 +19,7 @@ const routeModules = [
   // Community post endpoints share the posts router and must be mounted last.
   ['/', require('./posts')],
   ['/communities/:communityId/events', require('./events')],
-  ['/chat', require('./chat')]
+  ['/chat', require('./chat')],
 ];
 
 for (const [path, route] of routeModules) {

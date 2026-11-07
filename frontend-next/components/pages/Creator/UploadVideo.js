@@ -429,7 +429,8 @@ const UploadVideo = () => {
               {courses.length === 0 && (
                 <div className="mt-4 p-4 bg-yellow-50 border border-yellow-200 rounded-md">
                   <p className="text-sm text-yellow-800 mb-2">
-                    You haven't created any courses yet. Create a course first to upload videos.
+                    You haven&apos;t created any courses yet. Create a course first to upload
+                    videos.
                   </p>
                   <Link href="/create-course" className="btn-primary">
                     Create Your First Course

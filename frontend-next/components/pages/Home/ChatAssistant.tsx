@@ -48,8 +48,9 @@ const ChatAssistant = () => {
         content: response.data.reply || "I'm having trouble connecting right now.",
       };
       setMessages((prev) => [...prev, botMessage]);
-    } catch (error: any) {
-      if (isFirstChatRequest && error?.silent) {
+    } catch (error: unknown) {
+      const err = error as { silent?: boolean };
+      if (isFirstChatRequest && err?.silent) {
         setIsFirstChatRequest(false);
         setMessages((prev) => [
           ...prev,

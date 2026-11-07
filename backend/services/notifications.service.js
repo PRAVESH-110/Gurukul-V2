@@ -1,11 +1,17 @@
 const Notification = require('../models/Notification');
 
-const listForRecipient = (recipient) => Notification.find({ recipient }).sort({ createdAt: -1 }).limit(50);
-const countUnreadForRecipient = (recipient) => Notification.countDocuments({ recipient, isRead: false });
-const markRead = (id, recipient) => Notification.findOneAndUpdate(
-  { _id: id, recipient }, { isRead: true }, { new: true, runValidators: true }
-);
-const markAllRead = (recipient) => Notification.updateMany({ recipient, isRead: false }, { isRead: true });
+const listForRecipient = (recipient) =>
+  Notification.find({ recipient }).sort({ createdAt: -1 }).limit(50);
+const countUnreadForRecipient = (recipient) =>
+  Notification.countDocuments({ recipient, isRead: false });
+const markRead = (id, recipient) =>
+  Notification.findOneAndUpdate(
+    { _id: id, recipient },
+    { isRead: true },
+    { new: true, runValidators: true },
+  );
+const markAllRead = (recipient) =>
+  Notification.updateMany({ recipient, isRead: false }, { isRead: true });
 const deleteForRecipient = (id, recipient) => Notification.findOneAndDelete({ _id: id, recipient });
 
 const notifyConnectedUsers = async (io, { type, content }) => {
@@ -16,11 +22,13 @@ const notifyConnectedUsers = async (io, { type, content }) => {
     const recipientIds = [...new Set(sockets.map((socket) => socket.data.userId).filter(Boolean))];
     if (recipientIds.length === 0) return [];
 
-    const notifications = await Notification.insertMany(recipientIds.map((recipient) => ({
-      recipient,
-      type,
-      content
-    })));
+    const notifications = await Notification.insertMany(
+      recipientIds.map((recipient) => ({
+        recipient,
+        type,
+        content,
+      })),
+    );
 
     notifications.forEach((notification) => {
       io.to(notification.recipient.toString()).emit('new_notification', notification);
@@ -38,5 +46,5 @@ module.exports = {
   markRead,
   markAllRead,
   deleteForRecipient,
-  notifyConnectedUsers
+  notifyConnectedUsers,
 };

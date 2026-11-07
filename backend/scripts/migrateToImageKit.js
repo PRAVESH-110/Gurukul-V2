@@ -24,7 +24,7 @@ async function migrate() {
           const res = await uploadToImageKit({
             file: localFilePath,
             fileName: path.basename(localFilePath),
-            folder: 'gurukul/courses'
+            folder: 'gurukul/courses',
           });
           course.thumbnail = res.url;
           await course.save();
@@ -42,14 +42,16 @@ async function migrate() {
   for (const community of communities) {
     if (community.coverImage && community.coverImage.startsWith('/uploads/')) {
       const localFilePath = path.join(backendDir, community.coverImage);
-      console.log(`Checking community: "${community.name}" with coverImage ${community.coverImage}`);
+      console.log(
+        `Checking community: "${community.name}" with coverImage ${community.coverImage}`,
+      );
       if (fs.existsSync(localFilePath)) {
         console.log(`Uploading ${localFilePath} to ImageKit...`);
         try {
           const res = await uploadToImageKit({
             file: localFilePath,
             fileName: path.basename(localFilePath),
-            folder: 'gurukul/communities'
+            folder: 'gurukul/communities',
           });
           community.coverImage = res.url;
           await community.save();
@@ -67,7 +69,7 @@ async function migrate() {
   process.exit(0);
 }
 
-migrate().catch(err => {
+migrate().catch((err) => {
   console.error('Migration error:', err);
   process.exit(1);
 });

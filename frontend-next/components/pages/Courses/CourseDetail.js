@@ -103,7 +103,7 @@ const CourseDetail = () => {
           </div>
           <h3 className="text-lg font-bold text-gray-900 mb-2">Failed to load course details</h3>
           <p className="text-gray-600 mb-6">
-            We couldn't fetch the course information. Please try again later.
+            We couldn&apos;t fetch the course information. Please try again later.
           </p>
           <Link href="/courses" className="btn-primary w-full inline-block">
             Back to Courses
@@ -275,7 +275,7 @@ const CourseDetail = () => {
 
             {/* What you'll learn */}
             <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8">
-              <h2 className="text-2xl font-bold text-gray-900 mb-6">What you'll learn</h2>
+              <h2 className="text-2xl font-bold text-gray-900 mb-6">What you&apos;ll learn</h2>
               <div className="grid md:grid-cols-2 gap-4">
                 {[
                   'Master the core concepts and advanced techniques',

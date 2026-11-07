@@ -8,7 +8,7 @@ exports.getMyCommunities = async (req, res, next) => {
   try {
     const communities = await Community.find({
       'members.user': req.user.id,
-      isActive: true
+      isActive: true,
     })
       .select('name description banner membersCount isPrivate')
       .sort({ createdAt: -1 });
@@ -16,7 +16,7 @@ exports.getMyCommunities = async (req, res, next) => {
     res.status(200).json({
       success: true,
       count: communities.length,
-      data: communities
+      data: communities,
     });
   } catch (error) {
     next(error);
@@ -29,8 +29,8 @@ exports.getMyCommunities = async (req, res, next) => {
 exports.getMyCreatedCommunities = async (req, res, next) => {
   try {
     const communities = await Community.find({
-      'creator': req.user.id,
-      isActive: true
+      creator: req.user.id,
+      isActive: true,
     })
       .select('name description banner membersCount isPrivate')
       .sort({ createdAt: -1 });
@@ -38,7 +38,7 @@ exports.getMyCreatedCommunities = async (req, res, next) => {
     res.status(200).json({
       success: true,
       count: communities.length,
-      data: communities
+      data: communities,
     });
   } catch (error) {
     next(error);
@@ -49,8 +49,8 @@ exports.getMyCreatedCommunities = async (req, res, next) => {
 exports.getMyAdminCommunities = async (req, res, next) => {
   try {
     const communities = await Community.find({
-      'admin': req.user.id,
-      isActive: true
+      admin: req.user.id,
+      isActive: true,
     })
       .select('name description banner membersCount isPrivate')
       .sort({ createdAt: -1 });
@@ -58,7 +58,7 @@ exports.getMyAdminCommunities = async (req, res, next) => {
     res.status(200).json({
       success: true,
       count: communities.length,
-      data: communities
+      data: communities,
     });
   } catch (error) {
     next(error);

@@ -6,8 +6,8 @@ const attachSocketServer = (server, allowedOrigins) => {
     cors: {
       origin: allowedOrigins,
       methods: ['GET', 'POST', 'PUT', 'DELETE'],
-      credentials: true
-    }
+      credentials: true,
+    },
   });
 
   io.use(authenticateSocket);

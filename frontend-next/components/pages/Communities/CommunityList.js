@@ -267,8 +267,8 @@ const CommunityList = () => {
             </div>
             <h3 className="text-xl font-bold text-gray-900 mb-2">No communities found</h3>
             <p className="text-gray-600 max-w-md mx-auto mb-8">
-              We couldn't find any communities matching your criteria. Try adjusting your search or
-              filters.
+              We couldn&apos;t find any communities matching your criteria. Try adjusting your
+              search or filters.
             </p>
             {user?.role === 'creator' || user?.role === 'admin' ? (
               <Link href="/create-community" className="btn-primary inline-flex items-center">

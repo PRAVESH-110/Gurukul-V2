@@ -2,18 +2,17 @@ const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
 
-
 // Configure file type validation
 const fileTypes = {
   image: {
     allowed: ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/svg+xml'],
     maxSize: 10 * 1024 * 1024, // 10MB
-    error: 'Only images (JPEG, PNG, GIF, WebP, SVG) are allowed.'
+    error: 'Only images (JPEG, PNG, GIF, WebP, SVG) are allowed.',
   },
   video: {
     allowed: ['video/mp4', 'video/webm', 'video/ogg', 'video/quicktime'],
     maxSize: 100 * 1024 * 1024, // 100MB
-    error: 'Only videos (MP4, WebM, OGG, MOV) up to 100MB are allowed.'
+    error: 'Only videos (MP4, WebM, OGG, MOV) up to 100MB are allowed.',
   },
   document: {
     allowed: [
@@ -23,11 +22,11 @@ const fileTypes = {
       'application/vnd.ms-excel',
       'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
       'text/plain',
-      'text/csv'
+      'text/csv',
     ],
     maxSize: 10 * 1024 * 1024, // 10MB
-    error: 'Only documents (PDF, DOC, DOCX, XLS, XLSX, TXT, CSV) up to 10MB are allowed.'
-  }
+    error: 'Only documents (PDF, DOC, DOCX, XLS, XLSX, TXT, CSV) up to 10MB are allowed.',
+  },
 };
 
 // Create storage configuration
@@ -47,7 +46,7 @@ const getStorage = (type = 'general') => {
       const ext = path.extname(file.originalname).toLowerCase();
       const uniqueSuffix = `${Date.now()}-${Math.round(Math.random() * 1e9)}`;
       cb(null, `${type}-${uniqueSuffix}${ext}`);
-    }
+    },
   });
 };
 
@@ -70,9 +69,9 @@ const createUploader = (type) => {
     storage: getStorage(type),
     limits: {
       fileSize: config.maxSize,
-      files: 1
+      files: 1,
     },
-    fileFilter: createFileFilter(type)
+    fileFilter: createFileFilter(type),
   });
 };
 
@@ -100,9 +99,9 @@ const upload = {
   any: () => {
     return multer({
       storage: getStorage('misc'),
-      limits: { fileSize: 50 * 1024 * 1024 } // 50MB
+      limits: { fileSize: 50 * 1024 * 1024 }, // 50MB
     }).any();
-  }
+  },
 };
 
 // Error handling middleware for multer
@@ -126,7 +125,7 @@ const handleUploadErrors = (err, req, res, next) => {
           message = 'Unexpected field in file upload';
           break;
       }
-    } else if (err.message && Object.values(fileTypes).some(t => t.error === err.message)) {
+    } else if (err.message && Object.values(fileTypes).some((t) => t.error === err.message)) {
       status = 400; // Bad request for invalid file types
       message = err.message;
     }
@@ -134,7 +133,7 @@ const handleUploadErrors = (err, req, res, next) => {
     return res.status(status).json({
       success: false,
       message,
-      error: process.env.NODE_ENV === 'development' ? err.message : undefined
+      error: process.env.NODE_ENV === 'development' ? err.message : undefined,
     });
   }
 
@@ -166,5 +165,5 @@ module.exports = {
   upload,
   handleUploadErrors,
   deleteFile,
-  fileTypes
+  fileTypes,
 };

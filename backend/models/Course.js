@@ -1,245 +1,268 @@
 const mongoose = require('mongoose');
 
-const courseSchema = new mongoose.Schema({
-  title: {
-    type: String,
-    required: [true, 'Course title is required'],
-    trim: true,
-    maxlength: [200, 'Title cannot exceed 200 characters']
-  },
-  subtitle: {
-    type: String,
-    trim: true,
-    maxlength: [500, 'Subtitle cannot exceed 500 characters']
-  },
-  description: {
-    type: String,
-    required: [true, 'Course description is required'],
-    maxlength: [5000, 'Description cannot exceed 5000 characters']
-  },
-  thumbnail: {
-    type: String,
-    default: null
-  },
-  previewVideo: {
-    url: String,
-    fileId: String
-  },
-  creator: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'User',
-    required: [true, 'Creator is required']
-  },
-  community: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'Community',
-    default: null
-  },
-  instructors: [{
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'User'
-  }],
-  price: {
-    type: Number,
-    default: 0,
-    min: [0, 'Price cannot be negative']
-  },
-  isFree: {
-    type: Boolean,
-    default: true
-  },
-  level: {
-    type: String,
-    enum: ['beginner', 'intermediate', 'advanced'],
-    required: [true, 'Course level is required'],
-    default: 'beginner'
-  },
-  category: {
-    type: String,
-    required: [true, 'Category is required'],
-    trim: true
-  },
-  subcategory: {
-    type: String,
-    trim: true
-  },
-  language: {
-    type: String,
-    default: 'English'
-  },
-  tags: [{
-    type: String,
-    trim: true
-  }],
-  sections: [{
+const courseSchema = new mongoose.Schema(
+  {
     title: {
       type: String,
-      required: true,
-      trim: true
+      required: [true, 'Course title is required'],
+      trim: true,
+      maxlength: [200, 'Title cannot exceed 200 characters'],
     },
-    description: String,
-    order: {
-      type: Number,
-      default: 0
+    subtitle: {
+      type: String,
+      trim: true,
+      maxlength: [500, 'Subtitle cannot exceed 500 characters'],
     },
-    lectures: [{
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'Video'
-    }]
-  }],
-  enrolledStudents: [{
-    user: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'User'
+    description: {
+      type: String,
+      required: [true, 'Course description is required'],
+      maxlength: [5000, 'Description cannot exceed 5000 characters'],
     },
-    enrolledAt: {
-      type: Date,
-      default: Date.now
+    thumbnail: {
+      type: String,
+      default: null,
     },
-    completedVideos: [{
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'Video'
-    }],
-    progress: {
-      type: Number,
-      default: 0,
-      min: 0,
-      max: 100
-    }
-  }],
-  enrollmentCount: {
-    type: Number,
-    default: 0
-  },
-  rating: {
-    average: {
-      type: Number,
-      default: 0,
-      min: 0,
-      max: 5
+    previewVideo: {
+      url: String,
+      fileId: String,
     },
-    count: {
-      type: Number,
-      default: 0
-    }
-  },
-  reviews: [{
-    student: {
+    creator: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'User',
-      required: true
+      required: [true, 'Creator is required'],
+    },
+    community: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Community',
+      default: null,
+    },
+    instructors: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User',
+      },
+    ],
+    price: {
+      type: Number,
+      default: 0,
+      min: [0, 'Price cannot be negative'],
+    },
+    isFree: {
+      type: Boolean,
+      default: true,
+    },
+    level: {
+      type: String,
+      enum: ['beginner', 'intermediate', 'advanced'],
+      required: [true, 'Course level is required'],
+      default: 'beginner',
+    },
+    category: {
+      type: String,
+      required: [true, 'Category is required'],
+      trim: true,
+    },
+    subcategory: {
+      type: String,
+      trim: true,
+    },
+    language: {
+      type: String,
+      default: 'English',
+    },
+    tags: [
+      {
+        type: String,
+        trim: true,
+      },
+    ],
+    sections: [
+      {
+        title: {
+          type: String,
+          required: true,
+          trim: true,
+        },
+        description: String,
+        order: {
+          type: Number,
+          default: 0,
+        },
+        lectures: [
+          {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'Video',
+          },
+        ],
+      },
+    ],
+    enrolledStudents: [
+      {
+        user: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: 'User',
+        },
+        enrolledAt: {
+          type: Date,
+          default: Date.now,
+        },
+        completedVideos: [
+          {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'Video',
+          },
+        ],
+        progress: {
+          type: Number,
+          default: 0,
+          min: 0,
+          max: 100,
+        },
+      },
+    ],
+    enrollmentCount: {
+      type: Number,
+      default: 0,
     },
     rating: {
-      type: Number,
-      required: true,
-      min: 1,
-      max: 5
+      average: {
+        type: Number,
+        default: 0,
+        min: 0,
+        max: 5,
+      },
+      count: {
+        type: Number,
+        default: 0,
+      },
     },
-    comment: {
+    reviews: [
+      {
+        student: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: 'User',
+          required: true,
+        },
+        rating: {
+          type: Number,
+          required: true,
+          min: 1,
+          max: 5,
+        },
+        comment: {
+          type: String,
+          maxlength: [1000, 'Review comment cannot exceed 1000 characters'],
+        },
+        createdAt: {
+          type: Date,
+          default: Date.now,
+        },
+      },
+    ],
+    isPublished: {
+      type: Boolean,
+      default: false,
+    },
+    isApproved: {
+      type: Boolean,
+      default: false,
+    },
+    status: {
       type: String,
-      maxlength: [1000, 'Review comment cannot exceed 1000 characters']
+      enum: ['draft', 'pending', 'published', 'rejected'],
+      default: 'draft',
     },
-    createdAt: {
-      type: Date,
-      default: Date.now
-    }
-  }],
-  isPublished: {
-    type: Boolean,
-    default: false
-  },
-  isApproved: {
-    type: Boolean,
-    default: false
-  },
-  status: {
-    type: String,
-    enum: ['draft', 'pending', 'published', 'rejected'],
-    default: 'draft'
-  },
-  visibility: {
-    type: String,
-    enum: ['public', 'private'],
-    default: 'private'
-  },
-  duration: {
-    type: Number, // in minutes
-    default: 0
-  },
-  totalVideos: {
-    type: Number,
-    default: 0
-  },
-  resources: [{
-    title: String,
-    url: String,
-    type: {
+    visibility: {
       type: String,
-      enum: ['file', 'link', 'document']
+      enum: ['public', 'private'],
+      default: 'private',
     },
-    fileId: String
-  }],
-  requirements: [{
-    type: String,
-    trim: true
-  }],
-  learningOutcomes: [{
-    type: String,
-    trim: true
-  }],
-  certificateTemplate: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'CertificateTemplate'
-  },
-  settings: {
-    allowPreview: {
-      type: Boolean,
-      default: true
-    },
-    enableQnA: {
-      type: Boolean,
-      default: true
-    },
-    enableNotes: {
-      type: Boolean,
-      default: true
-    },
-    enableDownloads: {
-      type: Boolean,
-      default: false
-    },
-    completionThreshold: {
-      type: Number,
-      default: 80,
-      min: 0,
-      max: 100
-    }
-  },
-  seo: {
-    metaTitle: String,
-    metaDescription: String,
-    keywords: [String]
-  },
-  stats: {
-    totalViews: {
-      type: Number,
-      default: 0
-    },
-    totalWatchTime: {
+    duration: {
       type: Number, // in minutes
-      default: 0
+      default: 0,
     },
-    completionRate: {
+    totalVideos: {
       type: Number,
-      default: 0
-    }
+      default: 0,
+    },
+    resources: [
+      {
+        title: String,
+        url: String,
+        type: {
+          type: String,
+          enum: ['file', 'link', 'document'],
+        },
+        fileId: String,
+      },
+    ],
+    requirements: [
+      {
+        type: String,
+        trim: true,
+      },
+    ],
+    learningOutcomes: [
+      {
+        type: String,
+        trim: true,
+      },
+    ],
+    certificateTemplate: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'CertificateTemplate',
+    },
+    settings: {
+      allowPreview: {
+        type: Boolean,
+        default: true,
+      },
+      enableQnA: {
+        type: Boolean,
+        default: true,
+      },
+      enableNotes: {
+        type: Boolean,
+        default: true,
+      },
+      enableDownloads: {
+        type: Boolean,
+        default: false,
+      },
+      completionThreshold: {
+        type: Number,
+        default: 80,
+        min: 0,
+        max: 100,
+      },
+    },
+    seo: {
+      metaTitle: String,
+      metaDescription: String,
+      keywords: [String],
+    },
+    stats: {
+      totalViews: {
+        type: Number,
+        default: 0,
+      },
+      totalWatchTime: {
+        type: Number, // in minutes
+        default: 0,
+      },
+      completionRate: {
+        type: Number,
+        default: 0,
+      },
+    },
+    deletedAt: Date,
   },
-  deletedAt: Date
-}, {
-  timestamps: true,
-  toJSON: { virtuals: true },
-  toObject: { virtuals: true }
-});
+  {
+    timestamps: true,
+    toJSON: { virtuals: true },
+    toObject: { virtuals: true },
+  },
+);
 
 // Indexes for performance
 courseSchema.index({ creator: 1 });
@@ -255,7 +278,7 @@ courseSchema.index({
   subtitle: 'text',
   description: 'text',
   'instructors.name': 'text',
-  tags: 'text'
+  tags: 'text',
 });
 
 // Calculate average rating
@@ -277,7 +300,11 @@ courseSchema.pre('save', function (next) {
   // Handle both array formats for backward compatibility
   if (this.enrolledStudents && this.enrolledStudents.length > 0) {
     // If enrolledStudents contains objects with user property
-    if (this.enrolledStudents[0] && typeof this.enrolledStudents[0] === 'object' && this.enrolledStudents[0].user) {
+    if (
+      this.enrolledStudents[0] &&
+      typeof this.enrolledStudents[0] === 'object' &&
+      this.enrolledStudents[0].user
+    ) {
       this.enrollmentCount = this.enrolledStudents.length;
     } else {
       // If enrolledStudents contains direct ObjectIds
@@ -291,7 +318,7 @@ courseSchema.pre('save', function (next) {
   if (this.isModified('sections')) {
     this.totalVideos = this.sections.reduce(
       (total, section) => total + (section.lectures?.length || 0),
-      0
+      0,
     );
   }
 
@@ -323,15 +350,15 @@ courseSchema.pre('save', function (next) {
 // Add a method to check if a user is enrolled
 courseSchema.methods.isEnrolled = function (userId) {
   if (!userId) return false;
-  return this.enrolledStudents.some(student =>
-    student.user && student.user.toString() === userId.toString()
+  return this.enrolledStudents.some(
+    (student) => student.user && student.user.toString() === userId.toString(),
   );
 };
 
 // Add a method to get user progress
 courseSchema.methods.getUserProgress = function (userId) {
-  const enrollment = this.enrolledStudents.find(student =>
-    student.user && student.user.toString() === userId.toString()
+  const enrollment = this.enrolledStudents.find(
+    (student) => student.user && student.user.toString() === userId.toString(),
   );
 
   if (!enrollment) return 0;
@@ -344,8 +371,8 @@ courseSchema.methods.getUserProgress = function (userId) {
 
 // Add a method to mark a video as completed
 courseSchema.methods.markVideoCompleted = async function (userId, videoId) {
-  const enrollment = this.enrolledStudents.find(student =>
-    student.user && student.user.toString() === userId.toString()
+  const enrollment = this.enrolledStudents.find(
+    (student) => student.user && student.user.toString() === userId.toString(),
   );
 
   if (!enrollment) {
@@ -353,8 +380,8 @@ courseSchema.methods.markVideoCompleted = async function (userId, videoId) {
   }
 
   // Check if video is already marked as completed
-  const videoExists = enrollment.completedVideos.some(vid =>
-    vid.toString() === videoId.toString()
+  const videoExists = enrollment.completedVideos.some(
+    (vid) => vid.toString() === videoId.toString(),
   );
 
   if (!videoExists) {
@@ -389,7 +416,7 @@ courseSchema.methods.getFirstVideo = async function () {
     path: 'sections.lectures',
     select: 'title url duration isPublished',
     match: { isPublished: true },
-    options: { sort: { order: 1 }, limit: 1 }
+    options: { sort: { order: 1 }, limit: 1 },
   }).execPopulate();
 
   for (const section of course.sections) {
@@ -410,7 +437,7 @@ courseSchema.methods.enrollStudent = function (userId) {
       user: userId,
       enrolledAt: new Date(),
       completedVideos: [],
-      progress: 0
+      progress: 0,
     });
   }
 };
@@ -418,7 +445,7 @@ courseSchema.methods.enrollStudent = function (userId) {
 // Unenroll student
 courseSchema.methods.unenrollStudent = function (userId) {
   this.enrolledStudents = this.enrolledStudents.filter(
-    student => student.user.toString() !== userId.toString()
+    (student) => student.user.toString() !== userId.toString(),
   );
 };
 

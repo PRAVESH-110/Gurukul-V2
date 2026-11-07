@@ -310,7 +310,7 @@ const CreateCommunity = () => {
                   <li>Foster a welcoming and inclusive environment</li>
                   <li>Encourage meaningful discussions and knowledge sharing</li>
                   <li>Respect all community members and their opinions</li>
-                  <li>Keep content relevant to the community's purpose</li>
+                  <li>Keep content relevant to the community&apos;s purpose</li>
                 </ul>
               </div>
             </div>

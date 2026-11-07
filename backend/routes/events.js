@@ -1,4 +1,3 @@
-
 const express = require('express');
 const Event = require('../models/Event');
 const Community = require('../models/Community');
@@ -17,7 +16,7 @@ const getCommunityEvents = async (req, res, next) => {
 
     const query = {
       community: communityId,
-      isActive: true
+      isActive: true,
     };
 
     // Filter for upcoming events
@@ -41,9 +40,9 @@ const getCommunityEvents = async (req, res, next) => {
       pagination: {
         page: parseInt(page),
         limit: parseInt(limit),
-        pages: Math.ceil(total / limit)
+        pages: Math.ceil(total / limit),
       },
-      events
+      events,
     });
   } catch (error) {
     next(error);
@@ -64,17 +63,21 @@ const createEvent = async (req, res, next) => {
       location,
       maxAttendees,
       isRecurring,
-      recurrencePattern
+      recurrencePattern,
     } = req.body;
     const { communityId } = req.params;
 
     const community = req.community; // Set by checkCommunityMembership middleware
 
     // Check if user is admin of the community or system admin
-    if (!community.isAdmin(req.user._id) && community.creator.toString() !== req.user._id.toString() && req.user.role !== 'admin') {
+    if (
+      !community.isAdmin(req.user._id) &&
+      community.creator.toString() !== req.user._id.toString() &&
+      req.user.role !== 'admin'
+    ) {
       return res.status(403).json({
         success: false,
-        message: 'Only community admins can create events'
+        message: 'Only community admins can create events',
       });
     }
 
@@ -88,7 +91,7 @@ const createEvent = async (req, res, next) => {
       maxAttendees,
       isRecurring,
       community: communityId,
-      creator: req.user._id
+      creator: req.user._id,
     };
 
     // Only include recurrencePattern if isRecurring is true
@@ -96,7 +99,7 @@ const createEvent = async (req, res, next) => {
       if (!recurrencePattern) {
         return res.status(400).json({
           success: false,
-          message: 'Recurrence pattern is required for recurring events'
+          message: 'Recurrence pattern is required for recurring events',
         });
       }
       eventData.recurrencePattern = recurrencePattern;
@@ -109,7 +112,7 @@ const createEvent = async (req, res, next) => {
     res.status(201).json({
       success: true,
       message: 'Event created successfully',
-      event
+      event,
     });
   } catch (error) {
     next(error);
@@ -129,7 +132,7 @@ const getEvent = async (req, res, next) => {
     if (!event || !event.isActive) {
       return res.status(404).json({
         success: false,
-        message: 'Event not found'
+        message: 'Event not found',
       });
     }
 
@@ -142,7 +145,7 @@ const getEvent = async (req, res, next) => {
     if (!isMember && !isCreator && !isAdmin) {
       return res.status(403).json({
         success: false,
-        message: 'You must be a member to view this event'
+        message: 'You must be a member to view this event',
       });
     }
 
@@ -150,8 +153,10 @@ const getEvent = async (req, res, next) => {
       success: true,
       event: {
         ...event.toObject(),
-        userRSVP: event.attendees.find(a => a.user._id.toString() === req.user._id.toString())?.status || null
-      }
+        userRSVP:
+          event.attendees.find((a) => a.user._id.toString() === req.user._id.toString())?.status ||
+          null,
+      },
     });
   } catch (error) {
     next(error);
@@ -168,7 +173,7 @@ const updateEvent = async (req, res, next) => {
     if (!event || !event.isActive) {
       return res.status(404).json({
         success: false,
-        message: 'Event not found'
+        message: 'Event not found',
       });
     }
 
@@ -176,7 +181,7 @@ const updateEvent = async (req, res, next) => {
     if (event.creator.toString() !== req.user._id.toString() && req.user.role !== 'admin') {
       return res.status(403).json({
         success: false,
-        message: 'Not authorized to update this event'
+        message: 'Not authorized to update this event',
       });
     }
 
@@ -189,7 +194,7 @@ const updateEvent = async (req, res, next) => {
       location,
       maxAttendees,
       isRecurring,
-      recurrencePattern
+      recurrencePattern,
     } = req.body;
 
     const updatedEvent = await Event.findByIdAndUpdate(
@@ -203,18 +208,19 @@ const updateEvent = async (req, res, next) => {
         location: location !== undefined ? location : event.location,
         maxAttendees: maxAttendees !== undefined ? maxAttendees : event.maxAttendees,
         isRecurring: isRecurring !== undefined ? isRecurring : event.isRecurring,
-        recurrencePattern: recurrencePattern !== undefined ? recurrencePattern : event.recurrencePattern
+        recurrencePattern:
+          recurrencePattern !== undefined ? recurrencePattern : event.recurrencePattern,
       },
       {
         new: true,
-        runValidators: true
-      }
+        runValidators: true,
+      },
     ).populate('creator', 'firstName lastName avatar');
 
     res.status(200).json({
       success: true,
       message: 'Event updated successfully',
-      event: updatedEvent
+      event: updatedEvent,
     });
   } catch (error) {
     next(error);
@@ -231,7 +237,7 @@ const deleteEvent = async (req, res, next) => {
     if (!event) {
       return res.status(404).json({
         success: false,
-        message: 'Event not found'
+        message: 'Event not found',
       });
     }
 
@@ -239,7 +245,7 @@ const deleteEvent = async (req, res, next) => {
     if (event.creator.toString() !== req.user._id.toString() && req.user.role !== 'admin') {
       return res.status(403).json({
         success: false,
-        message: 'Not authorized to delete this event'
+        message: 'Not authorized to delete this event',
       });
     }
 
@@ -249,7 +255,7 @@ const deleteEvent = async (req, res, next) => {
 
     res.status(200).json({
       success: true,
-      message: 'Event deleted successfully'
+      message: 'Event deleted successfully',
     });
   } catch (error) {
     next(error);
@@ -267,7 +273,7 @@ const rsvpToEvent = async (req, res, next) => {
     if (!event || !event.isActive) {
       return res.status(404).json({
         success: false,
-        message: 'Event not found'
+        message: 'Event not found',
       });
     }
 
@@ -280,17 +286,17 @@ const rsvpToEvent = async (req, res, next) => {
     if (!isMember && !isCreator && !isAdmin) {
       return res.status(403).json({
         success: false,
-        message: 'You must be a member to RSVP to this event'
+        message: 'You must be a member to RSVP to this event',
       });
     }
 
     // Check if event has max attendees limit
     if (event.maxAttendees && status === 'going') {
-      const goingCount = event.attendees.filter(a => a.status === 'going').length;
+      const goingCount = event.attendees.filter((a) => a.status === 'going').length;
       if (goingCount >= event.maxAttendees) {
         return res.status(400).json({
           success: false,
-          message: 'Event has reached maximum capacity'
+          message: 'Event has reached maximum capacity',
         });
       }
     }
@@ -299,7 +305,7 @@ const rsvpToEvent = async (req, res, next) => {
     if (!['going', 'maybe', 'not_going'].includes(status)) {
       return res.status(400).json({
         success: false,
-        message: 'Invalid RSVP status'
+        message: 'Invalid RSVP status',
       });
     }
 
@@ -310,7 +316,7 @@ const rsvpToEvent = async (req, res, next) => {
     res.status(200).json({
       success: true,
       message: `RSVP updated to ${status}`,
-      status
+      status,
     });
   } catch (error) {
     next(error);

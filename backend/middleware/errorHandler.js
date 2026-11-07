@@ -12,9 +12,9 @@ const errorHandler = (err, req, res, next) => {
       originalError: {
         name: err.name,
         code: err.code,
-        keyValue: err.keyValue
-      }
-    })
+        keyValue: err.keyValue,
+      },
+    }),
   };
 
   // Log the error with request details
@@ -34,12 +34,14 @@ const errorHandler = (err, req, res, next) => {
 
     case 'ValidationError':
       error.statusCode = 400;
-      error.message = Object.values(err.errors).map(val => val.message).join('; ');
+      error.message = Object.values(err.errors)
+        .map((val) => val.message)
+        .join('; ');
       error.errorCode = 'VALIDATION_ERROR';
-      error.details = Object.values(err.errors).map(val => ({
+      error.details = Object.values(err.errors).map((val) => ({
         field: val.path,
         message: val.message,
-        value: val.value
+        value: val.value,
       }));
       break;
 
@@ -63,7 +65,7 @@ const errorHandler = (err, req, res, next) => {
         error.errorCode = 'DUPLICATE_KEY';
         error.details = {
           field: Object.keys(err.keyPattern || {}).join(', '),
-          value: Object.values(err.keyValue || {})[0]
+          value: Object.values(err.keyValue || {})[0],
         };
       }
       break;
@@ -89,12 +91,12 @@ const errorHandler = (err, req, res, next) => {
       ...(error.details && { details: error.details }),
       ...(process.env.NODE_ENV === 'development' && {
         stack: error.stack,
-        originalError: error.originalError
-      })
+        originalError: error.originalError,
+      }),
     },
     timestamp: new Date().toISOString(),
     path: req.originalUrl,
-    method: req.method
+    method: req.method,
   });
 };
 

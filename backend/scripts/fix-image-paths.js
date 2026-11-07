@@ -21,7 +21,7 @@ async function fixImagePaths() {
 
     // Fix Course thumbnails
     const courses = await Course.find({
-      thumbnail: { $regex: /^\/uploads\/image-/ }
+      thumbnail: { $regex: /^\/uploads\/image-/ },
     });
 
     console.log(`📚 Found ${courses.length} courses with old thumbnail paths`);
@@ -40,7 +40,7 @@ async function fixImagePaths() {
 
     // Fix Community cover images
     const communities = await Community.find({
-      coverImage: { $regex: /^\/uploads\/image-/ }
+      coverImage: { $regex: /^\/uploads\/image-/ },
     });
 
     console.log(`\n🏘️  Found ${communities.length} communities with old cover image paths`);
@@ -57,7 +57,6 @@ async function fixImagePaths() {
     }
 
     console.log('\n✅ All image paths fixed!');
-
   } catch (error) {
     console.error('❌ Error:', error);
   } finally {

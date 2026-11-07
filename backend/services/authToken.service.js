@@ -10,7 +10,8 @@ const REFRESH_TTL_DAYS = Number.parseInt(process.env.REFRESH_TOKEN_EXPIRE_DAYS, 
 const hash = (value) => crypto.createHash('sha256').update(value).digest('hex');
 
 const createCsrfToken = (refreshToken, nonce) => {
-  const signature = crypto.createHmac('sha256', process.env.JWT_SECRET)
+  const signature = crypto
+    .createHmac('sha256', process.env.JWT_SECRET)
     .update(`${refreshToken}.${nonce}`)
     .digest('base64url');
   return `${nonce}.${signature}`;
@@ -26,37 +27,48 @@ const createSession = async (user, familyId = crypto.randomUUID()) => {
     familyId,
     tokenHash: hash(refreshToken),
     csrfNonce,
-    expiresAt
+    expiresAt,
   });
 
   const accessToken = jwt.sign({ id: user._id, type: 'access' }, process.env.JWT_SECRET, {
-    expiresIn: process.env.ACCESS_TOKEN_EXPIRE || '1h'
+    expiresIn: process.env.ACCESS_TOKEN_EXPIRE || '1h',
   });
 
   return {
     accessToken,
     refreshToken,
     csrfToken: createCsrfToken(refreshToken, csrfNonce),
-    expiresAt
+    expiresAt,
   };
 };
 
 const rotateSession = async (refreshToken) => {
   if (!refreshToken) return null;
 
-  const session = await RefreshToken.findOneAndUpdate({
-    tokenHash: hash(refreshToken),
-    expiresAt: { $gt: new Date() },
-    consumedAt: null
-  }, { $set: { consumedAt: new Date() } }, { new: false });
+  const session = await RefreshToken.findOneAndUpdate(
+    {
+      tokenHash: hash(refreshToken),
+      expiresAt: { $gt: new Date() },
+      consumedAt: null,
+    },
+    { $set: { consumedAt: new Date() } },
+    { new: false },
+  );
   if (!session) {
-    const replayedSession = await RefreshToken.findOne({ tokenHash: hash(refreshToken), consumedAt: { $ne: null } });
+    const replayedSession = await RefreshToken.findOne({
+      tokenHash: hash(refreshToken),
+      consumedAt: { $ne: null },
+    });
     if (replayedSession) await RefreshToken.deleteMany({ familyId: replayedSession.familyId });
     return null;
   }
 
   const user = await User.findById(session.userId);
-  if (!user || !user.isActive || (user.passwordChangedAt && session.createdAt <= user.passwordChangedAt)) {
+  if (
+    !user ||
+    !user.isActive ||
+    (user.passwordChangedAt && session.createdAt <= user.passwordChangedAt)
+  ) {
     await RefreshToken.deleteMany({ familyId: session.familyId });
     return null;
   }
@@ -75,18 +87,18 @@ const getCsrfForSession = async (refreshToken) => {
   const session = await RefreshToken.findOne({
     tokenHash: hash(refreshToken),
     expiresAt: { $gt: new Date() },
-    consumedAt: null
+    consumedAt: null,
   }).select('csrfNonce expiresAt');
   if (!session) return null;
   return {
     csrfToken: createCsrfToken(refreshToken, session.csrfNonce),
-    expiresAt: session.expiresAt
+    expiresAt: session.expiresAt,
   };
 };
 
 const cookieSettings = () => ({
   secure: process.env.NODE_ENV === 'production',
-  sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax'
+  sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
 });
 
 const setSessionCookies = (res, session) => {
@@ -98,13 +110,13 @@ const setSessionCookies = (res, session) => {
     ...settings,
     httpOnly: true,
     path: '/api/auth',
-    expires: session.expiresAt
+    expires: session.expiresAt,
   });
   res.cookie(CSRF_COOKIE, session.csrfToken, {
     ...settings,
     httpOnly: false,
     path: '/',
-    expires: session.expiresAt
+    expires: session.expiresAt,
   });
 };
 
@@ -115,7 +127,7 @@ const setCsrfCookie = (res, csrfToken, expiresAt) => {
     ...cookieSettings(),
     httpOnly: false,
     path: '/',
-    expires: expiresAt
+    expires: expiresAt,
   });
 };
 
@@ -134,7 +146,7 @@ const serializeUser = (user) => ({
   email: user.email,
   role: user.role,
   avatar: user.avatar,
-  lastLoginAt: user.lastLoginAt
+  lastLoginAt: user.lastLoginAt,
 });
 
 module.exports = {
@@ -149,5 +161,5 @@ module.exports = {
   setSessionCookies,
   setCsrfCookie,
   clearSessionCookies,
-  serializeUser
+  serializeUser,
 };

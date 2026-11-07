@@ -56,7 +56,7 @@ const StudentDashboard = () => {
             Welcome back, {dashboard.user.firstName}!
           </h1>
           <p className="text-primary-100 text-lg max-w-2xl">
-            Continue your learning journey and explore new courses. You're doing great!
+            Continue your learning journey and explore new courses. You&apos;re doing great!
           </p>
         </div>
       </div>

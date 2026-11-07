@@ -22,13 +22,10 @@ async function directUpdate() {
           const res = await uploadToImageKit({
             file: localFilePath,
             fileName: path.basename(localFilePath),
-            folder: 'gurukul/courses'
+            folder: 'gurukul/courses',
           });
           const updateObj = { $set: { thumbnail: res.url } };
-          await db.collection('courses').updateOne(
-            { _id: course._id },
-            updateObj
-          );
+          await db.collection('courses').updateOne({ _id: course._id }, updateObj);
           console.log('Successfully updated in DB -> ' + res.url);
         } catch (err) {
           console.error('Error uploading:', err.message);
@@ -49,13 +46,10 @@ async function directUpdate() {
           const res = await uploadToImageKit({
             file: localFilePath,
             fileName: path.basename(localFilePath),
-            folder: 'gurukul/communities'
+            folder: 'gurukul/communities',
           });
           const updateObj = { $set: { coverImage: res.url } };
-          await db.collection('communities').updateOne(
-            { _id: community._id },
-            updateObj
-          );
+          await db.collection('communities').updateOne({ _id: community._id }, updateObj);
           console.log('Successfully updated in DB -> ' + res.url);
         } catch (err) {
           console.error('Error uploading:', err.message);
@@ -70,8 +64,7 @@ async function directUpdate() {
   process.exit(0);
 }
 
-directUpdate().catch(err => {
+directUpdate().catch((err) => {
   console.error('Error:', err);
   process.exit(1);
 });
-

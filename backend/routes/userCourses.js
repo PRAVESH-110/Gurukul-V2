@@ -11,6 +11,11 @@ router.get('/me/enrolled', protect, userCoursesController.getEnrolledCourses);
 // @desc    Get user's created courses (for instructors)
 // @route   GET /api/courses/me/created
 // @access  Private (Instructor)
-router.get('/me/created', protect, authorize('creator', 'admin'), userCoursesController.getCreatedCourses);
+router.get(
+  '/me/created',
+  protect,
+  authorize('creator', 'admin'),
+  userCoursesController.getCreatedCourses,
+);
 
 module.exports = router;
