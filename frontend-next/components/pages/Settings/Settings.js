@@ -32,13 +32,13 @@ const Settings = () => {
     notifications: {
       email: true,
       push: false,
-      courseUpdates: true
+      courseUpdates: true,
     },
     privacy: {
       profileVisibility: 'public',
       emailVisibility: 'private',
-      activityStatus: 'public'
-    }
+      activityStatus: 'public',
+    },
   });
 
   // Sync profile query data with state
@@ -52,13 +52,13 @@ const Settings = () => {
         notifications: profile.notifications || {
           email: true,
           push: false,
-          courseUpdates: true
+          courseUpdates: true,
         },
         privacy: profile.privacy || {
           profileVisibility: 'public',
           emailVisibility: 'private',
-          activityStatus: 'public'
-        }
+          activityStatus: 'public',
+        },
       });
     }
   }, [profile]);
@@ -67,7 +67,7 @@ const Settings = () => {
     mutationFn: (data) => userAPI.updateUser(userId, data),
 
     onSuccess: (response) => {
-      toast.success("Settings updated successfully");
+      toast.success('Settings updated successfully');
 
       // Extract user data from response
       const responseData = response?.data || response;
@@ -79,12 +79,12 @@ const Settings = () => {
           if (oldData) {
             return {
               ...oldData,
-              user: { ...updatedUser }
+              user: { ...updatedUser },
             };
           }
           return {
             success: true,
-            user: { ...updatedUser }
+            user: { ...updatedUser },
           };
         });
 
@@ -92,15 +92,15 @@ const Settings = () => {
         updateUser(updatedUser);
       } else {
         // Invalidate fallback
-        queryClient.invalidateQueries(["userProfile", userId]);
+        queryClient.invalidateQueries(['userProfile', userId]);
       }
 
-      router.push("/profile");
+      router.push('/profile');
     },
 
     onError: () => {
-      toast.error("Failed to update settings");
-    }
+      toast.error('Failed to update settings');
+    },
   });
 
   const handleSave = () => {
@@ -125,29 +125,29 @@ const Settings = () => {
   }
 
   const handleInputChange = (field, value) => {
-    setSettings(prev => ({
+    setSettings((prev) => ({
       ...prev,
-      [field]: value
+      [field]: value,
     }));
   };
 
   const handleNotificationChange = (field, value) => {
-    setSettings(prev => ({
+    setSettings((prev) => ({
       ...prev,
       notifications: {
         ...prev.notifications,
-        [field]: value
-      }
+        [field]: value,
+      },
     }));
   };
 
   const handlePrivacyChange = (field, value) => {
-    setSettings(prev => ({
+    setSettings((prev) => ({
       ...prev,
       privacy: {
         ...prev.privacy,
-        [field]: value
-      }
+        [field]: value,
+      },
     }));
   };
 
@@ -172,9 +172,7 @@ const Settings = () => {
         <div className="p-6 space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Full Name
-              </label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Full Name</label>
               <input
                 type="text"
                 value={settings.name}
@@ -184,9 +182,7 @@ const Settings = () => {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Email
-              </label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
               <input
                 type="email"
                 value={settings.email}
@@ -199,9 +195,7 @@ const Settings = () => {
             </div>
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Bio
-            </label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Bio</label>
             <textarea
               value={settings.bio}
               onChange={(e) => handleInputChange('bio', e.target.value)}
@@ -211,9 +205,7 @@ const Settings = () => {
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Location
-            </label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Location</label>
             <input
               type="text"
               value={settings.location}
@@ -339,4 +331,3 @@ const Settings = () => {
 };
 
 export default Settings;
-

@@ -20,7 +20,6 @@ const Layout = ({ children }) => {
     const handleResize = () => {
       const mobile = window.innerWidth < 768;
       setIsMobile(mobile);
-
     };
 
     // Initial check
@@ -50,7 +49,7 @@ const Layout = ({ children }) => {
         <main
           className={`flex-1 min-w-0 transition-all duration-300`}
           style={{
-            marginLeft: user && isSidebarOpen && !isMobile ? `${sidebarWidth}px` : '0'
+            marginLeft: user && isSidebarOpen && !isMobile ? `${sidebarWidth}px` : '0',
           }}
         >
           <div

@@ -1,13 +1,13 @@
-"use client";
+'use client';
 
-import React, { useState, useEffect, Suspense } from "react";
-import Link from "next/link";
-import { useRouter, useSearchParams } from "next/navigation";
-import { useAuth } from "@/context/AuthContext";
-import { useForm } from "react-hook-form";
-import { Eye, EyeOff, BookOpen } from "lucide-react";
-import LoadingSpinner from "@/components/UI/LoadingSpinner";
-import WarmupLoader from "@/components/UI/WarmupLoader";
+import React, { useState, useEffect, Suspense } from 'react';
+import Link from 'next/link';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { useAuth } from '@/context/AuthContext';
+import { useForm } from 'react-hook-form';
+import { Eye, EyeOff, BookOpen } from 'lucide-react';
+import LoadingSpinner from '@/components/UI/LoadingSpinner';
+import WarmupLoader from '@/components/UI/WarmupLoader';
 
 function LoginInner() {
   const { login } = useAuth();
@@ -31,7 +31,7 @@ function LoginInner() {
     setError,
   } = useForm();
 
-  const from = searchParams.get("from") || "/dashboard";
+  const from = searchParams.get('from') || '/dashboard';
 
   const onSubmit = async (data) => {
     setIsLoading(true);
@@ -44,7 +44,7 @@ function LoginInner() {
         router.push(from);
       } else {
         setIsFirstAttempt(false); // Validation error — not a cold start
-        setError("root", { message: result.message || "Invalid credentials" });
+        setError('root', { message: result.message || 'Invalid credentials' });
       }
     } catch (error) {
       if (isFirstAttempt && error?.silent) {
@@ -52,8 +52,8 @@ function LoginInner() {
         console.warn('Login cold-start failure, suppressed.');
         setIsFirstAttempt(false);
       } else {
-        setError("root", {
-          message: error.message || "An unexpected error occurred",
+        setError('root', {
+          message: error.message || 'An unexpected error occurred',
         });
       }
     } finally {
@@ -68,7 +68,7 @@ function LoginInner() {
         <div className="absolute -top-[20%] -left-[10%] w-[50%] h-[50%] rounded-full bg-primary-100/50 blur-3xl opacity-60 animate-fade-in"></div>
         <div
           className="absolute top-[20%] -right-[10%] w-[40%] h-[40%] rounded-full bg-blue-100/50 blur-3xl opacity-60 animate-fade-in"
-          style={{ animationDelay: "0.2s" }}
+          style={{ animationDelay: '0.2s' }}
         ></div>
       </div>
 
@@ -90,18 +90,15 @@ function LoginInner() {
         <form className="mt-8 space-y-6" onSubmit={handleSubmit(onSubmit)}>
           <div className="space-y-5">
             <div>
-              <label
-                htmlFor="email"
-                className="block text-sm font-medium text-gray-700 mb-1.5"
-              >
+              <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1.5">
                 Email address
               </label>
               <input
-                {...register("email", {
-                  required: "Email is required",
+                {...register('email', {
+                  required: 'Email is required',
                   pattern: {
                     value: /^\S+@\S+$/i,
-                    message: "Invalid email address",
+                    message: 'Invalid email address',
                   },
                 })}
                 type="email"
@@ -119,10 +116,7 @@ function LoginInner() {
 
             <div>
               <div className="flex items-center justify-between mb-1.5">
-                <label
-                  htmlFor="password"
-                  className="block text-sm font-medium text-gray-700"
-                >
+                <label htmlFor="password" className="block text-sm font-medium text-gray-700">
                   Password
                 </label>
                 <div className="text-sm">
@@ -136,10 +130,10 @@ function LoginInner() {
               </div>
               <div className="relative group">
                 <input
-                  {...register("password", {
-                    required: "Password is required",
+                  {...register('password', {
+                    required: 'Password is required',
                   })}
-                  type={showPassword ? "text" : "password"}
+                  type={showPassword ? 'text' : 'password'}
                   autoComplete="current-password"
                   className="input w-full pr-10 bg-gray-50/50 focus:bg-white transition-all duration-200"
                   placeholder="Enter your password"
@@ -149,11 +143,7 @@ function LoginInner() {
                   className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600 transition-colors"
                   onClick={() => setShowPassword(!showPassword)}
                 >
-                  {showPassword ? (
-                    <EyeOff className="h-5 w-5" />
-                  ) : (
-                    <Eye className="h-5 w-5" />
-                  )}
+                  {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
                 </button>
               </div>
               {errors.password && (
@@ -167,9 +157,7 @@ function LoginInner() {
 
           {errors.root && (
             <div className="bg-red-50/50 border border-red-100 rounded-xl p-4 animate-fade-in">
-              <p className="text-sm text-red-600 text-center font-medium">
-                {errors.root.message}
-              </p>
+              <p className="text-sm text-red-600 text-center font-medium">{errors.root.message}</p>
             </div>
           )}
 
@@ -187,14 +175,14 @@ function LoginInner() {
                   Signing in...
                 </>
               ) : (
-                "Sign in"
+                'Sign in'
               )}
             </button>
           </div>
 
           <div className="text-center">
             <p className="text-sm text-gray-600">
-              Don't have an account?{" "}
+              Don't have an account?{' '}
               <Link
                 href="/register"
                 className="font-semibold text-primary-600 hover:text-primary-500 transition-colors"

@@ -9,7 +9,6 @@ import { User, Mail, Calendar, MapPin, Edit } from 'lucide-react';
 import EditProfile from './EditProfileModal';
 import toast from 'react-hot-toast';
 
-
 const Profile = () => {
   const { user, updateUser } = useAuth();
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -19,11 +18,10 @@ const Profile = () => {
   // Handle ESC key to close modal
   useEffect(() => {
     const handleKeyDown = (event) => {
-      if (event.key === 'Escape' && isModalOpen || event.click === 'Escape' && isModalOpen) {
+      if ((event.key === 'Escape' && isModalOpen) || (event.click === 'Escape' && isModalOpen)) {
         setIsModalOpen(false);
       }
     };
-
 
     if (isModalOpen) {
       document.addEventListener('keydown', handleKeyDown);
@@ -58,13 +56,13 @@ const Profile = () => {
       // Create a completely new object to ensure React Query detects the change
       const newData = {
         success: true,
-        user: { ...updatedUser } // Create a new user object reference
+        user: { ...updatedUser }, // Create a new user object reference
       };
       // If oldData exists, merge it but ensure we create new object references
       if (oldData) {
         const updated = {
           ...oldData,
-          user: { ...updatedUser } // Force new reference
+          user: { ...updatedUser }, // Force new reference
         };
         console.log('Updated cache data:', updated);
         return updated;
@@ -83,11 +81,14 @@ const Profile = () => {
     toast.success('Profile updated successfully');
   };
 
-
   // Get user ID (handle both _id and id)
   const userId = user?._id || user?.id;
 
-  const { data: profileData, isLoading, error } = useQuery({
+  const {
+    data: profileData,
+    isLoading,
+    error,
+  } = useQuery({
     queryKey: ['userProfile', userId],
     queryFn: () => userAPI.getUser(userId),
     enabled: !!userId,
@@ -128,15 +129,10 @@ const Profile = () => {
                   {`${profile?.firstName || ''} ${profile?.lastName || ''}`.trim() || 'User Name'}
                 </h1>
                 <p className="text-gray-600">{profile?.email}</p>
-                <p className="text-sm text-gray-500 capitalize">
-                  {profile?.role || 'Student'}
-                </p>
+                <p className="text-sm text-gray-500 capitalize">{profile?.role || 'Student'}</p>
               </div>
             </div>
-            <button
-              onClick={() => setIsModalOpen(true)}
-              className="btn-outline "
-            >
+            <button onClick={() => setIsModalOpen(true)} className="btn-outline ">
               <Edit className="h-4 w-4 mr-2" />
               Edit Profile
             </button>
@@ -149,9 +145,7 @@ const Profile = () => {
         {/* Personal Information */}
         <div className="bg-white rounded-lg shadow-sm border">
           <div className="p-6 border-b border-gray-200">
-            <h2 className="text-lg font-semibold text-gray-900">
-              Personal Information
-            </h2>
+            <h2 className="text-lg font-semibold text-gray-900">Personal Information</h2>
           </div>
           <div className="p-6 space-y-4">
             <div className="flex items-center space-x-3">
@@ -159,7 +153,8 @@ const Profile = () => {
               <div>
                 <p className="text-sm font-medium text-gray-900">Full Name</p>
                 <p className="text-sm text-gray-600">
-                  {`${profile?.firstName || ''} ${profile?.lastName || ''}`.trim() || 'Not provided'}
+                  {`${profile?.firstName || ''} ${profile?.lastName || ''}`.trim() ||
+                    'Not provided'}
                 </p>
               </div>
             </div>
@@ -185,9 +180,7 @@ const Profile = () => {
               <MapPin className="h-5 w-5 text-gray-400" />
               <div>
                 <p className="text-sm font-medium text-gray-900">Location</p>
-                <p className="text-sm text-gray-600">
-                  {profile?.location || 'Not provided'}
-                </p>
+                <p className="text-sm text-gray-600">{profile?.location || 'Not provided'}</p>
               </div>
             </div>
           </div>
@@ -196,33 +189,23 @@ const Profile = () => {
         {/* Account Statistics */}
         <div className="bg-white rounded-lg shadow-sm border">
           <div className="p-6 border-b border-gray-200">
-            <h2 className="text-lg font-semibold text-gray-900">
-              Account Statistics
-            </h2>
+            <h2 className="text-lg font-semibold text-gray-900">Account Statistics</h2>
           </div>
           <div className="p-6 space-y-4">
             <div className="flex justify-between">
               <span className="text-sm text-gray-600">Courses Enrolled</span>
-              <span className="text-sm font-medium">
-                {profile?.enrolledCourses?.length || 0}
-              </span>
+              <span className="text-sm font-medium">{profile?.enrolledCourses?.length || 0}</span>
             </div>
             <div className="flex justify-between">
               <span className="text-sm text-gray-600">Communities Joined</span>
-              <span className="text-sm font-medium">
-                {profile?.joinedCommunities?.length || 0}
-              </span>
+              <span className="text-sm font-medium">{profile?.joinedCommunities?.length || 0}</span>
             </div>
             <div className="flex justify-between">
               <span className="text-sm text-gray-600">Courses Created</span>
-              <span className="text-sm font-medium">
-                {profile?.createdCourses?.length || 0}
-              </span>
+              <span className="text-sm font-medium">{profile?.createdCourses?.length || 0}</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-sm text-gray-600">
-                Communities Created
-              </span>
+              <span className="text-sm text-gray-600">Communities Created</span>
               <span className="text-sm font-medium">
                 {profile?.createdCommunities?.length || 0}
               </span>
@@ -237,9 +220,7 @@ const Profile = () => {
           <h2 className="text-lg font-semibold text-gray-900">About</h2>
         </div>
         <div className="p-6">
-          <p className="text-gray-600">
-            {profile?.bio || 'No bio provided yet.'}
-          </p>
+          <p className="text-gray-600">{profile?.bio || 'No bio provided yet.'}</p>
         </div>
       </div>
 
@@ -261,4 +242,3 @@ const Profile = () => {
 };
 
 export default Profile;
-

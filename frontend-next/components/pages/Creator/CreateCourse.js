@@ -13,7 +13,12 @@ const CreateCourse = () => {
   const [thumbnail, setThumbnail] = useState(null);
   const [thumbnailPreview, setThumbnailPreview] = useState(null);
 
-  const { register, handleSubmit, formState: { errors }, watch } = useForm();
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+    watch,
+  } = useForm();
 
   const handleThumbnailChange = (e) => {
     const file = e.target.files[0];
@@ -43,13 +48,13 @@ const CreateCourse = () => {
         // Add other fields as needed
         tags: [], // Add tags if you have them
         requirements: [], // Add requirements if you have them
-        learningOutcomes: [] // Add learning outcomes if you have them
+        learningOutcomes: [], // Add learning outcomes if you have them
       };
 
       // If using FormData for file upload
       if (thumbnail) {
         const formData = new FormData();
-        Object.keys(courseData).forEach(key => {
+        Object.keys(courseData).forEach((key) => {
           if (Array.isArray(courseData[key])) {
             formData.append(key, JSON.stringify(courseData[key]));
           } else {
@@ -69,12 +74,13 @@ const CreateCourse = () => {
       }
     } catch (error) {
       console.error('Course creation error:', error);
-      const errorMessage = error.response?.data?.message || error.message || 'Failed to create course';
+      const errorMessage =
+        error.response?.data?.message || error.message || 'Failed to create course';
 
       // Show specific validation errors if available
       if (error.response?.data?.errors) {
         const validationErrors = error.response.data.errors;
-        const errorMessages = validationErrors.map(err => err.msg || err.message).join(', ');
+        const errorMessages = validationErrors.map((err) => err.msg || err.message).join(', ');
         toast.error(`Validation Error: ${errorMessages}`);
       } else {
         toast.error(errorMessage);
@@ -85,16 +91,27 @@ const CreateCourse = () => {
   };
 
   const categories = [
-    'Programming', 'Design', 'Business', 'Marketing',
-    'Data Science', 'Photography', 'Music', 'Language',
-    'Health & Fitness', 'Cooking', 'Art', 'Other'
+    'Programming',
+    'Design',
+    'Business',
+    'Marketing',
+    'Data Science',
+    'Photography',
+    'Music',
+    'Language',
+    'Health & Fitness',
+    'Cooking',
+    'Art',
+    'Other',
   ];
 
   return (
     <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-gray-900 mb-4">Create New Course</h1>
-        <p className="text-gray-600">Share your knowledge and create an engaging learning experience</p>
+        <p className="text-gray-600">
+          Share your knowledge and create an engaging learning experience
+        </p>
       </div>
 
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-8">
@@ -103,18 +120,14 @@ const CreateCourse = () => {
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="md:col-span-2">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Course Title *
-              </label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Course Title *</label>
               <input
                 type="text"
                 {...register('title', { required: 'Course title is required' })}
                 className="input w-full"
                 placeholder="Enter course title"
               />
-              {errors.title && (
-                <p className="text-red-600 text-sm mt-1">{errors.title.message}</p>
-              )}
+              {errors.title && <p className="text-red-600 text-sm mt-1">{errors.title.message}</p>}
             </div>
 
             <div className="md:col-span-2">
@@ -133,16 +146,16 @@ const CreateCourse = () => {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Category *
-              </label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Category *</label>
               <select
                 {...register('category', { required: 'Category is required' })}
                 className="input w-full"
               >
                 <option value="">Select a category</option>
-                {categories.map(category => (
-                  <option key={category} value={category}>{category}</option>
+                {categories.map((category) => (
+                  <option key={category} value={category}>
+                    {category}
+                  </option>
                 ))}
               </select>
               {errors.category && (
@@ -163,15 +176,11 @@ const CreateCourse = () => {
                 <option value="intermediate">Intermediate</option>
                 <option value="advanced">Advanced</option>
               </select>
-              {errors.level && (
-                <p className="text-red-600 text-sm mt-1">{errors.level.message}</p>
-              )}
+              {errors.level && <p className="text-red-600 text-sm mt-1">{errors.level.message}</p>}
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Price ($) *
-              </label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Price ($) *</label>
               <div className="relative">
                 <DollarSign className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
                 <input
@@ -180,22 +189,18 @@ const CreateCourse = () => {
                   min="0"
                   {...register('price', {
                     required: 'Price is required',
-                    min: { value: 0, message: 'Price must be 0 or greater' }
+                    min: { value: 0, message: 'Price must be 0 or greater' },
                   })}
                   className="input w-full pl-10"
                   placeholder="0.00"
                 />
               </div>
-              {errors.price && (
-                <p className="text-red-600 text-sm mt-1">{errors.price.message}</p>
-              )}
+              {errors.price && <p className="text-red-600 text-sm mt-1">{errors.price.message}</p>}
               <p className="text-sm text-gray-500 mt-1">Set to 0 for free course</p>
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Language
-              </label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Language</label>
               <input
                 type="text"
                 {...register('language')}
@@ -223,10 +228,7 @@ const CreateCourse = () => {
                   className="hidden"
                   id="thumbnail-upload"
                 />
-                <label
-                  htmlFor="thumbnail-upload"
-                  className="btn-outline cursor-pointer"
-                >
+                <label htmlFor="thumbnail-upload" className="btn-outline cursor-pointer">
                   <Upload className="h-4 w-4 mr-2" />
                   Choose Image
                 </label>
@@ -257,9 +259,7 @@ const CreateCourse = () => {
                 {...register('isPublished')}
                 className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded"
               />
-              <label className="ml-2 block text-sm text-gray-900">
-                Publish course immediately
-              </label>
+              <label className="ml-2 block text-sm text-gray-900">Publish course immediately</label>
             </div>
 
             <div className="flex items-center">
@@ -284,11 +284,7 @@ const CreateCourse = () => {
           >
             Cancel
           </button>
-          <button
-            type="submit"
-            disabled={isSubmitting}
-            className="btn-primary"
-          >
+          <button type="submit" disabled={isSubmitting} className="btn-primary">
             {isSubmitting ? 'Creating...' : 'Create Course'}
           </button>
         </div>
@@ -298,4 +294,3 @@ const CreateCourse = () => {
 };
 
 export default CreateCourse;
-

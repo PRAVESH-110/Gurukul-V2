@@ -2,14 +2,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { useAuth } from '@/context/AuthContext';
-import {
-  BookOpen,
-  Star,
-  ArrowRight,
-  Play,
-  Globe,
-  Clock,
-} from 'lucide-react';
+import { BookOpen, Star, ArrowRight, Play, Globe, Clock } from 'lucide-react';
 import './flow.css';
 import Image from 'next/image';
 
@@ -18,32 +11,35 @@ import HomeFAQSection from './HomeFAQSection';
 
 const featuredCourses = [
   {
-    name: " Fundamentals of Crypto",
-    description: "Crypto is a digital currency that’s secured by cryptography, making it nearly impossible to counterfeit or double-spend. Learn how it works.",
+    name: ' Fundamentals of Crypto',
+    description:
+      'Crypto is a digital currency that’s secured by cryptography, making it nearly impossible to counterfeit or double-spend. Learn how it works.',
     rating: 4.9,
-    audience: "1.2k",
-    time: "2hrs",
-    cost: "$30",
-    image: "/assets/dex.jpeg"
+    audience: '1.2k',
+    time: '2hrs',
+    cost: '$30',
+    image: '/assets/dex.jpeg',
   },
   {
-    name: " AI course",
-    description: "Learn full-stack web development from scratch with modern technologies including React, Node.js, and more.",
+    name: ' AI course',
+    description:
+      'Learn full-stack web development from scratch with modern technologies including React, Node.js, and more.',
     rating: 4.9,
-    audience: "1.2k",
-    time: "25hrs",
-    cost: "$12",
-    image: "/assets/ai_banner.png"
+    audience: '1.2k',
+    time: '25hrs',
+    cost: '$12',
+    image: '/assets/ai_banner.png',
   },
   {
-    name: " Linkedin mastery",
-    description: "Learn how to use LinkedIn effectively to network, find jobs, and build your professional brand.",
+    name: ' Linkedin mastery',
+    description:
+      'Learn how to use LinkedIn effectively to network, find jobs, and build your professional brand.',
     rating: 4.9,
-    audience: "1.2k",
-    time: "40hrs",
-    cost: "$300",
-    image: "/assets/PRAVESH DHAKAL.png"
-  }
+    audience: '1.2k',
+    time: '40hrs',
+    cost: '$300',
+    image: '/assets/PRAVESH DHAKAL.png',
+  },
 ];
 
 const Home = () => {
@@ -71,10 +67,34 @@ const Home = () => {
             <span>5.0</span>
             <Star className="w-4 h-4 ml-1.5 mr-2 fill-current text-yellow-500" />
             <div className="flex border rounded-full overflow-hidden px-1 mr-2">
-              <Image src="/stud2.jpg" alt="Student" width={20} height={20} className="rounded-full" />
-              <Image src="/stud3.jpg" alt="Student" width={20} height={20} className="rounded-full" />
-              <Image src="/stud4.webp" alt="Student" width={20} height={20} className="rounded-full" />
-              <Image src="/stud1.webp" alt="Student" width={20} height={20} className="rounded-full" />
+              <Image
+                src="/stud2.jpg"
+                alt="Student"
+                width={20}
+                height={20}
+                className="rounded-full"
+              />
+              <Image
+                src="/stud3.jpg"
+                alt="Student"
+                width={20}
+                height={20}
+                className="rounded-full"
+              />
+              <Image
+                src="/stud4.webp"
+                alt="Student"
+                width={20}
+                height={20}
+                className="rounded-full"
+              />
+              <Image
+                src="/stud1.webp"
+                alt="Student"
+                width={20}
+                height={20}
+                className="rounded-full"
+              />
             </div>
             <span>50+ reviews</span>
           </div>
@@ -86,11 +106,18 @@ const Home = () => {
             </span>
           </h1>
 
-          <p className="text-base sm:text-lg md:text-xl text-gray-200 max-w-xl leading-relaxed drop-shadow-md mb-6 animate-slide-up" style={{ animationDelay: '0.1s' }}>
-            Learn from a wide range of courses or start creating your own courses and get paid, no matter how small your audience.
+          <p
+            className="text-base sm:text-lg md:text-xl text-gray-200 max-w-xl leading-relaxed drop-shadow-md mb-6 animate-slide-up"
+            style={{ animationDelay: '0.1s' }}
+          >
+            Learn from a wide range of courses or start creating your own courses and get paid, no
+            matter how small your audience.
           </p>
 
-          <div className="flex flex-col sm:flex-row gap-4 justify-start w-full max-w-md animate-slide-up" style={{ animationDelay: '0.2s' }}>
+          <div
+            className="flex flex-col sm:flex-row gap-4 justify-start w-full max-w-md animate-slide-up"
+            style={{ animationDelay: '0.2s' }}
+          >
             {!user ? (
               <>
                 <Link
@@ -132,13 +159,17 @@ const Home = () => {
           </div>
 
           <div className="flex flex-col items-center gap-3">
-            <h3 className="text-center text-base md:text-lg font-semibold text-gray-800">Gather audience</h3>
+            <h3 className="text-center text-base md:text-lg font-semibold text-gray-800">
+              Gather audience
+            </h3>
             <i className="fa-solid fa-arrow-right arrow hidden md:block"></i>
           </div>
 
           {/* Uploadable Main Image */}
           <div className="main-image flex-1 max-w-[620px] flex flex-col items-center">
-            <h3 className="w-full py-2 mb-2 text-center text-lg md:text-xl font-bold text-gray-900">Create what you love</h3>
+            <h3 className="w-full py-2 mb-2 text-center text-lg md:text-xl font-bold text-gray-900">
+              Create what you love
+            </h3>
             <div className="w-full flex justify-center rounded-2xl ">
               <Image
                 src="/monetizehobby.png"
@@ -151,17 +182,43 @@ const Home = () => {
           </div>
 
           <div className="flex flex-col items-center gap-3">
-            <h3 className="text-center text-base md:text-lg font-semibold text-gray-800">Start selling</h3>
+            <h3 className="text-center text-base md:text-lg font-semibold text-gray-800">
+              Start selling
+            </h3>
             <i className="fa-solid fa-arrow-right arrow hidden md:block"></i>
           </div>
 
           {/* Profiles */}
           <div className="flex flex-col items-center">
             <div className="profiles flex flex-col gap-3">
-              <Image src="/stud2.jpg" alt="Student" width={68} height={68} className="rounded-full shadow-sm" />
-              <Image src="/stud3.jpg" alt="Student" width={68} height={68} className="rounded-full shadow-sm" />
-              <Image src="/stud4.webp" alt="Student" width={68} height={68} className="rounded-full shadow-sm" />
-              <Image src="/stud1.webp" alt="Student" width={68} height={68} className="rounded-full shadow-sm" />
+              <Image
+                src="/stud2.jpg"
+                alt="Student"
+                width={68}
+                height={68}
+                className="rounded-full shadow-sm"
+              />
+              <Image
+                src="/stud3.jpg"
+                alt="Student"
+                width={68}
+                height={68}
+                className="rounded-full shadow-sm"
+              />
+              <Image
+                src="/stud4.webp"
+                alt="Student"
+                width={68}
+                height={68}
+                className="rounded-full shadow-sm"
+              />
+              <Image
+                src="/stud1.webp"
+                alt="Student"
+                width={68}
+                height={68}
+                className="rounded-full shadow-sm"
+              />
             </div>
           </div>
         </div>
@@ -196,10 +253,12 @@ const Home = () => {
             </Link>
           </div>
 
-
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
             {featuredCourses.map((featuredCourse, index) => (
-              <div key={index} className="group bg-white rounded-2xl border border-gray-100 overflow-hidden hover:shadow-xl hover:border-primary-100 transition-all duration-300 hover:-translate-y-1">
+              <div
+                key={index}
+                className="group bg-white rounded-2xl border border-gray-100 overflow-hidden hover:shadow-xl hover:border-primary-100 transition-all duration-300 hover:-translate-y-1"
+              >
                 <div className="relative aspect-video overflow-hidden">
                   <div className="absolute inset-0 bg-gradient-to-br from-gray-900/20 to-gray-900/60 z-10 group-hover:opacity-0 transition-opacity duration-300"></div>
                   {featuredCourse.image ? (
@@ -248,10 +307,7 @@ const Home = () => {
           </div>
 
           <div className="mt-12 text-center md:hidden">
-            <Link
-              href="/courses"
-              className="btn-secondary w-full justify-center"
-            >
+            <Link href="/courses" className="btn-secondary w-full justify-center">
               View All Courses
             </Link>
           </div>
@@ -280,7 +336,8 @@ const Home = () => {
                 <span className="text-2xl font-bold text-black tracking-tight">Gurukul</span>
               </div>
               <p className="text-gray-700 leading-relaxed">
-                Empowering learners worldwide with quality education, interactive courses, and a supportive community.
+                Empowering learners worldwide with quality education, interactive courses, and a
+                supportive community.
               </p>
             </div>
 
@@ -289,18 +346,42 @@ const Home = () => {
                 <h3 className="text-black font-semibold text-lg mb-6">Platforms</h3>
                 <ul className="space-y-4">
                   <li>
-                    <a href="https://www.linkedin.com/in/pravesh-dhakal/" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-black hover:text-primary-600 transition-colors cursor-pointer group">
-                      <i className="fa-brands fa-linkedin text-xl text-black"></i> <span className="text-black group-hover:text-primary-600 transition-colors">LinkedIn</span>
+                    <a
+                      href="https://www.linkedin.com/in/pravesh-dhakal/"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-2 text-black hover:text-primary-600 transition-colors cursor-pointer group"
+                    >
+                      <i className="fa-brands fa-linkedin text-xl text-black"></i>{' '}
+                      <span className="text-black group-hover:text-primary-600 transition-colors">
+                        LinkedIn
+                      </span>
                     </a>
                   </li>
                   <li>
-                    <a href="https://github.com/PRAVESH-110/Gurukul-V2" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-black hover:text-primary-600 transition-colors cursor-pointer group">
-                      <i className="fa-brands fa-github text-xl text-black"></i> <span className="text-black group-hover:text-primary-600 transition-colors">GitHub</span>
+                    <a
+                      href="https://github.com/PRAVESH-110/Gurukul-V2"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-2 text-black hover:text-primary-600 transition-colors cursor-pointer group"
+                    >
+                      <i className="fa-brands fa-github text-xl text-black"></i>{' '}
+                      <span className="text-black group-hover:text-primary-600 transition-colors">
+                        GitHub
+                      </span>
                     </a>
                   </li>
                   <li>
-                    <a href="https://www.gmail.com/" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-black hover:text-primary-600 transition-colors cursor-pointer group">
-                      <i className="fa-solid fa-envelope text-xl text-black"></i> <span className="text-black group-hover:text-primary-600 transition-colors">Gmail</span>
+                    <a
+                      href="https://www.gmail.com/"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-2 text-black hover:text-primary-600 transition-colors cursor-pointer group"
+                    >
+                      <i className="fa-solid fa-envelope text-xl text-black"></i>{' '}
+                      <span className="text-black group-hover:text-primary-600 transition-colors">
+                        Gmail
+                      </span>
                     </a>
                   </li>
                 </ul>
@@ -309,14 +390,30 @@ const Home = () => {
               <div className="flex-1">
                 <h3 className="text-black font-semibold text-lg mb-6">Support</h3>
                 <ul className="space-y-4">
-                  <li><a href="#faq-ai" className="text-black hover:text-primary-600 transition-colors cursor-pointer">Help Center</a></li>
-                  <li><a href="https://www.gmail.com/" className="text-black hover:text-primary-600 transition-colors">Contact Us</a></li>
+                  <li>
+                    <a
+                      href="#faq-ai"
+                      className="text-black hover:text-primary-600 transition-colors cursor-pointer"
+                    >
+                      Help Center
+                    </a>
+                  </li>
+                  <li>
+                    <a
+                      href="https://www.gmail.com/"
+                      className="text-black hover:text-primary-600 transition-colors"
+                    >
+                      Contact Us
+                    </a>
+                  </li>
                 </ul>
               </div>
 
               <div className="flex-1">
                 <h3 className="text-black font-semibold text-lg mb-6">Stay Updated</h3>
-                <p className="text-gray-700 mb-4">Subscribe to our newsletter for the latest updates.</p>
+                <p className="text-gray-700 mb-4">
+                  Subscribe to our newsletter for the latest updates.
+                </p>
                 <form className="flex gap-2">
                   <input
                     type="email"

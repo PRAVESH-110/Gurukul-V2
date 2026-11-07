@@ -1,42 +1,38 @@
-import type { Metadata } from "next";
-import { Geist, Geist_Mono, Damion } from "next/font/google";
-import "./globals.css";
-import "@fortawesome/fontawesome-free/css/all.min.css";
+import type { Metadata } from 'next';
+import { Geist, Geist_Mono, Damion } from 'next/font/google';
+import './globals.css';
+import '@fortawesome/fontawesome-free/css/all.min.css';
 import { AuthProvider } from '@/context/AuthContext';
 import Layout from '@/components/Layout/Layout';
-import Providers from "./providers";
-
+import Providers from './providers';
 
 const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
+  variable: '--font-geist-sans',
+  subsets: ['latin'],
 });
 
 const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
+  variable: '--font-geist-mono',
+  subsets: ['latin'],
 });
 
 const damion = Damion({
-  weight: "400",
-  variable: "--font-damion",
-  subsets: ["latin"],
+  weight: '400',
+  variable: '--font-damion',
+  subsets: ['latin'],
 });
 
 export const metadata: Metadata = {
-  title: "Gurukul Platform",
-  description: "The ultimate learning platform where knowledge meets community.",
+  title: 'Gurukul Platform',
+  description: 'The ultimate learning platform where knowledge meets community.',
   icons: {
-    icon: [
-      { url: "/favicon.ico" },
-      { url: "/logo.png", type: "image/png" }
-    ],
-    shortcut: "/favicon.ico",
-    apple: "/logo.png"
-  }
+    icon: [{ url: '/favicon.ico' }, { url: '/logo.png', type: 'image/png' }],
+    shortcut: '/favicon.ico',
+    apple: '/logo.png',
+  },
 };
 
-import { warmUpBackend } from "@/lib/warmup";
+import { warmUpBackend } from '@/lib/warmup';
 
 export default async function RootLayout({
   children,
@@ -53,9 +49,7 @@ export default async function RootLayout({
       >
         <Providers>
           <AuthProvider>
-            <Layout>
-              {children}
-            </Layout>
+            <Layout>{children}</Layout>
           </AuthProvider>
         </Providers>
       </body>

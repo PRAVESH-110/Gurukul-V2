@@ -1,87 +1,89 @@
 .flow-wrapper {
-    display: flex;
-    align-items: center;
-    justify-content: space-evenly;
-    gap: 24px;
-    width: 100%;
-    flex-wrap: wrap;
+  display: flex;
+  align-items: center;
+  justify-content: space-evenly;
+  gap: 24px;
+  width: 100%;
+  flex-wrap: wrap;
 }
 
 .social-icons {
-    display: flex;
-    flex-direction: column;
-    gap: 20px;
-    font-size: 48px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  font-size: 48px;
 }
 
 .arrow {
-    font-size: 42px;
-    color: #4f4b4b;
+  font-size: 42px;
+  color: #4f4b4b;
 }
 
 .main-image {
-    max-width: 100%;
+  max-width: 100%;
 }
 
 .main-image img {
-    max-width: 100%;
-    height: auto;
+  max-width: 100%;
+  height: auto;
 }
 
 .profiles {
-    display: flex;
-    flex-direction: column;
-    gap: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
 }
 
 .profiles img {
-    border-radius: 50%;
-    object-fit: cover;
-    width: 68px;
-    height: 68px;
+  border-radius: 50%;
+  object-fit: cover;
+  width: 68px;
+  height: 68px;
 }
 
 .income-box {
-    border: 2px solid #989191;
-    padding: 12px 32px;
-    border-radius: 25px;
-    text-align: center;
-    min-width: 10px;
-    transition: all 0.3s ease;
+  border: 2px solid #989191;
+  padding: 12px 32px;
+  border-radius: 25px;
+  text-align: center;
+  min-width: 10px;
+  transition: all 0.3s ease;
 }
 
 .income-box:hover {
-    border-color: #000000;
-    box-shadow: 0 0 25px rgb(255, 234, 0), 0 5px 15px rgba(0, 0, 0, 0.8);
+  border-color: #000000;
+  box-shadow:
+    0 0 25px rgb(255, 234, 0),
+    0 5px 15px rgba(0, 0, 0, 0.8);
 }
 
 @media (max-width: 768px) {
-    .flow-wrapper {
-        flex-direction: column;
-        gap: 20px;
-    }
+  .flow-wrapper {
+    flex-direction: column;
+    gap: 20px;
+  }
 
-    .arrow {
-        transform: rotate(90deg);
-    }
+  .arrow {
+    transform: rotate(90deg);
+  }
 
-    .profiles {
-        flex-direction: row;
-    }
+  .profiles {
+    flex-direction: row;
+  }
 }
 
 @media (max-width: 700px) {
-    .faqsai {
-        flex-direction: column;
-    }
+  .faqsai {
+    flex-direction: column;
+  }
 
-    .faq {
-        width: 100%;
-        height: auto;
-    }
+  .faq {
+    width: 100%;
+    height: auto;
+  }
 
-    .ai {
-        width: 100%;
-        height: auto;
-    }
+  .ai {
+    width: 100%;
+    height: auto;
+  }
 }

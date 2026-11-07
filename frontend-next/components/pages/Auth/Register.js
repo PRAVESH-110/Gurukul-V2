@@ -28,7 +28,7 @@ const Register = () => {
     handleSubmit,
     formState: { errors },
     setError,
-    watch
+    watch,
   } = useForm();
 
   const watchRole = watch('role');
@@ -64,7 +64,10 @@ const Register = () => {
       {/* Background Decorative Elements */}
       <div className="absolute top-0 left-0 w-full h-full overflow-hidden -z-10 pointer-events-none">
         <div className="absolute -top-[20%] -right-[10%] w-[50%] h-[50%] rounded-full bg-primary-100/50 blur-3xl opacity-60 animate-fade-in"></div>
-        <div className="absolute top-[20%] -left-[10%] w-[40%] h-[40%] rounded-full bg-blue-100/50 blur-3xl opacity-60 animate-fade-in" style={{ animationDelay: '0.2s' }}></div>
+        <div
+          className="absolute top-[20%] -left-[10%] w-[40%] h-[40%] rounded-full bg-blue-100/50 blur-3xl opacity-60 animate-fade-in"
+          style={{ animationDelay: '0.2s' }}
+        ></div>
       </div>
 
       <div className="max-w-md w-full space-y-8 bg-white/80 backdrop-blur-xl p-8 rounded-2xl shadow-xl border border-white/20 animate-slide-up">
@@ -97,16 +100,25 @@ const Register = () => {
                     value="student"
                     className="sr-only"
                   />
-                  <div className={`p-4 border-2 rounded-xl transition-all duration-200 ${watchRole === 'student'
-                    ? 'border-primary-600 bg-primary-50/50 ring-1 ring-primary-600 shadow-sm'
-                    : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
-                    }`}>
+                  <div
+                    className={`p-4 border-2 rounded-xl transition-all duration-200 ${
+                      watchRole === 'student'
+                        ? 'border-primary-600 bg-primary-50/50 ring-1 ring-primary-600 shadow-sm'
+                        : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
+                    }`}
+                  >
                     <div className="flex flex-col items-center text-center space-y-2">
-                      <div className={`p-2 rounded-lg ${watchRole === 'student' ? 'bg-primary-100 text-primary-600' : 'bg-gray-100 text-gray-500 group-hover:text-gray-700'}`}>
+                      <div
+                        className={`p-2 rounded-lg ${watchRole === 'student' ? 'bg-primary-100 text-primary-600' : 'bg-gray-100 text-gray-500 group-hover:text-gray-700'}`}
+                      >
                         <User className="h-6 w-6" />
                       </div>
                       <div>
-                        <p className={`font-semibold ${watchRole === 'student' ? 'text-primary-900' : 'text-gray-900'}`}>Student</p>
+                        <p
+                          className={`font-semibold ${watchRole === 'student' ? 'text-primary-900' : 'text-gray-900'}`}
+                        >
+                          Student
+                        </p>
                         <p className="text-xs text-gray-500 mt-0.5">Learn & Grow</p>
                       </div>
                     </div>
@@ -120,16 +132,25 @@ const Register = () => {
                     value="creator"
                     className="sr-only"
                   />
-                  <div className={`p-4 border-2 rounded-xl transition-all duration-200 ${watchRole === 'creator'
-                    ? 'border-primary-600 bg-primary-50/50 ring-1 ring-primary-600 shadow-sm'
-                    : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
-                    }`}>
+                  <div
+                    className={`p-4 border-2 rounded-xl transition-all duration-200 ${
+                      watchRole === 'creator'
+                        ? 'border-primary-600 bg-primary-50/50 ring-1 ring-primary-600 shadow-sm'
+                        : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
+                    }`}
+                  >
                     <div className="flex flex-col items-center text-center space-y-2">
-                      <div className={`p-2 rounded-lg ${watchRole === 'creator' ? 'bg-primary-100 text-primary-600' : 'bg-gray-100 text-gray-500 group-hover:text-gray-700'}`}>
+                      <div
+                        className={`p-2 rounded-lg ${watchRole === 'creator' ? 'bg-primary-100 text-primary-600' : 'bg-gray-100 text-gray-500 group-hover:text-gray-700'}`}
+                      >
                         <UserCheck className="h-6 w-6" />
                       </div>
                       <div>
-                        <p className={`font-semibold ${watchRole === 'creator' ? 'text-primary-900' : 'text-gray-900'}`}>Creator</p>
+                        <p
+                          className={`font-semibold ${watchRole === 'creator' ? 'text-primary-900' : 'text-gray-900'}`}
+                        >
+                          Creator
+                        </p>
                         <p className="text-xs text-gray-500 mt-0.5">Teach & Earn</p>
                       </div>
                     </div>
@@ -147,7 +168,10 @@ const Register = () => {
             {/* Name Fields */}
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label htmlFor="firstName" className="block text-sm font-medium text-gray-700 mb-1.5">
+                <label
+                  htmlFor="firstName"
+                  className="block text-sm font-medium text-gray-700 mb-1.5"
+                >
                   First Name
                 </label>
                 <input
@@ -155,8 +179,8 @@ const Register = () => {
                     required: 'First name is required',
                     minLength: {
                       value: 2,
-                      message: 'Min 2 chars'
-                    }
+                      message: 'Min 2 chars',
+                    },
                   })}
                   type="text"
                   className="input bg-gray-50/50 focus:bg-white transition-all duration-200"
@@ -168,7 +192,10 @@ const Register = () => {
               </div>
 
               <div>
-                <label htmlFor="lastName" className="block text-sm font-medium text-gray-700 mb-1.5">
+                <label
+                  htmlFor="lastName"
+                  className="block text-sm font-medium text-gray-700 mb-1.5"
+                >
                   Last Name
                 </label>
                 <input
@@ -176,8 +203,8 @@ const Register = () => {
                     required: 'Last name is required',
                     minLength: {
                       value: 2,
-                      message: 'Min 2 chars'
-                    }
+                      message: 'Min 2 chars',
+                    },
                   })}
                   type="text"
                   className="input bg-gray-50/50 focus:bg-white transition-all duration-200"
@@ -199,8 +226,8 @@ const Register = () => {
                   required: 'Email is required',
                   pattern: {
                     value: /^\S+@\S+$/i,
-                    message: 'Invalid email address'
-                  }
+                    message: 'Invalid email address',
+                  },
                 })}
                 type="email"
                 autoComplete="email"
@@ -226,8 +253,8 @@ const Register = () => {
                     required: 'Password is required',
                     minLength: {
                       value: 6,
-                      message: 'Min 6 chars'
-                    }
+                      message: 'Min 6 chars',
+                    },
                   })}
                   type={showPassword ? 'text' : 'password'}
                   autoComplete="new-password"
@@ -239,11 +266,7 @@ const Register = () => {
                   className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600 transition-colors"
                   onClick={() => setShowPassword(!showPassword)}
                 >
-                  {showPassword ? (
-                    <EyeOff className="h-5 w-5" />
-                  ) : (
-                    <Eye className="h-5 w-5" />
-                  )}
+                  {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
                 </button>
               </div>
               {errors.password && (
@@ -283,11 +306,17 @@ const Register = () => {
           <div className="text-center">
             <p className="text-xs text-gray-500">
               By creating an account, you agree to our{' '}
-              <a href="#" className="text-primary-600 hover:text-primary-500 font-medium hover:underline">
+              <a
+                href="#"
+                className="text-primary-600 hover:text-primary-500 font-medium hover:underline"
+              >
                 Terms of Service
               </a>{' '}
               and{' '}
-              <a href="#" className="text-primary-600 hover:text-primary-500 font-medium hover:underline">
+              <a
+                href="#"
+                className="text-primary-600 hover:text-primary-500 font-medium hover:underline"
+              >
                 Privacy Policy
               </a>
             </p>
@@ -308,4 +337,3 @@ const Register = () => {
 };
 
 export default Register;
-

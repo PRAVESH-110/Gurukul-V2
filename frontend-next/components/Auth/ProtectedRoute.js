@@ -14,7 +14,11 @@ const ProtectedRoute = ({ children, requiredRole = null }) => {
     if (!loading) {
       if (!user) {
         router.push(`/login?from=${encodeURIComponent(pathname)}`);
-      } else if (requiredRole && user.role !== requiredRole && !(requiredRole === 'creator' && user.role === 'admin')) {
+      } else if (
+        requiredRole &&
+        user.role !== requiredRole &&
+        !(requiredRole === 'creator' && user.role === 'admin')
+      ) {
         router.push('/dashboard');
       }
     }
@@ -30,7 +34,11 @@ const ProtectedRoute = ({ children, requiredRole = null }) => {
 
   if (!user) return null;
 
-  if (requiredRole && user.role !== requiredRole && !(requiredRole === 'creator' && user.role === 'admin')) {
+  if (
+    requiredRole &&
+    user.role !== requiredRole &&
+    !(requiredRole === 'creator' && user.role === 'admin')
+  ) {
     return null;
   }
 
@@ -38,4 +46,3 @@ const ProtectedRoute = ({ children, requiredRole = null }) => {
 };
 
 export default ProtectedRoute;
-

@@ -12,10 +12,14 @@ const MyCommunities = () => {
   const { user } = useAuth();
   const [searchTerm, setSearchTerm] = useState('');
 
-  const { data: communitiesData, isLoading, error } = useQuery({
+  const {
+    data: communitiesData,
+    isLoading,
+    error,
+  } = useQuery({
     queryKey: ['myCommunities', user?._id],
     queryFn: () => communityAPI.getCreatorCommunities(), // This will route to student communities for students
-    enabled: !!user
+    enabled: !!user,
   });
 
   if (isLoading) {
@@ -36,9 +40,10 @@ const MyCommunities = () => {
 
   const communities = communitiesData?.data?.data?.data || communitiesData?.data?.communities || [];
 
-  const filteredCommunities = communities.filter(community =>
-    community.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    community.description.toLowerCase().includes(searchTerm.toLowerCase())
+  const filteredCommunities = communities.filter(
+    (community) =>
+      community.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      community.description.toLowerCase().includes(searchTerm.toLowerCase()),
   );
 
   return (
@@ -82,18 +87,14 @@ const MyCommunities = () => {
                 <div className="flex items-start justify-between mb-4">
                   <div className="flex-1">
                     <div className="flex items-center mb-2">
-                      <h3 className="font-semibold text-gray-900 mr-2">
-                        {community.name}
-                      </h3>
+                      <h3 className="font-semibold text-gray-900 mr-2">{community.name}</h3>
                       {community.type === 'private' ? (
                         <Lock className="h-4 w-4 text-gray-500" />
                       ) : (
                         <Globe className="h-4 w-4 text-green-500" />
                       )}
                     </div>
-                    <p className="text-sm text-gray-600 line-clamp-3">
-                      {community.description}
-                    </p>
+                    <p className="text-sm text-gray-600 line-clamp-3">{community.description}</p>
                   </div>
                 </div>
 
@@ -138,8 +139,7 @@ const MyCommunities = () => {
           <p className="text-gray-600 mb-4">
             {searchTerm
               ? 'Try adjusting your search terms'
-              : 'Join communities to connect with other learners and creators'
-            }
+              : 'Join communities to connect with other learners and creators'}
           </p>
           {!searchTerm && (
             <Link href="/communities" className="btn-primary">
@@ -153,9 +153,7 @@ const MyCommunities = () => {
       {communities.length > 0 && (
         <div className="mt-12 grid grid-cols-1 md:grid-cols-3 gap-6">
           <div className="bg-white p-6 rounded-lg shadow-sm border text-center">
-            <div className="text-2xl font-bold text-primary-600 mb-2">
-              {communities.length}
-            </div>
+            <div className="text-2xl font-bold text-primary-600 mb-2">{communities.length}</div>
             <div className="text-sm text-gray-600">Communities Joined</div>
           </div>
 
@@ -179,4 +177,3 @@ const MyCommunities = () => {
 };
 
 export default MyCommunities;
-

@@ -18,7 +18,7 @@ const EditCommunity = () => {
     description: '',
     type: 'public',
     tags: [],
-    rules: []
+    rules: [],
   });
 
   const [banner, setBanner] = useState(null);
@@ -38,10 +38,10 @@ const EditCommunity = () => {
         description: community.description || '',
         type: community.type || 'public',
         tags: community.tags || [],
-        rules: community.rules || []
+        rules: community.rules || [],
       });
       setBannerPreview(community.coverImage?.url || community.banner);
-    }
+    },
   });
 
   // Update community mutation
@@ -55,21 +55,22 @@ const EditCommunity = () => {
     },
     onError: (error) => {
       toast.error(error.response?.data?.message || 'Failed to update community');
-    }
+    },
   });
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      [name]: value
+      [name]: value,
     }));
   };
 
   const handleBannerChange = (e) => {
     const file = e.target.files[0];
     if (file) {
-      if (file.size > 5 * 1024 * 1024) { // 5MB limit
+      if (file.size > 5 * 1024 * 1024) {
+        // 5MB limit
         toast.error('Image must be less than 5MB');
         return;
       }
@@ -80,35 +81,35 @@ const EditCommunity = () => {
 
   const addTag = () => {
     if (tagInput.trim() && !formData.tags.includes(tagInput.trim())) {
-      setFormData(prev => ({
+      setFormData((prev) => ({
         ...prev,
-        tags: [...prev.tags, tagInput.trim()]
+        tags: [...prev.tags, tagInput.trim()],
       }));
       setTagInput('');
     }
   };
 
   const removeTag = (tagToRemove) => {
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      tags: prev.tags.filter(tag => tag !== tagToRemove)
+      tags: prev.tags.filter((tag) => tag !== tagToRemove),
     }));
   };
 
   const addRule = () => {
     if (ruleInput.trim()) {
-      setFormData(prev => ({
+      setFormData((prev) => ({
         ...prev,
-        rules: [...prev.rules, ruleInput.trim()]
+        rules: [...prev.rules, ruleInput.trim()],
       }));
       setRuleInput('');
     }
   };
 
   const removeRule = (index) => {
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      rules: prev.rules.filter((_, i) => i !== index)
+      rules: prev.rules.filter((_, i) => i !== index),
     }));
   };
 
@@ -118,7 +119,7 @@ const EditCommunity = () => {
     const submitData = new FormData();
 
     // Add all form fields
-    Object.keys(formData).forEach(key => {
+    Object.keys(formData).forEach((key) => {
       if (key === 'tags' || key === 'rules') {
         submitData.append(key, JSON.stringify(formData[key]));
       } else {
@@ -178,9 +179,7 @@ const EditCommunity = () => {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Description *
-              </label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Description *</label>
               <textarea
                 name="description"
                 value={formData.description}
@@ -246,7 +245,8 @@ const EditCommunity = () => {
                 <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 cursor-pointer hover:border-primary-400">
                   <Upload className="h-8 w-8 text-gray-400 mx-auto mb-2" />
                   <p className="text-sm text-gray-600 text-center">
-                    Click to upload banner<br />
+                    Click to upload banner
+                    <br />
                     <span className="text-xs text-gray-500">Max 5MB, JPG/PNG</span>
                   </p>
                 </div>
@@ -260,7 +260,7 @@ const EditCommunity = () => {
           <h2 className="text-xl font-semibold text-gray-900 mb-4">Tags</h2>
 
           <div className="flex flex-wrap gap-2 mb-4">
-            {formData.tags.map(tag => (
+            {formData.tags.map((tag) => (
               <span
                 key={tag}
                 className="bg-primary-100 text-primary-800 px-3 py-1 rounded-full text-sm flex items-center"
@@ -286,11 +286,7 @@ const EditCommunity = () => {
               className="input flex-1"
               placeholder="Add a tag and press Enter"
             />
-            <button
-              type="button"
-              onClick={addTag}
-              className="btn-secondary"
-            >
+            <button type="button" onClick={addTag} className="btn-secondary">
               Add Tag
             </button>
           </div>
@@ -324,11 +320,7 @@ const EditCommunity = () => {
               className="input flex-1"
               placeholder="Add a community rule and press Enter"
             />
-            <button
-              type="button"
-              onClick={addRule}
-              className="btn-secondary"
-            >
+            <button type="button" onClick={addRule} className="btn-secondary">
               Add Rule
             </button>
           </div>

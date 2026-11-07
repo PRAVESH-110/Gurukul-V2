@@ -3,15 +3,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter, usePathname } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
-import {
-  Search,
-  Bell,
-  User,
-  LogOut,
-  Settings,
-  BookOpen,
-  Menu,
-} from 'lucide-react';
+import { Search, Bell, User, LogOut, Settings, BookOpen, Menu } from 'lucide-react';
 import logo from '@/assets/logo.png';
 import Image from 'next/image';
 import { io } from 'socket.io-client';
@@ -76,10 +68,11 @@ const Header = ({ toggleSidebar, isSidebarOpen }) => {
         console.error('Failed to fetch unread notifications', err);
       }
     };
-    const socketUrl = process.env.NEXT_PUBLIC_API_URL?.replace('/api', '') || 'http://localhost:5001';
+    const socketUrl =
+      process.env.NEXT_PUBLIC_API_URL?.replace('/api', '') || 'http://localhost:5001';
     const socket = io(socketUrl, {
       withCredentials: true,
-      auth: token ? { token } : {}
+      auth: token ? { token } : {},
     });
 
     socket.on('connect', refreshUnreadCount);
@@ -90,7 +83,7 @@ const Header = ({ toggleSidebar, isSidebarOpen }) => {
       // Trigger a beautiful visual popup toast
       toast(notification.content, {
         icon: '🔔',
-        duration: 4000
+        duration: 4000,
       });
     });
 
@@ -117,7 +110,11 @@ const Header = ({ toggleSidebar, isSidebarOpen }) => {
   //outside click for notifications
   useEffect(() => {
     const handleClickOutside = (event) => {
-      if (showNotifications && notificationRef.current && !notificationRef.current.contains(event.target)) {
+      if (
+        showNotifications &&
+        notificationRef.current &&
+        !notificationRef.current.contains(event.target)
+      ) {
         setShowNotifications(false);
       }
     };
@@ -127,7 +124,6 @@ const Header = ({ toggleSidebar, isSidebarOpen }) => {
       document.removeEventListener('mousedown', handleClickOutside);
     };
   }, [showNotifications]);
-
 
   const handleSearch = (e) => {
     e.preventDefault();
@@ -145,19 +141,21 @@ const Header = ({ toggleSidebar, isSidebarOpen }) => {
   return (
     <header
       className={`fixed top-0 z-50 w-full transition-all duration-300 transform ${
-        isVisible || isSidebarOpen ? 'translate-y-0 opacity-100' : '-translate-y-full opacity-0 pointer-events-none'
+        isVisible || isSidebarOpen
+          ? 'translate-y-0 opacity-100'
+          : '-translate-y-full opacity-0 pointer-events-none'
       } ${
         isHomePage
           ? isSidebarOpen
             ? 'bg-black/60 backdrop-blur-md border-b border-white/10 shadow-sm'
             : isAtTop
-            ? 'bg-transparent border-transparent'
-            : 'bg-black/40 backdrop-blur-md border-b border-white/10 shadow-sm'
+              ? 'bg-transparent border-transparent'
+              : 'bg-black/40 backdrop-blur-md border-b border-white/10 shadow-sm'
           : isSidebarOpen
-          ? 'bg-white/95 backdrop-blur-md border-b border-gray-100 shadow-sm'
-          : isAtTop
-          ? 'bg-transparent border-transparent'
-          : 'bg-white/90 backdrop-blur-md border-b border-gray-100 shadow-sm'
+            ? 'bg-white/95 backdrop-blur-md border-b border-gray-100 shadow-sm'
+            : isAtTop
+              ? 'bg-transparent border-transparent'
+              : 'bg-white/90 backdrop-blur-md border-b border-gray-100 shadow-sm'
       }`}
     >
       <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-12">
@@ -167,19 +165,27 @@ const Header = ({ toggleSidebar, isSidebarOpen }) => {
             {user && (
               <button
                 onClick={toggleSidebar}
-                className={`mr-4 p-2 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-primary-500/20 ${isHomePage ? "text-white hover:bg-white/10" : "text-gray-500 hover:bg-gray-100 hover:text-gray-700"}`}
+                className={`mr-4 p-2 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-primary-500/20 ${isHomePage ? 'text-white hover:bg-white/10' : 'text-gray-500 hover:bg-gray-100 hover:text-gray-700'}`}
               >
                 <Menu className="h-6 w-6" />
               </button>
             )}
             <Link href="/" className="flex items-center space-x-3 group">
               {/* <img src={logo} alt="Gurukul Logo" className="w-10 h-10 rounded-full shadow-lg shadow-primary/20 group-hover:scale-105 transition-transform duration-200" /> */}
-              <Image src={logo} alt="Gurukul Logo" width={36} height={36} className="w-10 h-10 rounded-full shadow-lg shadow-primary/20 group-hover:scale-105 transition-transform duration-200" />
-              <span className={`text-2xl font-bold tracking-tight ${isHomePage ? "text-white drop-shadow-md" : "bg-clip-text text-transparent bg-gradient-to-r from-gray-900 to-gray-700"}`}>Gurukul</span>
+              <Image
+                src={logo}
+                alt="Gurukul Logo"
+                width={36}
+                height={36}
+                className="w-10 h-10 rounded-full shadow-lg shadow-primary/20 group-hover:scale-105 transition-transform duration-200"
+              />
+              <span
+                className={`text-2xl font-bold tracking-tight ${isHomePage ? 'text-white drop-shadow-md' : 'bg-clip-text text-transparent bg-gradient-to-r from-gray-900 to-gray-700'}`}
+              >
+                Gurukul
+              </span>
             </Link>
           </div>
-
-
 
           {/* Navigation and User Menu */}
           <div className="flex items-center space-x-2 sm:space-x-4">
@@ -190,8 +196,8 @@ const Header = ({ toggleSidebar, isSidebarOpen }) => {
                   href="/courses"
                   className={`hidden sm:block px-3 py-2 text-sm font-medium transition-colors rounded-3xl ${
                     isHomePage
-                      ? "text-white/90 hover:text-white hover:bg-white/10"
-                      : "text-gray-700 hover:text-black hover:bg-gray-100"
+                      ? 'text-white/90 hover:text-white hover:bg-white/10'
+                      : 'text-gray-700 hover:text-black hover:bg-gray-100'
                   }`}
                 >
                   Courses
@@ -200,23 +206,23 @@ const Header = ({ toggleSidebar, isSidebarOpen }) => {
                   href="/communities"
                   className={`hidden sm:block px-3 py-2 text-sm font-medium transition-colors rounded-3xl ${
                     isHomePage
-                      ? "text-white/90 hover:text-white hover:bg-white/10"
-                      : "text-gray-700 hover:text-black hover:bg-gray-100"
+                      ? 'text-white/90 hover:text-white hover:bg-white/10'
+                      : 'text-gray-700 hover:text-black hover:bg-gray-100'
                   }`}
                 >
                   Communities
                 </Link>
                 <div
                   className={`h-5 w-px hidden sm:block mx-1 ${
-                    isHomePage ? "bg-white/25" : "bg-gray-200"
+                    isHomePage ? 'bg-white/25' : 'bg-gray-200'
                   }`}
                 ></div>
                 <Link
                   href="/login"
                   className={`px-3 py-2 rounded-xl text-sm font-medium transition-colors ${
                     isHomePage
-                      ? "text-white/90 hover:text-white hover:bg-white/10"
-                      : "text-gray-700 hover:text-primary-600 hover:bg-gray-50"
+                      ? 'text-white/90 hover:text-white hover:bg-white/10'
+                      : 'text-gray-700 hover:text-primary-600 hover:bg-gray-50'
                   }`}
                 >
                   Sign In
@@ -238,7 +244,7 @@ const Header = ({ toggleSidebar, isSidebarOpen }) => {
                       setShowNotifications(!showNotifications);
                       setShowUserMenu(false); // Close user menu if open
                     }}
-                    className={`p-2.5 rounded-xl transition-all duration-200 relative group ${isHomePage ? "text-white hover:bg-white/10" : "text-gray-500 hover:text-primary-600 hover:bg-primary-50"}`}
+                    className={`p-2.5 rounded-xl transition-all duration-200 relative group ${isHomePage ? 'text-white hover:bg-white/10' : 'text-gray-500 hover:text-primary-600 hover:bg-primary-50'}`}
                   >
                     <Bell className="h-5 w-5" />
                     {unreadCount > 0 && (
@@ -263,7 +269,7 @@ const Header = ({ toggleSidebar, isSidebarOpen }) => {
                       setShowUserMenu(!showUserMenu);
                       setShowNotifications(false); // Close notifications if open
                     }}
-                    className={`flex items-center space-x-3 p-1.5 pr-3 rounded-xl transition-all duration-200 ${isHomePage ? "text-white hover:bg-white/10" : "hover:bg-gray-50 border border-transparent hover:border-gray-100"}`}
+                    className={`flex items-center space-x-3 p-1.5 pr-3 rounded-xl transition-all duration-200 ${isHomePage ? 'text-white hover:bg-white/10' : 'hover:bg-gray-50 border border-transparent hover:border-gray-100'}`}
                   >
                     {user.avatar ? (
                       <Image
@@ -278,7 +284,9 @@ const Header = ({ toggleSidebar, isSidebarOpen }) => {
                         {user.firstName[0]}
                       </div>
                     )}
-                    <span className={`hidden md:block text-sm font-medium ${isHomePage ? "text-white drop-shadow" : "text-gray-700"}`}>
+                    <span
+                      className={`hidden md:block text-sm font-medium ${isHomePage ? 'text-white drop-shadow' : 'text-gray-700'}`}
+                    >
                       {user.firstName}
                     </span>
                   </button>
@@ -340,26 +348,22 @@ const Header = ({ toggleSidebar, isSidebarOpen }) => {
               </>
             )}
           </div>
-        </div >
+        </div>
 
         {/* Mobile Menu */}
-
-      </div >
+      </div>
 
       {/* Click outside to close menus */}
-      {
-        showUserMenu && (
-          <div
-            className="fixed inset-0 z-40 bg-black/20 backdrop-blur-sm md:hidden"
-            onClick={() => {
-              setShowUserMenu(false);
-            }}
-          />
-        )
-      }
-    </header >
+      {showUserMenu && (
+        <div
+          className="fixed inset-0 z-40 bg-black/20 backdrop-blur-sm md:hidden"
+          onClick={() => {
+            setShowUserMenu(false);
+          }}
+        />
+      )}
+    </header>
   );
 };
 
 export default Header;
-

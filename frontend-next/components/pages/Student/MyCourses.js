@@ -14,7 +14,12 @@ const MyCourses = () => {
   const [filter, setFilter] = useState('all');
   const [searchTerm, setSearchTerm] = useState('');
 
-  const { data: coursesData, isLoading, error, refetch } = useQuery({
+  const {
+    data: coursesData,
+    isLoading,
+    error,
+    refetch,
+  } = useQuery({
     queryKey: ['myCourses', user?._id],
     queryFn: async () => {
       console.log('Fetching courses for user:', user._id);
@@ -24,7 +29,7 @@ const MyCourses = () => {
     },
     enabled: !!user,
     staleTime: 0, // Always fetch fresh data
-    cacheTime: 0 // Don't cache
+    cacheTime: 0, // Don't cache
   });
 
   if (isLoading) {
@@ -46,9 +51,10 @@ const MyCourses = () => {
   const courses = coursesData?.data?.data?.courses || [];
   console.log('Courses extracted:', courses);
 
-  const filteredCourses = courses.filter(course => {
+  const filteredCourses = courses.filter((course) => {
     const matchesSearch = course.title.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesFilter = filter === 'all' ||
+    const matchesFilter =
+      filter === 'all' ||
       (filter === 'in-progress' && course.progress < 100) ||
       (filter === 'completed' && course.progress >= 100);
     return matchesSearch && matchesFilter;
@@ -109,7 +115,7 @@ const MyCourses = () => {
               <div className="ml-4">
                 <p className="text-sm font-medium text-gray-600">In Progress</p>
                 <p className="text-2xl font-bold text-gray-900">
-                  {courses.filter(c => c.progress < 100).length}
+                  {courses.filter((c) => c.progress < 100).length}
                 </p>
               </div>
             </div>
@@ -123,7 +129,7 @@ const MyCourses = () => {
               <div className="ml-4">
                 <p className="text-sm font-medium text-gray-600">Completed</p>
                 <p className="text-2xl font-bold text-gray-900">
-                  {courses.filter(c => c.progress >= 100).length}
+                  {courses.filter((c) => c.progress >= 100).length}
                 </p>
               </div>
             </div>
@@ -134,7 +140,10 @@ const MyCourses = () => {
         {filteredCourses.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {filteredCourses.map((course) => (
-              <div key={course._id} className="bg-white rounded-lg shadow-sm border overflow-hidden">
+              <div
+                key={course._id}
+                className="bg-white rounded-lg shadow-sm border overflow-hidden"
+              >
                 <div className="aspect-video bg-gray-200 relative">
                   {course.thumbnail ? (
                     <img
@@ -144,7 +153,8 @@ const MyCourses = () => {
                       onError={(e) => {
                         e.target.onerror = null;
                         e.target.style.display = 'none';
-                        e.target.parentElement.innerHTML = '<div class="w-full h-full flex items-center justify-center"><svg class="h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" /></svg></div>';
+                        e.target.parentElement.innerHTML =
+                          '<div class="w-full h-full flex items-center justify-center"><svg class="h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" /></svg></div>';
                       }}
                     />
                   ) : (
@@ -161,9 +171,7 @@ const MyCourses = () => {
                 </div>
 
                 <div className="p-4">
-                  <h3 className="font-semibold text-gray-900 mb-2 line-clamp-2">
-                    {course.title}
-                  </h3>
+                  <h3 className="font-semibold text-gray-900 mb-2 line-clamp-2">{course.title}</h3>
 
                   <p className="text-sm text-gray-600 mb-3">
                     by {course.creator?.firstName} {course.creator?.lastName}
@@ -188,10 +196,7 @@ const MyCourses = () => {
                       {course.completedVideos || 0} of {course.totalVideos || 0} lessons
                     </div>
 
-                    <Link
-                      href={`/courses/${course._id}`}
-                      className="btn-primary text-sm"
-                    >
+                    <Link href={`/courses/${course._id}`} className="btn-primary text-sm">
                       {course.progress >= 100 ? 'Review' : 'Continue'}
                     </Link>
                   </div>
@@ -203,15 +208,16 @@ const MyCourses = () => {
           <div className="text-center py-12">
             <BookOpen className="h-16 w-16 text-gray-400 mx-auto mb-4" />
             <h3 className="text-lg font-medium text-gray-900 mb-2">
-              {searchTerm || filter !== 'all' ? 'No courses match your criteria' : 'No courses enrolled yet'}
+              {searchTerm || filter !== 'all'
+                ? 'No courses match your criteria'
+                : 'No courses enrolled yet'}
             </h3>
             <p className="text-gray-600 mb-4">
               {searchTerm || filter !== 'all'
                 ? 'Try adjusting your search or filters'
-                : 'Start learning by enrolling in your first course'
-              }
+                : 'Start learning by enrolling in your first course'}
             </p>
-            {(!searchTerm && filter === 'all') && (
+            {!searchTerm && filter === 'all' && (
               <Link href="/courses" className="btn-primary">
                 Browse Courses
               </Link>
@@ -224,4 +230,3 @@ const MyCourses = () => {
 };
 
 export default MyCourses;
-

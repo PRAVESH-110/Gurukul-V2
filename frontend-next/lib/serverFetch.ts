@@ -5,13 +5,13 @@
  */
 
 const getApiBase = () =>
-    process.env.NODE_ENV === 'development'
-        ? process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001/api'
-        : process.env.NEXT_PUBLIC_API_URL_PROD || 'https://gurukul-04ad.onrender.com/api';
+  process.env.NODE_ENV === 'development'
+    ? process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001/api'
+    : process.env.NEXT_PUBLIC_API_URL_PROD || 'https://gurukul-04ad.onrender.com/api';
 
 type FetchOptions = {
-    params?: Record<string, string | number | boolean | undefined>;
-    revalidate?: number; // seconds, 0 = no-store, undefined = default Next.js cache
+  params?: Record<string, string | number | boolean | undefined>;
+  revalidate?: number; // seconds, 0 = no-store, undefined = default Next.js cache
 };
 
 /**
@@ -19,35 +19,35 @@ type FetchOptions = {
  * Returns the parsed JSON body, or null on any error.
  */
 export async function serverGet<T = unknown>(
-    path: string,
-    { params, revalidate }: FetchOptions = {}
+  path: string,
+  { params, revalidate }: FetchOptions = {},
 ): Promise<T | null> {
-    try {
-        const url = new URL(`${getApiBase()}${path}`);
+  try {
+    const url = new URL(`${getApiBase()}${path}`);
 
-        if (params) {
-            Object.entries(params).forEach(([key, value]) => {
-                if (value !== undefined && value !== '') {
-                    url.searchParams.set(key, String(value));
-                }
-            });
+    if (params) {
+      Object.entries(params).forEach(([key, value]) => {
+        if (value !== undefined && value !== '') {
+          url.searchParams.set(key, String(value));
         }
-
-        const headers: Record<string, string> = {
-            'Accept': 'application/json',
-        };
-
-        const res = await fetch(url.toString(), {
-            headers,
-            // revalidate: 0 → no-store (always fresh)
-            // revalidate: N → ISR every N seconds
-            // undefined  → Next.js default (full-route cache)
-            next: revalidate !== undefined ? { revalidate } : undefined,
-        });
-
-        if (!res.ok) return null;
-        return (await res.json()) as T;
-    } catch {
-        return null;
+      });
     }
+
+    const headers: Record<string, string> = {
+      Accept: 'application/json',
+    };
+
+    const res = await fetch(url.toString(), {
+      headers,
+      // revalidate: 0 → no-store (always fresh)
+      // revalidate: N → ISR every N seconds
+      // undefined  → Next.js default (full-route cache)
+      next: revalidate !== undefined ? { revalidate } : undefined,
+    });
+
+    if (!res.ok) return null;
+    return (await res.json()) as T;
+  } catch {
+    return null;
+  }
 }

@@ -14,18 +14,29 @@ const CourseCatalog = () => {
   const [selectedCategory, setSelectedCategory] = useState('');
   const [sortBy, setSortBy] = useState('popular');
 
-  const { data: coursesData, isLoading, error } = useQuery({
+  const {
+    data: coursesData,
+    isLoading,
+    error,
+  } = useQuery({
     queryKey: ['courses', { search: searchTerm, category: selectedCategory, sort: sortBy }],
-    queryFn: () => courseAPI.getCourses({
-      search: searchTerm,
-      category: selectedCategory,
-      sort: sortBy
-    })
+    queryFn: () =>
+      courseAPI.getCourses({
+        search: searchTerm,
+        category: selectedCategory,
+        sort: sortBy,
+      }),
   });
 
   const categories = [
-    'Programming', 'Design', 'Business', 'Marketing',
-    'Data Science', 'Photography', 'Music', 'Language'
+    'Programming',
+    'Design',
+    'Business',
+    'Marketing',
+    'Data Science',
+    'Photography',
+    'Music',
+    'Language',
   ];
 
   if (isLoading) {
@@ -44,11 +55,10 @@ const CourseCatalog = () => {
             <BookOpen className="h-8 w-8 text-red-600" />
           </div>
           <h3 className="text-lg font-bold text-gray-900 mb-2">Failed to load courses</h3>
-          <p className="text-gray-600 mb-6">We couldn&apos;t fetch the course catalog. Please try again later.</p>
-          <button
-            onClick={() => window.location.reload()}
-            className="btn-primary w-full"
-          >
+          <p className="text-gray-600 mb-6">
+            We couldn&apos;t fetch the course catalog. Please try again later.
+          </p>
+          <button onClick={() => window.location.reload()} className="btn-primary w-full">
             Retry
           </button>
         </div>
@@ -65,11 +75,14 @@ const CourseCatalog = () => {
         <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-12 py-12 lg:py-16">
           <div className="max-w-3xl">
             <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-6 tracking-tight">
-              Explore Our <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary-600 to-primary-500">Courses</span>
+              Explore Our{' '}
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary-600 to-primary-500">
+                Courses
+              </span>
             </h1>
             <p className="text-xl text-gray-600 leading-relaxed">
-              Discover a world of knowledge with our expertly crafted courses.
-              From coding to design, find the perfect path for your learning journey.
+              Discover a world of knowledge with our expertly crafted courses. From coding to
+              design, find the perfect path for your learning journey.
             </p>
           </div>
         </div>
@@ -99,8 +112,10 @@ const CourseCatalog = () => {
                 className="w-full appearance-none px-4 py-3 bg-gray-50 border-transparent rounded-xl focus:bg-white focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-all duration-200 cursor-pointer"
               >
                 <option value="">All Categories</option>
-                {categories.map(category => (
-                  <option key={category} value={category}>{category}</option>
+                {categories.map((category) => (
+                  <option key={category} value={category}>
+                    {category}
+                  </option>
                 ))}
               </select>
               <Filter className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4 pointer-events-none" />
@@ -121,7 +136,12 @@ const CourseCatalog = () => {
               </select>
               <div className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400 pointer-events-none">
                 <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="2"
+                    d="M19 9l-7 7-7-7"
+                  />
                 </svg>
               </div>
             </div>
@@ -145,7 +165,8 @@ const CourseCatalog = () => {
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                       onError={(e) => {
                         e.target.style.display = 'none';
-                        e.target.parentElement.innerHTML = '<div class="w-full h-full flex items-center justify-center bg-gray-100"><svg class="h-12 w-12 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" /></svg></div>';
+                        e.target.parentElement.innerHTML =
+                          '<div class="w-full h-full flex items-center justify-center bg-gray-100"><svg class="h-12 w-12 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" /></svg></div>';
                       }}
                     />
                   ) : (
@@ -191,9 +212,7 @@ const CourseCatalog = () => {
 
                     <div className="flex items-center justify-between">
                       {course.price > 0 ? (
-                        <span className="text-xl font-bold text-gray-900">
-                          ${course.price}
-                        </span>
+                        <span className="text-xl font-bold text-gray-900">${course.price}</span>
                       ) : (
                         <span className="text-xl font-bold text-green-600">Free</span>
                       )}
@@ -213,7 +232,8 @@ const CourseCatalog = () => {
             </div>
             <h3 className="text-xl font-bold text-gray-900 mb-2">No courses found</h3>
             <p className="text-gray-600 max-w-md mx-auto">
-              We couldnt find any courses matching your criteria. Try adjusting your search or filters.
+              We couldnt find any courses matching your criteria. Try adjusting your search or
+              filters.
             </p>
             <button
               onClick={() => {
@@ -233,4 +253,3 @@ const CourseCatalog = () => {
 };
 
 export default CourseCatalog;
-

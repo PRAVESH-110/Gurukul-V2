@@ -12,7 +12,7 @@ const EditProfile = ({ user, onCancel, onSuccess, setIsModalOpen }) => {
     email: '',
     phone: '', // Add other fields if they exist in your User model
     address: '',
-    dateOfBirth: ''
+    dateOfBirth: '',
   });
 
   const queryClient = useQueryClient();
@@ -26,7 +26,7 @@ const EditProfile = ({ user, onCancel, onSuccess, setIsModalOpen }) => {
         email: user.email || '',
         phone: user.phone || '',
         address: user.address || '',
-        dateOfBirth: user.dateOfBirth ? user.dateOfBirth.split('T')[0] : ''
+        dateOfBirth: user.dateOfBirth ? user.dateOfBirth.split('T')[0] : '',
       });
     }
   }, [user]);
@@ -71,15 +71,15 @@ const EditProfile = ({ user, onCancel, onSuccess, setIsModalOpen }) => {
     },
 
     onError: (error) => {
-      console.error("Error updating profile:", error);
-    }
+      console.error('Error updating profile:', error);
+    },
   });
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      [name]: value
+      [name]: value,
     }));
   };
 
@@ -96,19 +96,23 @@ const EditProfile = ({ user, onCancel, onSuccess, setIsModalOpen }) => {
     }
   };
 
-
   return (
     <div className="bg-white rounded-sm h-shadow-sm border border-rounded p-6 relative">
       <div className="flex items-center justify-between mb-6">
         <h2 className="text-xl font-semibold text-gray-900">Edit Profile</h2>
         <button
-          onClick={onCancel}  // Use onCancel prop instead of setIsModalOpen
+          onClick={onCancel} // Use onCancel prop instead of setIsModalOpen
           className="text-gray-500 hover:text-gray-700 focus:outline-none"
           type="button"
         >
           <span className="sr-only">Close</span>
           <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M6 18L18 6M6 6l12 12"
+            />
           </svg>
         </button>
       </div>
@@ -237,10 +241,7 @@ const EditProfile = ({ user, onCancel, onSuccess, setIsModalOpen }) => {
             disabled={updateProfileMutation.isLoading}
             className="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {updateProfileMutation.isLoading ? 'Saving...'
-
-
-              : 'Save Changes'}
+            {updateProfileMutation.isLoading ? 'Saving...' : 'Save Changes'}
           </button>
         </div>
       </form>

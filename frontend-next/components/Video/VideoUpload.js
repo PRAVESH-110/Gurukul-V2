@@ -9,7 +9,14 @@ import { videoAPI } from '@/services/api';
 import { Upload, X, Check, Plus, Trash2, Edit2, FileVideo, AlertCircle, Film } from 'lucide-react';
 
 const VideoUpload = ({ courseId, onUploadComplete, existingVideos = [] }) => {
-  const { register, handleSubmit, reset, setValue, watch, formState: { errors } } = useForm();
+  const {
+    register,
+    handleSubmit,
+    reset,
+    setValue,
+    watch,
+    formState: { errors },
+  } = useForm();
   const { user } = useAuth();
   const router = useRouter();
   const fileInputRef = useRef(null);
@@ -55,7 +62,7 @@ const VideoUpload = ({ courseId, onUploadComplete, existingVideos = [] }) => {
 
     const newSection = {
       id: `section-${Date.now()}`,
-      name: newSectionName.trim()
+      name: newSectionName.trim(),
     };
 
     setSections([...sections, newSection]);
@@ -95,7 +102,7 @@ const VideoUpload = ({ courseId, onUploadComplete, existingVideos = [] }) => {
           title: data.title,
           description: data.description,
           section: selectedSection,
-          isPublished: data.isPublished || false
+          isPublished: data.isPublished || false,
         };
 
         // If new file uploaded, update url and fileId
@@ -110,9 +117,7 @@ const VideoUpload = ({ courseId, onUploadComplete, existingVideos = [] }) => {
         const response = await videoAPI.updateVideo(editingVideo._id, updatedVideo);
 
         // Update the video in the list
-        setVideos(videos.map(video =>
-          video._id === editingVideo._id ? response.data : video
-        ));
+        setVideos(videos.map((video) => (video._id === editingVideo._id ? response.data : video)));
 
         toast.success('Video updated successfully!');
         setIsEditing(false);
@@ -133,7 +138,7 @@ const VideoUpload = ({ courseId, onUploadComplete, existingVideos = [] }) => {
           duration: 1, // Will be updated by webhook
           order: videos.length + 1,
           status: 'processing',
-          isActive: true
+          isActive: true,
         };
 
         console.log('📤 Creating video record:', videoRecord);
@@ -153,10 +158,10 @@ const VideoUpload = ({ courseId, onUploadComplete, existingVideos = [] }) => {
       reset();
       setSelectedFile(null);
       setPreviewUrl('');
-
     } catch (error) {
       console.error('❌ Error uploading video:', error);
-      const errorMessage = error.response?.data?.message || error.message || 'Failed to upload video';
+      const errorMessage =
+        error.response?.data?.message || error.message || 'Failed to upload video';
       toast.error(errorMessage);
     } finally {
       setIsUploading(false);
@@ -166,10 +171,12 @@ const VideoUpload = ({ courseId, onUploadComplete, existingVideos = [] }) => {
 
   // Handle video deletion
   const handleDeleteVideo = async (videoId) => {
-    if (window.confirm('Are you sure you want to delete this video? This action cannot be undone.')) {
+    if (
+      window.confirm('Are you sure you want to delete this video? This action cannot be undone.')
+    ) {
       try {
         await videoAPI.deleteVideo(videoId);
-        setVideos(videos.filter(video => video._id !== videoId));
+        setVideos(videos.filter((video) => video._id !== videoId));
         toast.success('Video deleted successfully');
       } catch (error) {
         console.error('Error deleting video:', error);
@@ -205,14 +212,13 @@ const VideoUpload = ({ courseId, onUploadComplete, existingVideos = [] }) => {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           {/* Left column - Video upload/preview */}
           <div className="space-y-4">
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Video File
-            </label>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Video File</label>
             <div
-              className={`border-2 border-dashed rounded-xl p-8 text-center cursor-pointer transition-all duration-200 ${selectedFile || (isEditing && previewUrl)
-                ? 'border-primary-500 bg-primary-50/30'
-                : 'border-gray-300 hover:border-primary-400 hover:bg-gray-50'
-                }`}
+              className={`border-2 border-dashed rounded-xl p-8 text-center cursor-pointer transition-all duration-200 ${
+                selectedFile || (isEditing && previewUrl)
+                  ? 'border-primary-500 bg-primary-50/30'
+                  : 'border-gray-300 hover:border-primary-400 hover:bg-gray-50'
+              }`}
               onClick={() => fileInputRef.current.click()}
             >
               <input
@@ -258,15 +264,11 @@ const VideoUpload = ({ courseId, onUploadComplete, existingVideos = [] }) => {
                   <div className="w-16 h-16 bg-primary-50 text-primary-600 rounded-full flex items-center justify-center mx-auto mb-4">
                     <Upload className="h-8 w-8" />
                   </div>
-                  <p className="text-base font-medium text-gray-900 mb-1">
-                    Click to upload video
-                  </p>
+                  <p className="text-base font-medium text-gray-900 mb-1">Click to upload video</p>
                   <p className="text-sm text-gray-500 mb-4">
                     or drag and drop MP4, WebM, OGG, or MOV
                   </p>
-                  <p className="text-xs text-gray-400 uppercase tracking-wide">
-                    Max size: 100MB
-                  </p>
+                  <p className="text-xs text-gray-400 uppercase tracking-wide">Max size: 100MB</p>
                 </div>
               )}
 
@@ -291,7 +293,9 @@ const VideoUpload = ({ courseId, onUploadComplete, existingVideos = [] }) => {
                 <Film className="h-5 w-5 text-gray-400 mr-3" />
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium text-gray-900 truncate">{selectedFile.name}</p>
-                  <p className="text-xs text-gray-500">{(selectedFile.size / (1024 * 1024)).toFixed(2)} MB</p>
+                  <p className="text-xs text-gray-500">
+                    {(selectedFile.size / (1024 * 1024)).toFixed(2)} MB
+                  </p>
                 </div>
               </div>
             )}
@@ -333,9 +337,7 @@ const VideoUpload = ({ courseId, onUploadComplete, existingVideos = [] }) => {
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Section
-                </label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Section</label>
                 <div className="flex space-x-2">
                   <select
                     value={selectedSection}
@@ -392,14 +394,12 @@ const VideoUpload = ({ courseId, onUploadComplete, existingVideos = [] }) => {
               <div className="flex items-center pt-6">
                 <label className="flex items-center cursor-pointer group">
                   <div className="relative">
-                    <input
-                      type="checkbox"
-                      {...register('isPublished')}
-                      className="sr-only peer"
-                    />
+                    <input type="checkbox" {...register('isPublished')} className="sr-only peer" />
                     <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary-600"></div>
                   </div>
-                  <span className="ml-3 text-sm font-medium text-gray-700 group-hover:text-gray-900">Publish immediately</span>
+                  <span className="ml-3 text-sm font-medium text-gray-700 group-hover:text-gray-900">
+                    Publish immediately
+                  </span>
                 </label>
               </div>
             </div>
@@ -407,18 +407,10 @@ const VideoUpload = ({ courseId, onUploadComplete, existingVideos = [] }) => {
             <div className="pt-4 flex justify-end space-x-3 border-t border-gray-100 mt-6">
               {isEditing ? (
                 <>
-                  <button
-                    type="button"
-                    onClick={handleCancelEdit}
-                    className="btn-secondary"
-                  >
+                  <button type="button" onClick={handleCancelEdit} className="btn-secondary">
                     Cancel
                   </button>
-                  <button
-                    type="submit"
-                    disabled={isUploading}
-                    className="btn-primary"
-                  >
+                  <button type="submit" disabled={isUploading} className="btn-primary">
                     {isUploading ? 'Saving...' : 'Save Changes'}
                   </button>
                 </>
@@ -440,4 +432,3 @@ const VideoUpload = ({ courseId, onUploadComplete, existingVideos = [] }) => {
 };
 
 export default VideoUpload;
-

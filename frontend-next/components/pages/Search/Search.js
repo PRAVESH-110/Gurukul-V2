@@ -18,7 +18,7 @@ const Search = () => {
   const [filters, setFilters] = useState({
     category: '',
     level: '',
-    price: ''
+    price: '',
   });
 
   // Update query state if URL param changes
@@ -29,7 +29,11 @@ const Search = () => {
     }
   }, [searchParams]);
 
-  const { data: searchResults, isLoading, error } = useQuery({
+  const {
+    data: searchResults,
+    isLoading,
+    error,
+  } = useQuery({
     queryKey: ['search', query, activeTab, filters],
     queryFn: () => {
       if (!query.trim()) return { data: { courses: [], communities: [], users: [], posts: [] } };
@@ -42,7 +46,7 @@ const Search = () => {
 
       return searchAPI.globalSearch(params);
     },
-    enabled: !!query.trim()
+    enabled: !!query.trim(),
   });
 
   const handleSearch = (e) => {
@@ -62,11 +66,19 @@ const Search = () => {
   const results = searchResults?.data?.results || {};
 
   const tabs = [
-    { id: 'all', label: 'All', count: (results.courses?.length || 0) + (results.communities?.length || 0) + (results.users?.length || 0) + (results.posts?.length || 0) },
+    {
+      id: 'all',
+      label: 'All',
+      count:
+        (results.courses?.length || 0) +
+        (results.communities?.length || 0) +
+        (results.users?.length || 0) +
+        (results.posts?.length || 0),
+    },
     { id: 'courses', label: 'Courses', count: results.courses?.length || 0 },
     { id: 'communities', label: 'Communities', count: results.communities?.length || 0 },
     { id: 'users', label: 'Users', count: results.users?.length || 0 },
-    { id: 'posts', label: 'Posts', count: results.posts?.length || 0 }
+    { id: 'posts', label: 'Posts', count: results.posts?.length || 0 },
   ];
 
   return (
@@ -112,10 +124,11 @@ const Search = () => {
                   <button
                     key={tab.id}
                     onClick={() => setActiveTab(tab.id)}
-                    className={`px-6 py-3 text-sm font-medium border-b-2 ${activeTab === tab.id
-                      ? 'border-primary-500 text-primary-600'
-                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                      }`}
+                    className={`px-6 py-3 text-sm font-medium border-b-2 ${
+                      activeTab === tab.id
+                        ? 'border-primary-500 text-primary-600'
+                        : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                    }`}
                   >
                     {tab.label}
                     {tab.count > 0 && (
@@ -167,12 +180,8 @@ const Search = () => {
                             )}
                           </div>
                           <div className="flex-1 min-w-0">
-                            <h3 className="text-lg font-medium text-gray-900">
-                              {course.title}
-                            </h3>
-                            <p className="text-sm text-gray-600 mt-1">
-                              {course.description}
-                            </p>
+                            <h3 className="text-lg font-medium text-gray-900">{course.title}</h3>
+                            <p className="text-sm text-gray-600 mt-1">{course.description}</p>
                             <div className="flex items-center space-x-4 mt-2">
                               <span className="text-sm text-gray-500">
                                 By {course.creator?.name}
@@ -193,53 +202,52 @@ const Search = () => {
               )}
 
               {/* Communities */}
-              {(activeTab === 'all' || activeTab === 'communities') && results.communities?.length > 0 && (
-                <div className="bg-white rounded-lg shadow-sm border">
-                  <div className="p-6 border-b border-gray-200">
-                    <h2 className="text-lg font-semibold text-gray-900 flex items-center">
-                      <Users className="h-5 w-5 mr-2" />
-                      Communities ({results.communities.length})
-                    </h2>
-                  </div>
-                  <div className="divide-y divide-gray-200">
-                    {results.communities.map((community) => (
-                      <div key={community._id} className="p-6 hover:bg-gray-50">
-                        <div className="flex items-start space-x-4">
-                          <div className="flex-shrink-0">
-                            {community.avatar ? (
-                              <img
-                                src={community.avatar}
-                                alt={community.name}
-                                className="w-12 h-12 rounded-full object-cover"
-                              />
-                            ) : (
-                              <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
-                                <Users className="h-6 w-6 text-blue-600" />
+              {(activeTab === 'all' || activeTab === 'communities') &&
+                results.communities?.length > 0 && (
+                  <div className="bg-white rounded-lg shadow-sm border">
+                    <div className="p-6 border-b border-gray-200">
+                      <h2 className="text-lg font-semibold text-gray-900 flex items-center">
+                        <Users className="h-5 w-5 mr-2" />
+                        Communities ({results.communities.length})
+                      </h2>
+                    </div>
+                    <div className="divide-y divide-gray-200">
+                      {results.communities.map((community) => (
+                        <div key={community._id} className="p-6 hover:bg-gray-50">
+                          <div className="flex items-start space-x-4">
+                            <div className="flex-shrink-0">
+                              {community.avatar ? (
+                                <img
+                                  src={community.avatar}
+                                  alt={community.name}
+                                  className="w-12 h-12 rounded-full object-cover"
+                                />
+                              ) : (
+                                <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
+                                  <Users className="h-6 w-6 text-blue-600" />
+                                </div>
+                              )}
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <h3 className="text-lg font-medium text-gray-900">
+                                {community.name}
+                              </h3>
+                              <p className="text-sm text-gray-600 mt-1">{community.description}</p>
+                              <div className="flex items-center space-x-4 mt-2">
+                                <span className="text-sm text-gray-500">
+                                  {community.memberCount} members
+                                </span>
+                                <span className="text-sm text-gray-500">
+                                  Created by {community.creator?.name}
+                                </span>
                               </div>
-                            )}
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <h3 className="text-lg font-medium text-gray-900">
-                              {community.name}
-                            </h3>
-                            <p className="text-sm text-gray-600 mt-1">
-                              {community.description}
-                            </p>
-                            <div className="flex items-center space-x-4 mt-2">
-                              <span className="text-sm text-gray-500">
-                                {community.memberCount} members
-                              </span>
-                              <span className="text-sm text-gray-500">
-                                Created by {community.creator?.name}
-                              </span>
                             </div>
                           </div>
                         </div>
-                      </div>
-                    ))}
+                      ))}
+                    </div>
                   </div>
-                </div>
-              )}
+                )}
 
               {/* Users */}
               {(activeTab === 'all' || activeTab === 'users') && results.users?.length > 0 && (
@@ -268,15 +276,9 @@ const Search = () => {
                             )}
                           </div>
                           <div className="flex-1 min-w-0">
-                            <h3 className="text-lg font-medium text-gray-900">
-                              {user.name}
-                            </h3>
-                            <p className="text-sm text-gray-600">
-                              {user.email}
-                            </p>
-                            <p className="text-sm text-gray-500 capitalize">
-                              {user.role}
-                            </p>
+                            <h3 className="text-lg font-medium text-gray-900">{user.name}</h3>
+                            <p className="text-sm text-gray-600">{user.email}</p>
+                            <p className="text-sm text-gray-500 capitalize">{user.role}</p>
                           </div>
                         </div>
                       </div>
@@ -312,16 +314,12 @@ const Search = () => {
                             )}
                           </div>
                           <div className="flex-1 min-w-0">
-                            <h3 className="text-lg font-medium text-gray-900">
-                              {post.title}
-                            </h3>
+                            <h3 className="text-lg font-medium text-gray-900">{post.title}</h3>
                             <p className="text-sm text-gray-600 mt-1">
                               {post.content?.substring(0, 150)}...
                             </p>
                             <div className="flex items-center space-x-4 mt-2">
-                              <span className="text-sm text-gray-500">
-                                By {post.author?.name}
-                              </span>
+                              <span className="text-sm text-gray-500">By {post.author?.name}</span>
                               <span className="text-sm text-gray-500">
                                 {new Date(post.createdAt).toLocaleDateString()}
                               </span>
@@ -335,20 +333,16 @@ const Search = () => {
               )}
 
               {/* No Results */}
-              {query.trim() && !isLoading && (
+              {query.trim() &&
+                !isLoading &&
                 results.courses?.length === 0 &&
                 results.communities?.length === 0 &&
                 results.users?.length === 0 &&
-                results.posts?.length === 0
-              ) && (
+                results.posts?.length === 0 && (
                   <div className="text-center py-12">
                     <SearchIcon className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                    <h3 className="text-lg font-medium text-gray-900 mb-2">
-                      No results found
-                    </h3>
-                    <p className="text-gray-600">
-                      Try adjusting your search terms or filters
-                    </p>
+                    <h3 className="text-lg font-medium text-gray-900 mb-2">No results found</h3>
+                    <p className="text-gray-600">Try adjusting your search terms or filters</p>
                   </div>
                 )}
             </div>
@@ -360,9 +354,7 @@ const Search = () => {
       {!query.trim() && (
         <div className="text-center py-12">
           <SearchIcon className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-          <h3 className="text-lg font-medium text-gray-900 mb-2">
-            Search for anything
-          </h3>
+          <h3 className="text-lg font-medium text-gray-900 mb-2">Search for anything</h3>
           <p className="text-gray-600">
             Find courses, communities, users, and posts in our platform
           </p>
@@ -379,4 +371,3 @@ export default function SearchInner() {
     </Suspense>
   );
 }
-

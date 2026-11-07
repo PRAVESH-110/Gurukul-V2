@@ -10,7 +10,11 @@ export const getImageUrl = (imagePath) => {
   }
 
   // If the path is already a full URL (starts with http or blob), return as is
-  if (imagePath.startsWith('http://') || imagePath.startsWith('https://') || imagePath.startsWith('blob:')) {
+  if (
+    imagePath.startsWith('http://') ||
+    imagePath.startsWith('https://') ||
+    imagePath.startsWith('blob:')
+  ) {
     console.log('✅ getImageUrl: Full URL provided:', imagePath);
     return imagePath;
   }
@@ -22,7 +26,9 @@ export const getImageUrl = (imagePath) => {
       return (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001').replace('/api', '');
     }
     // In production, use the production URL
-    return (process.env.NEXT_PUBLIC_API_URL_PROD || 'https://gurukul-04ad.onrender.com/api').replace('/api', '');
+    return (
+      process.env.NEXT_PUBLIC_API_URL_PROD || 'https://gurukul-04ad.onrender.com/api'
+    ).replace('/api', '');
   };
 
   const baseUrl = getBaseUrl();
@@ -46,7 +52,7 @@ export const getPlaceholderImage = (type = 'default') => {
     course: 'https://via.placeholder.com/1280x720/4F46E5/FFFFFF?text=Course',
     community: 'https://via.placeholder.com/1200x300/4F46E5/FFFFFF?text=Community',
     avatar: 'https://via.placeholder.com/200x200/4F46E5/FFFFFF?text=User',
-    default: 'https://via.placeholder.com/800x600/4F46E5/FFFFFF?text=Image'
+    default: 'https://via.placeholder.com/800x600/4F46E5/FFFFFF?text=Image',
   };
 
   return placeholders[type] || placeholders.default;

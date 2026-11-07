@@ -26,7 +26,7 @@ const EditCourse = () => {
     requirements: [],
     learningOutcomes: [],
     isPublished: false,
-    allowComments: true
+    allowComments: true,
   });
 
   const [thumbnail, setThumbnail] = useState(null);
@@ -54,10 +54,10 @@ const EditCourse = () => {
         requirements: course.requirements || [],
         learningOutcomes: course.learningOutcomes || [],
         isPublished: course.isPublished || false,
-        allowComments: course.allowComments !== false
+        allowComments: course.allowComments !== false,
       });
       setThumbnailPreview(course.thumbnail);
-    }
+    },
   });
 
   // Update course mutation
@@ -71,21 +71,22 @@ const EditCourse = () => {
     },
     onError: (error) => {
       toast.error(error.response?.data?.message || 'Failed to update course');
-    }
+    },
   });
 
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      [name]: type === 'checkbox' ? checked : value
+      [name]: type === 'checkbox' ? checked : value,
     }));
   };
 
   const handleThumbnailChange = (e) => {
     const file = e.target.files[0];
     if (file) {
-      if (file.size > 5 * 1024 * 1024) { // 5MB limit
+      if (file.size > 5 * 1024 * 1024) {
+        // 5MB limit
         toast.error('Image must be less than 5MB');
         return;
       }
@@ -96,52 +97,52 @@ const EditCourse = () => {
 
   const addTag = () => {
     if (tagInput.trim() && !formData.tags.includes(tagInput.trim())) {
-      setFormData(prev => ({
+      setFormData((prev) => ({
         ...prev,
-        tags: [...prev.tags, tagInput.trim()]
+        tags: [...prev.tags, tagInput.trim()],
       }));
       setTagInput('');
     }
   };
 
   const removeTag = (tagToRemove) => {
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      tags: prev.tags.filter(tag => tag !== tagToRemove)
+      tags: prev.tags.filter((tag) => tag !== tagToRemove),
     }));
   };
 
   const addRequirement = () => {
     if (requirementInput.trim()) {
-      setFormData(prev => ({
+      setFormData((prev) => ({
         ...prev,
-        requirements: [...prev.requirements, requirementInput.trim()]
+        requirements: [...prev.requirements, requirementInput.trim()],
       }));
       setRequirementInput('');
     }
   };
 
   const removeRequirement = (index) => {
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      requirements: prev.requirements.filter((_, i) => i !== index)
+      requirements: prev.requirements.filter((_, i) => i !== index),
     }));
   };
 
   const addOutcome = () => {
     if (outcomeInput.trim()) {
-      setFormData(prev => ({
+      setFormData((prev) => ({
         ...prev,
-        learningOutcomes: [...prev.learningOutcomes, outcomeInput.trim()]
+        learningOutcomes: [...prev.learningOutcomes, outcomeInput.trim()],
       }));
       setOutcomeInput('');
     }
   };
 
   const removeOutcome = (index) => {
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      learningOutcomes: prev.learningOutcomes.filter((_, i) => i !== index)
+      learningOutcomes: prev.learningOutcomes.filter((_, i) => i !== index),
     }));
   };
 
@@ -151,7 +152,7 @@ const EditCourse = () => {
     const submitData = new FormData();
 
     // Add all form fields
-    Object.keys(formData).forEach(key => {
+    Object.keys(formData).forEach((key) => {
       if (key === 'tags' || key === 'requirements' || key === 'learningOutcomes') {
         submitData.append(key, JSON.stringify(formData[key]));
       } else {
@@ -196,9 +197,7 @@ const EditCourse = () => {
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="md:col-span-2">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Course Title *
-              </label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Course Title *</label>
               <input
                 type="text"
                 name="title"
@@ -211,9 +210,7 @@ const EditCourse = () => {
             </div>
 
             <div className="md:col-span-2">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Description *
-              </label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Description *</label>
               <textarea
                 name="description"
                 value={formData.description}
@@ -226,9 +223,7 @@ const EditCourse = () => {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Category *
-              </label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Category *</label>
               <input
                 type="text"
                 name="category"
@@ -241,9 +236,7 @@ const EditCourse = () => {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Level *
-              </label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Level *</label>
               <select
                 name="level"
                 value={formData.level}
@@ -258,9 +251,7 @@ const EditCourse = () => {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Language
-              </label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Language</label>
               <input
                 type="text"
                 name="language"
@@ -272,11 +263,11 @@ const EditCourse = () => {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Price
-              </label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Price</label>
               <div className="relative">
-                <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500">$</span>
+                <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500">
+                  $
+                </span>
                 <input
                   type="number"
                   name="price"
@@ -338,7 +329,8 @@ const EditCourse = () => {
                 <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 cursor-pointer hover:border-primary-400">
                   <Upload className="h-8 w-8 text-gray-400 mx-auto mb-2" />
                   <p className="text-sm text-gray-600 text-center">
-                    Click to upload thumbnail<br />
+                    Click to upload thumbnail
+                    <br />
                     <span className="text-xs text-gray-500">Max 5MB, JPG/PNG</span>
                   </p>
                 </div>
@@ -352,7 +344,7 @@ const EditCourse = () => {
           <h2 className="text-xl font-semibold text-gray-900 mb-4">Tags</h2>
 
           <div className="flex flex-wrap gap-2 mb-4">
-            {formData.tags.map(tag => (
+            {formData.tags.map((tag) => (
               <span
                 key={tag}
                 className="bg-primary-100 text-primary-800 px-3 py-1 rounded-full text-sm flex items-center"
@@ -378,11 +370,7 @@ const EditCourse = () => {
               className="input flex-1"
               placeholder="Add a tag and press Enter"
             />
-            <button
-              type="button"
-              onClick={addTag}
-              className="btn-secondary"
-            >
+            <button type="button" onClick={addTag} className="btn-secondary">
               Add Tag
             </button>
           </div>
@@ -416,11 +404,7 @@ const EditCourse = () => {
               className="input flex-1"
               placeholder="Add a requirement and press Enter"
             />
-            <button
-              type="button"
-              onClick={addRequirement}
-              className="btn-secondary"
-            >
+            <button type="button" onClick={addRequirement} className="btn-secondary">
               Add
             </button>
           </div>
@@ -454,11 +438,7 @@ const EditCourse = () => {
               className="input flex-1"
               placeholder="Add a learning outcome and press Enter"
             />
-            <button
-              type="button"
-              onClick={addOutcome}
-              className="btn-secondary"
-            >
+            <button type="button" onClick={addOutcome} className="btn-secondary">
               Add
             </button>
           </div>

@@ -13,7 +13,12 @@ const CreateCommunity = () => {
   const [banner, setBanner] = useState(null);
   const [bannerPreview, setBannerPreview] = useState(null);
 
-  const { register, handleSubmit, formState: { errors }, watch } = useForm();
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+    watch,
+  } = useForm();
 
   const handleBannerChange = (e) => {
     const file = e.target.files[0];
@@ -38,7 +43,7 @@ const CreateCommunity = () => {
         name: data.name,
         description: data.description,
         type: data.privacy, // Map privacy to type
-        tags: data.tags ? data.tags.split(',').map(tag => tag.trim()) : []
+        tags: data.tags ? data.tags.split(',').map((tag) => tag.trim()) : [],
       };
 
       // Add all fields to form data
@@ -68,7 +73,8 @@ const CreateCommunity = () => {
       }
     } catch (error) {
       console.error('Error creating community:', error);
-      const errorMessage = error.response?.data?.message ||
+      const errorMessage =
+        error.response?.data?.message ||
         error.response?.data?.errors?.[0]?.msg ||
         error.message ||
         'Failed to create community';
@@ -79,17 +85,31 @@ const CreateCommunity = () => {
   };
 
   const categories = [
-    'Technology', 'Education', 'Business', 'Arts & Design',
-    'Health & Wellness', 'Sports & Fitness', 'Gaming', 'Music',
-    'Photography', 'Cooking', 'Travel', 'Books & Literature',
-    'Science', 'Politics', 'Environment', 'Other'
+    'Technology',
+    'Education',
+    'Business',
+    'Arts & Design',
+    'Health & Wellness',
+    'Sports & Fitness',
+    'Gaming',
+    'Music',
+    'Photography',
+    'Cooking',
+    'Travel',
+    'Books & Literature',
+    'Science',
+    'Politics',
+    'Environment',
+    'Other',
   ];
 
   return (
     <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-gray-900 mb-4">Create New Community</h1>
-        <p className="text-gray-600">Build a space for like-minded people to connect and learn together</p>
+        <p className="text-gray-600">
+          Build a space for like-minded people to connect and learn together
+        </p>
       </div>
 
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-8">
@@ -107,9 +127,7 @@ const CreateCommunity = () => {
                 className="input w-full"
                 placeholder="Enter community name"
               />
-              {errors.name && (
-                <p className="text-red-600 text-sm mt-1">{errors.name.message}</p>
-              )}
+              {errors.name && <p className="text-red-600 text-sm mt-1">{errors.name.message}</p>}
             </div>
 
             <div className="md:col-span-2">
@@ -128,16 +146,16 @@ const CreateCommunity = () => {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Category *
-              </label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Category *</label>
               <select
                 {...register('category', { required: 'Category is required' })}
                 className="input w-full"
               >
                 <option value="">Select a category</option>
-                {categories.map(category => (
-                  <option key={category} value={category}>{category}</option>
+                {categories.map((category) => (
+                  <option key={category} value={category}>
+                    {category}
+                  </option>
                 ))}
               </select>
               {errors.category && (
@@ -184,9 +202,7 @@ const CreateCommunity = () => {
                 className="input w-full"
                 placeholder="Enter tags separated by commas (e.g., programming, javascript, web development)"
               />
-              <p className="text-sm text-gray-500 mt-1">
-                Tags help people discover your community
-              </p>
+              <p className="text-sm text-gray-500 mt-1">Tags help people discover your community</p>
             </div>
           </div>
         </div>
@@ -208,10 +224,7 @@ const CreateCommunity = () => {
                     className="hidden"
                     id="banner-upload"
                   />
-                  <label
-                    htmlFor="banner-upload"
-                    className="btn-outline cursor-pointer"
-                  >
+                  <label htmlFor="banner-upload" className="btn-outline cursor-pointer">
                     <Upload className="h-4 w-4 mr-2" />
                     Choose Banner
                   </label>
@@ -227,7 +240,8 @@ const CreateCommunity = () => {
                 )}
               </div>
               <p className="text-sm text-gray-500 mt-1">
-                Recommended size: 1200x300px. This will be displayed at the top of your community page.
+                Recommended size: 1200x300px. This will be displayed at the top of your community
+                page.
               </p>
             </div>
           </div>
@@ -290,9 +304,7 @@ const CreateCommunity = () => {
           <div className="flex">
             <Users className="h-5 w-5 text-blue-400 mt-0.5" />
             <div className="ml-3">
-              <h3 className="text-sm font-medium text-blue-800">
-                Community Guidelines
-              </h3>
+              <h3 className="text-sm font-medium text-blue-800">Community Guidelines</h3>
               <div className="mt-2 text-sm text-blue-700">
                 <ul className="list-disc pl-5 space-y-1">
                   <li>Foster a welcoming and inclusive environment</li>
@@ -313,11 +325,7 @@ const CreateCommunity = () => {
           >
             Cancel
           </button>
-          <button
-            type="submit"
-            disabled={isSubmitting}
-            className="btn-primary"
-          >
+          <button type="submit" disabled={isSubmitting} className="btn-primary">
             {isSubmitting ? 'Creating...' : 'Create Community'}
           </button>
         </div>
@@ -327,4 +335,3 @@ const CreateCommunity = () => {
 };
 
 export default CreateCommunity;
-

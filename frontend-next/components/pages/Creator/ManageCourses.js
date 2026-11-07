@@ -17,7 +17,7 @@ import {
   EyeOff,
   DollarSign,
   MoreVertical,
-  Video
+  Video,
 } from 'lucide-react';
 import LoadingSpinner from '@/components/UI/LoadingSpinner';
 import toast from 'react-hot-toast';
@@ -29,9 +29,14 @@ const ManageCourses = () => {
   const [visibilityFilter, setVisibilityFilter] = useState('all');
   const [sortBy, setSortBy] = useState('newest');
 
-  const { data: coursesData, isLoading, error, refetch } = useQuery({
+  const {
+    data: coursesData,
+    isLoading,
+    error,
+    refetch,
+  } = useQuery({
     queryKey: ['creatorCourses'],
-    queryFn: () => courseAPI.getCreatorCourses()
+    queryFn: () => courseAPI.getCreatorCourses(),
   });
 
   const handleDeleteCourse = async (courseId, courseName) => {
@@ -67,11 +72,12 @@ const ManageCourses = () => {
       // Navigate to the courses array
       // Structure: response.data.data.data (array of courses)
       if (newData.data?.data?.data) {
-        const courseIndex = newData.data.data.data.findIndex(c => c._id === courseId);
+        const courseIndex = newData.data.data.data.findIndex((c) => c._id === courseId);
         if (courseIndex !== -1) {
           newData.data.data.data[courseIndex].visibility = newVisibility;
           // Also update status for backward compatibility if needed by UI
-          newData.data.data.data[courseIndex].status = newVisibility === 'public' ? 'published' : 'draft';
+          newData.data.data.data[courseIndex].status =
+            newVisibility === 'public' ? 'published' : 'draft';
         }
       }
 
@@ -230,8 +236,7 @@ const ManageCourses = () => {
               <p className="text-2xl font-bold text-gray-900">
                 {typeof coursesData?.data?.data?.stats?.averageRating === 'number'
                   ? coursesData.data.data.stats.averageRating.toFixed(1)
-                  : '0.0'
-                }
+                  : '0.0'}
               </p>
             </div>
           </div>
@@ -247,8 +252,7 @@ const ManageCourses = () => {
             <p className="text-gray-600 mb-6">
               {searchTerm || visibilityFilter !== 'all'
                 ? 'Try adjusting your search or filters'
-                : 'Get started by creating your first course'
-              }
+                : 'Get started by creating your first course'}
             </p>
             <Link href="/create-course" className="btn-primary">
               <Plus className="h-4 w-4 mr-2" />
@@ -320,11 +324,16 @@ const ManageCourses = () => {
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${course.visibility === 'public'
-                        ? 'bg-green-100 text-green-800'
-                        : 'bg-gray-100 text-gray-800'
-                        }`}>
-                        {course.visibility ? course.visibility.charAt(0).toUpperCase() + course.visibility.slice(1) : 'Private'}
+                      <span
+                        className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                          course.visibility === 'public'
+                            ? 'bg-green-100 text-green-800'
+                            : 'bg-gray-100 text-gray-800'
+                        }`}
+                      >
+                        {course.visibility
+                          ? course.visibility.charAt(0).toUpperCase() + course.visibility.slice(1)
+                          : 'Private'}
                       </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
@@ -379,15 +388,19 @@ const ManageCourses = () => {
                             <Edit className="h-4 w-4" />
                           </Link>
                           <button
-                            onClick={() =>
-                              handleToggleVisibility(course._id, course.visibility)}
-                            className={`p-2 rounded-full ${course.visibility === 'public'
-                              ? 'text-green-600 hover:bg-green-50'
-                              : 'text-gray-600 hover:bg-gray-50'
-                              }`}
+                            onClick={() => handleToggleVisibility(course._id, course.visibility)}
+                            className={`p-2 rounded-full ${
+                              course.visibility === 'public'
+                                ? 'text-green-600 hover:bg-green-50'
+                                : 'text-gray-600 hover:bg-gray-50'
+                            }`}
                             title={course.visibility === 'public' ? 'Make Private' : 'Make Public'}
                           >
-                            {course.visibility === 'public' ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
+                            {course.visibility === 'public' ? (
+                              <Eye className="h-4 w-4" />
+                            ) : (
+                              <EyeOff className="h-4 w-4" />
+                            )}
                           </button>
                           <button
                             onClick={() => handleDeleteCourse(course._id, course.title)}
@@ -411,4 +424,3 @@ const ManageCourses = () => {
 };
 
 export default ManageCourses;
-

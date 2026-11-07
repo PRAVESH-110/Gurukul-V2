@@ -17,10 +17,15 @@ const CreateEvent = () => {
 
   const { data: communitiesData, isLoading: communitiesLoading } = useQuery({
     queryKey: ['creatorCommunities'],
-    queryFn: () => communityAPI.getCreatorCommunities()
+    queryFn: () => communityAPI.getCreatorCommunities(),
   });
 
-  const { register, handleSubmit, formState: { errors }, watch } = useForm();
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+    watch,
+  } = useForm();
 
   const onSubmit = async (data) => {
     setIsSubmitting(true);
@@ -75,7 +80,6 @@ const CreateEvent = () => {
   };
   const minStart = toLocalDateTime(new Date());
 
-
   const communities = communitiesData?.data?.data?.data || [];
 
   if (communitiesLoading) {
@@ -116,7 +120,9 @@ const CreateEvent = () => {
               </option>
             ))}
           </select>
-          {errors.community && <p className="text-red-600 text-sm mt-1">{errors.community.message}</p>}
+          {errors.community && (
+            <p className="text-red-600 text-sm mt-1">{errors.community.message}</p>
+          )}
         </div>
 
         <div>
@@ -127,7 +133,9 @@ const CreateEvent = () => {
             className="textarea w-full"
             placeholder="Describe the event..."
           />
-          {errors.description && <p className="text-red-600 text-sm mt-1">{errors.description.message}</p>}
+          {errors.description && (
+            <p className="text-red-600 text-sm mt-1">{errors.description.message}</p>
+          )}
         </div>
         <div>
           <label className="block text-sm font-medium mb-2">Start Date *</label>
@@ -137,7 +145,9 @@ const CreateEvent = () => {
             className="input w-full"
             min={minStart}
           />
-          {errors.startDate && <p className="text-red-600 text-sm mt-1">{errors.startDate.message}</p>}
+          {errors.startDate && (
+            <p className="text-red-600 text-sm mt-1">{errors.startDate.message}</p>
+          )}
         </div>
         <div>
           <label className="block text-sm font-medium mb-2">End Date *</label>
@@ -158,4 +168,3 @@ const CreateEvent = () => {
 };
 
 export default CreateEvent;
-

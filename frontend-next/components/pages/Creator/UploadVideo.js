@@ -19,10 +19,18 @@ const UploadVideo = () => {
   const [selectedCourse, setSelectedCourse] = useState(courseId);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const { register, handleSubmit, formState: { errors } } = useForm();
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm();
 
   // Fetch creator's courses with error handling
-  const { data: coursesResponse, isLoading: coursesLoading, error: coursesError } = useQuery({
+  const {
+    data: coursesResponse,
+    isLoading: coursesLoading,
+    error: coursesError,
+  } = useQuery({
     queryKey: ['creatorCourses'],
     queryFn: async () => {
       try {
@@ -36,8 +44,10 @@ const UploadVideo = () => {
     },
     onError: (error) => {
       console.error('Courses query error:', error);
-      toast.error(`Failed to load courses: ${error.response?.data?.message || error.message || 'Unknown error'}`);
-    }
+      toast.error(
+        `Failed to load courses: ${error.response?.data?.message || error.message || 'Unknown error'}`,
+      );
+    },
   });
 
   // Extract courses from the response
@@ -71,7 +81,7 @@ const UploadVideo = () => {
       allCourses: courses,
       rawResponse: coursesResponse,
       isLoading: coursesLoading,
-      error: coursesError
+      error: coursesError,
     });
   }, [courses, coursesResponse, coursesLoading, coursesError]);
 
@@ -88,7 +98,7 @@ const UploadVideo = () => {
     console.log('Courses Data:', {
       rawData: coursesResponse,
       loading: coursesLoading,
-      error: coursesError
+      error: coursesError,
     });
   }, [coursesResponse, coursesLoading, coursesError]);
 
@@ -113,7 +123,7 @@ const UploadVideo = () => {
       size: 1048576,
       width: 1920,
       height: 1080,
-      bytes: 1048576
+      bytes: 1048576,
     };
     setVideoData(testData);
     toast.success('Test video data set (for debugging)');
@@ -130,7 +140,7 @@ const UploadVideo = () => {
       size: 5242880,
       width: 1920,
       height: 1080,
-      bytes: 5242880
+      bytes: 5242880,
     };
     setVideoData(mockData);
     toast.success('Video uploaded successfully (mock)');
@@ -192,7 +202,7 @@ const UploadVideo = () => {
         mimeType: videoData.mimeType || 'video/mp4',
         thumbnailUrl: videoData.thumbnailUrl || '',
         status: 'processing',
-        isActive: true
+        isActive: true,
       };
 
       console.log('📤 Sending video record to API:');
@@ -247,24 +257,39 @@ const UploadVideo = () => {
         <div className="mt-6 bg-gray-50 rounded-lg p-4">
           <div className="flex items-center space-x-6">
             <div className={`flex items-center ${videoData ? 'text-green-600' : 'text-gray-400'}`}>
-              <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-medium mr-2 ${videoData ? 'bg-green-100 text-green-600' : 'bg-gray-200 text-gray-400'
-                }`}>
+              <div
+                className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-medium mr-2 ${
+                  videoData ? 'bg-green-100 text-green-600' : 'bg-gray-200 text-gray-400'
+                }`}
+              >
                 {videoData ? '✓' : '1'}
               </div>
               <span className="text-sm font-medium">Upload Video</span>
             </div>
 
-            <div className={`flex items-center ${selectedCourse ? 'text-green-600' : 'text-gray-400'}`}>
-              <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-medium mr-2 ${selectedCourse ? 'bg-green-100 text-green-600' : 'bg-gray-200 text-gray-400'
-                }`}>
+            <div
+              className={`flex items-center ${selectedCourse ? 'text-green-600' : 'text-gray-400'}`}
+            >
+              <div
+                className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-medium mr-2 ${
+                  selectedCourse ? 'bg-green-100 text-green-600' : 'bg-gray-200 text-gray-400'
+                }`}
+              >
                 {selectedCourse ? '✓' : '2'}
               </div>
               <span className="text-sm font-medium">Select Course</span>
             </div>
 
-            <div className={`flex items-center ${videoData && selectedCourse ? 'text-blue-600' : 'text-gray-400'}`}>
-              <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-medium mr-2 ${videoData && selectedCourse ? 'bg-blue-100 text-blue-600' : 'bg-gray-200 text-gray-400'
-                }`}>
+            <div
+              className={`flex items-center ${videoData && selectedCourse ? 'text-blue-600' : 'text-gray-400'}`}
+            >
+              <div
+                className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-medium mr-2 ${
+                  videoData && selectedCourse
+                    ? 'bg-blue-100 text-blue-600'
+                    : 'bg-gray-200 text-gray-400'
+                }`}
+              >
                 3
               </div>
               <span className="text-sm font-medium">Fill Details & Create</span>
@@ -293,15 +318,12 @@ const UploadVideo = () => {
           ) : (
             <div className="mt-4 p-3 bg-green-50 border border-green-200 rounded-md">
               <p className="text-sm text-green-800">
-                ✅ Video uploaded successfully! You can now fill out the lesson details and create the lesson.
+                ✅ Video uploaded successfully! You can now fill out the lesson details and create
+                the lesson.
               </p>
-              <p className="text-xs text-green-600 mt-1">
-                File ID: {videoData.fileId}
-              </p>
+              <p className="text-xs text-green-600 mt-1">File ID: {videoData.fileId}</p>
             </div>
           )}
-
-
         </div>
 
         {/* Course Selection */}
@@ -320,10 +342,7 @@ const UploadVideo = () => {
                 Error: {coursesError.message || 'Unknown error'}
               </p>
               <div className="space-x-2">
-                <button
-                  onClick={() => window.location.reload()}
-                  className="btn-outline btn-sm"
-                >
+                <button onClick={() => window.location.reload()} className="btn-outline btn-sm">
                   Retry
                 </button>
                 <Link href="/create-course" className="btn-primary btn-sm">
@@ -345,7 +364,11 @@ const UploadVideo = () => {
                 {coursesError ? (
                   <div className="p-3 text-sm text-red-700 bg-red-50 rounded-md border border-red-100">
                     <p className="font-medium">Error loading courses</p>
-                    <p className="mt-1">{coursesError.response?.data?.message || coursesError.message || 'Please try again later'}</p>
+                    <p className="mt-1">
+                      {coursesError.response?.data?.message ||
+                        coursesError.message ||
+                        'Please try again later'}
+                    </p>
                     <button
                       onClick={() => window.location.reload()}
                       className="mt-2 text-sm text-red-700 hover:underline"
@@ -364,7 +387,9 @@ const UploadVideo = () => {
                       required
                     >
                       <option value="">
-                        {coursesLoading ? 'Loading your courses...' : 'Select a course for this video'}
+                        {coursesLoading
+                          ? 'Loading your courses...'
+                          : 'Select a course for this video'}
                         {!coursesLoading && courses.length === 0 && ' (No courses found)'}
                       </option>
                       {courses.map((course) => (
@@ -384,18 +409,21 @@ const UploadVideo = () => {
                 )}
 
                 {/* Empty State */}
-                {!coursesLoading && !coursesError && courses.length === 0 && user?.role !== 'admin' && (
-                  <div className="mt-3 p-3 text-sm text-amber-700 bg-amber-50 rounded-md border border-amber-100">
-                    <p className="font-medium">No courses found</p>
-                    <p className="mt-1">You need to create a course before uploading videos.</p>
-                    <Link
-                      href="/create-course"
-                      className="mt-2 inline-flex items-center text-sm font-medium text-amber-700 hover:text-amber-800"
-                    >
-                      Create Your First Course →
-                    </Link>
-                  </div>
-                )}
+                {!coursesLoading &&
+                  !coursesError &&
+                  courses.length === 0 &&
+                  user?.role !== 'admin' && (
+                    <div className="mt-3 p-3 text-sm text-amber-700 bg-amber-50 rounded-md border border-amber-100">
+                      <p className="font-medium">No courses found</p>
+                      <p className="mt-1">You need to create a course before uploading videos.</p>
+                      <Link
+                        href="/create-course"
+                        className="mt-2 inline-flex items-center text-sm font-medium text-amber-700 hover:text-amber-800"
+                      >
+                        Create Your First Course →
+                      </Link>
+                    </div>
+                  )}
               </div>
 
               {courses.length === 0 && (
@@ -424,18 +452,14 @@ const UploadVideo = () => {
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="md:col-span-2">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Lesson Title *
-              </label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Lesson Title *</label>
               <input
                 type="text"
                 {...register('title', { required: 'Lesson title is required' })}
                 className="input w-full"
                 placeholder="Enter lesson title"
               />
-              {errors.title && (
-                <p className="text-red-600 text-sm mt-1">{errors.title.message}</p>
-              )}
+              {errors.title && <p className="text-red-600 text-sm mt-1">{errors.title.message}</p>}
             </div>
 
             <div className="md:col-span-2">
@@ -467,9 +491,7 @@ const UploadVideo = () => {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Lesson Order
-              </label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Lesson Order</label>
               <input
                 type="number"
                 min="1"
@@ -551,9 +573,7 @@ const UploadVideo = () => {
                 defaultChecked
                 className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded"
               />
-              <label className="ml-2 block text-sm text-gray-900">
-                Publish lesson immediately
-              </label>
+              <label className="ml-2 block text-sm text-gray-900">Publish lesson immediately</label>
             </div>
           </div>
         </div>
@@ -603,7 +623,9 @@ const UploadVideo = () => {
         {(!videoData || !selectedCourse) && (
           <div className="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded-md">
             <p className="text-sm text-yellow-800">
-              {!videoData && !selectedCourse && 'Please upload a video file and select a course to create the lesson.'}
+              {!videoData &&
+                !selectedCourse &&
+                'Please upload a video file and select a course to create the lesson.'}
               {!videoData && selectedCourse && 'Please upload a video file to create the lesson.'}
               {videoData && !selectedCourse && 'Please select a course to create the lesson.'}
             </p>
@@ -613,10 +635,9 @@ const UploadVideo = () => {
         {/* Debug Info - temporary */}
         <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-md text-xs">
           <p className="text-blue-800 font-mono">
-            🔧 Debug Info -
-            videoData: {videoData ? '✅ Set' : '❌ Not set'} |
-            selectedCourse: {selectedCourse ? '✅ Set (' + selectedCourse + ')' : '❌ Not set'} |
-            courses.length: {courses.length}
+            🔧 Debug Info - videoData: {videoData ? '✅ Set' : '❌ Not set'} | selectedCourse:{' '}
+            {selectedCourse ? '✅ Set (' + selectedCourse + ')' : '❌ Not set'} | courses.length:{' '}
+            {courses.length}
           </p>
         </div>
       </form>

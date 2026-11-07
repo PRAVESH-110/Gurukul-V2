@@ -21,10 +21,14 @@ const CreatePost = () => {
   // Fetch user's communities
   const { data: communitiesData, isLoading: communitiesLoading } = useQuery({
     queryKey: ['creatorCommunities'],
-    queryFn: () => communityAPI.getCreatorCommunities()
+    queryFn: () => communityAPI.getCreatorCommunities(),
   });
 
-  const { register, handleSubmit, formState: { errors } } = useForm();
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm();
 
   const handleImageChange = (e) => {
     const file = e.target.files[0];
@@ -82,7 +86,7 @@ const CreatePost = () => {
         title: data.title,
         content: data.content,
         hasImage: !!selectedImage,
-        communityId: targetCommunityId
+        communityId: targetCommunityId,
       });
 
       const response = await communityAPI.createPost(targetCommunityId, formData);
@@ -131,7 +135,9 @@ const CreatePost = () => {
               </option>
             ))}
           </select>
-          {errors.community && <p className="text-red-600 text-sm mt-1">{errors.community.message}</p>}
+          {errors.community && (
+            <p className="text-red-600 text-sm mt-1">{errors.community.message}</p>
+          )}
         </div>
         <div>
           <label className="block text-sm font-medium mb-2">Title *</label>

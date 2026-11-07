@@ -14,13 +14,19 @@ const VideoUploadPage = () => {
   const [videoData, setVideoData] = useState(null);
   const [selectedCourse, setSelectedCourse] = useState('');
 
-  const { register, handleSubmit, formState: { errors }, watch, setValue } = useForm({
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+    watch,
+    setValue,
+  } = useForm({
     defaultValues: {
       isPublished: false,
       allowDownload: false,
       enableComments: true,
       isPreview: false,
-    }
+    },
   });
 
   // Fetch creator's courses for the dropdown
@@ -144,9 +150,7 @@ const VideoUploadPage = () => {
               <div className="flex items-start space-x-2">
                 <AlertCircle className="h-5 w-5 text-yellow-600 mt-0.5" />
                 <div>
-                  <p className="text-sm text-yellow-800 font-medium">
-                    Upload your video first
-                  </p>
+                  <p className="text-sm text-yellow-800 font-medium">Upload your video first</p>
                   <p className="text-sm text-yellow-700 mt-1">
                     Please upload your video file before filling out the lesson details below.
                   </p>
@@ -161,9 +165,7 @@ const VideoUploadPage = () => {
           <h2 className="text-xl font-semibold text-gray-900 mb-6">Select Course</h2>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Course *
-            </label>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Course *</label>
             {coursesLoading ? (
               <div className="animate-pulse bg-gray-200 rounded-md h-10 w-full"></div>
             ) : (
@@ -204,18 +206,14 @@ const VideoUploadPage = () => {
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="md:col-span-2">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Video Title *
-              </label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Video Title *</label>
               <input
                 type="text"
                 {...register('title', { required: 'Video title is required' })}
                 className="input w-full"
                 placeholder="Enter video title"
               />
-              {errors.title && (
-                <p className="text-red-600 text-sm mt-1">{errors.title.message}</p>
-              )}
+              {errors.title && <p className="text-red-600 text-sm mt-1">{errors.title.message}</p>}
             </div>
 
             <div className="md:col-span-2">
@@ -247,9 +245,7 @@ const VideoUploadPage = () => {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Video Order
-              </label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Video Order</label>
               <input
                 type="number"
                 min="1"
@@ -342,18 +338,10 @@ const VideoUploadPage = () => {
 
         {/* Action Buttons */}
         <div className="flex justify-end space-x-4">
-          <button
-            type="button"
-            onClick={() => router.back()}
-            className="btn-outline"
-          >
+          <button type="button" onClick={() => router.back()} className="btn-outline">
             Cancel
           </button>
-          <button
-            type="submit"
-            disabled={!videoData || !selectedCourse}
-            className="btn-primary"
-          >
+          <button type="submit" disabled={!videoData || !selectedCourse} className="btn-primary">
             <Save className="h-4 w-4 mr-2" />
             Create Video Lesson
           </button>

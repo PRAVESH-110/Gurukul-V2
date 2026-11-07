@@ -49,22 +49,28 @@ export const AuthProvider = ({ children }) => {
   useEffect(() => {
     let active = true;
     if (!sessionRestorePromise) {
-      sessionRestorePromise = restoreSession().finally(() => { sessionRestorePromise = null; });
+      sessionRestorePromise = restoreSession().finally(() => {
+        sessionRestorePromise = null;
+      });
     }
-    sessionRestorePromise.then((restoredUser) => {
-      if (!active) return;
-      if (restoredUser) {
-        const tokens = readStoredTokens();
-        dispatch(setCredentials({ ...tokens, user: restoredUser }));
-      } else {
-        clearStoredTokens();
-        dispatch(clearCredentials());
-      }
-    }).finally(() => {
-      if (active) dispatch(setInitialized(true));
-    });
+    sessionRestorePromise
+      .then((restoredUser) => {
+        if (!active) return;
+        if (restoredUser) {
+          const tokens = readStoredTokens();
+          dispatch(setCredentials({ ...tokens, user: restoredUser }));
+        } else {
+          clearStoredTokens();
+          dispatch(clearCredentials());
+        }
+      })
+      .finally(() => {
+        if (active) dispatch(setInitialized(true));
+      });
 
-    return () => { active = false; };
+    return () => {
+      active = false;
+    };
   }, [dispatch]);
 
   useEffect(() => {
@@ -79,42 +85,49 @@ export const AuthProvider = ({ children }) => {
     return () => window.removeEventListener('storage', syncStorageTokens);
   }, [dispatch]);
 
-  const login = useCallback(async (email, password) => {
-    try {
-      const response = await authAPI.login(email, password);
-      if (response.data?.success) {
-        const session = response.data;
-        persistTokens(session.accessToken, session.csrfToken);
-        dispatch(setCredentials(session));
-        toast.success('Login successful!');
-        return { success: true };
+  const login = useCallback(
+    async (email, password) => {
+      try {
+        const response = await authAPI.login(email, password);
+        if (response.data?.success) {
+          const session = response.data;
+          persistTokens(session.accessToken, session.csrfToken);
+          dispatch(setCredentials(session));
+          toast.success('Login successful!');
+          return { success: true };
+        }
+        const message = response.data?.message || 'Login failed';
+        toast.error(message);
+        return { success: false, message };
+      } catch (error) {
+        const message =
+          error.response?.data?.message || error.message || 'An error occurred during login';
+        toast.error(message);
+        return { success: false, message };
       }
-      const message = response.data?.message || 'Login failed';
-      toast.error(message);
-      return { success: false, message };
-    } catch (error) {
-      const message = error.response?.data?.message || error.message || 'An error occurred during login';
-      toast.error(message);
-      return { success: false, message };
-    }
-  }, [dispatch]);
+    },
+    [dispatch],
+  );
 
-  const register = useCallback(async (userData) => {
-    try {
-      const response = await authAPI.register(userData);
-      if (!response.data?.success) {
-        return { success: false, message: response.data?.message || 'Registration failed' };
+  const register = useCallback(
+    async (userData) => {
+      try {
+        const response = await authAPI.register(userData);
+        if (!response.data?.success) {
+          return { success: false, message: response.data?.message || 'Registration failed' };
+        }
+        persistTokens(response.data.accessToken, response.data.csrfToken);
+        dispatch(setCredentials(response.data));
+        toast.success('Registration successful!');
+        return { success: true };
+      } catch (error) {
+        const message = error.response?.data?.message || error.message || 'Registration failed';
+        toast.error(message);
+        return { success: false, message };
       }
-      persistTokens(response.data.accessToken, response.data.csrfToken);
-      dispatch(setCredentials(response.data));
-      toast.success('Registration successful!');
-      return { success: true };
-    } catch (error) {
-      const message = error.response?.data?.message || error.message || 'Registration failed';
-      toast.error(message);
-      return { success: false, message };
-    }
-  }, [dispatch]);
+    },
+    [dispatch],
+  );
 
   const logout = useCallback(async () => {
     try {
@@ -128,29 +141,38 @@ export const AuthProvider = ({ children }) => {
     }
   }, [dispatch]);
 
-  const updateProfile = useCallback(async (profileData) => {
-    try {
-      const response = await authAPI.updateProfile(profileData);
-      if (response.data?.success) {
-        dispatch(setReduxUser(response.data.user));
-        toast.success('Profile updated successfully!');
-        return { success: true };
+  const updateProfile = useCallback(
+    async (profileData) => {
+      try {
+        const response = await authAPI.updateProfile(profileData);
+        if (response.data?.success) {
+          dispatch(setReduxUser(response.data.user));
+          toast.success('Profile updated successfully!');
+          return { success: true };
+        }
+        return { success: false, message: response.data?.message || 'Profile update failed' };
+      } catch (error) {
+        const message = error.response?.data?.message || error.message || 'Profile update failed';
+        toast.error(message);
+        return { success: false, message };
       }
-      return { success: false, message: response.data?.message || 'Profile update failed' };
-    } catch (error) {
-      const message = error.response?.data?.message || error.message || 'Profile update failed';
-      toast.error(message);
-      return { success: false, message };
-    }
-  }, [dispatch]);
+    },
+    [dispatch],
+  );
 
-  const updateUser = useCallback((userData) => {
-    dispatch(setReduxUser({ ...user, ...userData }));
-  }, [dispatch, user]);
+  const updateUser = useCallback(
+    (userData) => {
+      dispatch(setReduxUser({ ...user, ...userData }));
+    },
+    [dispatch, user],
+  );
 
-  const setUser = useCallback((value) => {
-    dispatch(setReduxUser(typeof value === 'function' ? value(user) : value));
-  }, [dispatch, user]);
+  const setUser = useCallback(
+    (value) => {
+      dispatch(setReduxUser(typeof value === 'function' ? value(user) : value));
+    },
+    [dispatch, user],
+  );
 
   const value = {
     user,

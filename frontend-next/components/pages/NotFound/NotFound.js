@@ -20,17 +20,11 @@ const NotFound = () => {
         </div>
 
         <div className="flex flex-col sm:flex-row gap-4 justify-center">
-          <Link
-            href="/"
-            className="btn-primary inline-flex items-center"
-          >
+          <Link href="/" className="btn-primary inline-flex items-center">
             <Home className="h-4 w-4 mr-2" />
             Go Home
           </Link>
-          <button
-            onClick={() => router.back()}
-            className="btn-outline inline-flex items-center"
-          >
+          <button onClick={() => router.back()} className="btn-outline inline-flex items-center">
             <ArrowLeft className="h-4 w-4 mr-2" />
             Go Back
           </button>
@@ -41,4 +35,3 @@ const NotFound = () => {
 };
 
 export default NotFound;
-

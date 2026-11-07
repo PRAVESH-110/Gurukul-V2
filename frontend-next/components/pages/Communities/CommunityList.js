@@ -14,19 +14,23 @@ const CommunityList = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterType, setFilterType] = useState('all'); // Default to 'all' for everyone
 
-  const { data: communitiesData, isLoading, error } = useQuery({
+  const {
+    data: communitiesData,
+    isLoading,
+    error,
+  } = useQuery({
     queryKey: ['communities', { search: searchTerm, type: filterType }],
     queryFn: async () => {
       try {
         if (filterType === 'my' && user) {
           const result = await communityAPI.getCreatorCommunities({
-            search: searchTerm
+            search: searchTerm,
           });
           return result;
         } else {
           const result = await communityAPI.getCommunities({
             search: searchTerm,
-            type: filterType === 'all' ? '' : filterType
+            type: filterType === 'all' ? '' : filterType,
           });
           return result;
         }
@@ -35,7 +39,7 @@ const CommunityList = () => {
         throw err;
       }
     },
-    enabled: filterType !== 'my' || !!user // Only enable query if not 'my' or user exists
+    enabled: filterType !== 'my' || !!user, // Only enable query if not 'my' or user exists
   });
 
   if (isLoading) {
@@ -55,12 +59,11 @@ const CommunityList = () => {
           </div>
           <h3 className="text-lg font-bold text-gray-900 mb-2">Failed to load communities</h3>
           <p className="text-gray-600 mb-6">
-            {error?.message || error?.response?.data?.message || 'Please check the console for details'}
+            {error?.message ||
+              error?.response?.data?.message ||
+              'Please check the console for details'}
           </p>
-          <button
-            onClick={() => window.location.reload()}
-            className="btn-primary w-full"
-          >
+          <button onClick={() => window.location.reload()} className="btn-primary w-full">
             Retry
           </button>
         </div>
@@ -79,11 +82,14 @@ const CommunityList = () => {
           <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
             <div className="max-w-3xl">
               <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-6 tracking-tight">
-                Join the <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary-600 to-primary-500">Community</span>
+                Join the{' '}
+                <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary-600 to-primary-500">
+                  Community
+                </span>
               </h1>
               <p className="text-xl text-gray-600 leading-relaxed">
-                Connect with like-minded learners, share knowledge, and grow together.
-                Find your tribe in our diverse collection of communities.
+                Connect with like-minded learners, share knowledge, and grow together. Find your
+                tribe in our diverse collection of communities.
               </p>
             </div>
             {(user?.role === 'creator' || user?.role === 'admin') && (
@@ -119,10 +125,11 @@ const CommunityList = () => {
             <div className="flex p-1 bg-gray-100 rounded-xl">
               <button
                 onClick={() => setFilterType('all')}
-                className={`px-6 py-2.5 text-sm font-medium rounded-lg transition-all duration-200 ${filterType === 'all'
-                  ? 'bg-white text-gray-900 shadow-sm'
-                  : 'text-gray-600 hover:text-gray-900'
-                  }`}
+                className={`px-6 py-2.5 text-sm font-medium rounded-lg transition-all duration-200 ${
+                  filterType === 'all'
+                    ? 'bg-white text-gray-900 shadow-sm'
+                    : 'text-gray-600 hover:text-gray-900'
+                }`}
               >
                 All
               </button>
@@ -130,10 +137,11 @@ const CommunityList = () => {
                 onClick={() => setFilterType('my')}
                 disabled={!user}
                 title={!user ? 'Sign in to view your communities' : ''}
-                className={`px-6 py-2.5 text-sm font-medium rounded-lg transition-all duration-200 ${filterType === 'my'
-                  ? 'bg-white text-gray-900 shadow-sm'
-                  : 'text-gray-600 hover:text-gray-900 disabled:opacity-50 disabled:cursor-not-allowed'
-                  }`}
+                className={`px-6 py-2.5 text-sm font-medium rounded-lg transition-all duration-200 ${
+                  filterType === 'my'
+                    ? 'bg-white text-gray-900 shadow-sm'
+                    : 'text-gray-600 hover:text-gray-900 disabled:opacity-50 disabled:cursor-not-allowed'
+                }`}
               >
                 My Communities
               </button>
@@ -259,9 +267,10 @@ const CommunityList = () => {
             </div>
             <h3 className="text-xl font-bold text-gray-900 mb-2">No communities found</h3>
             <p className="text-gray-600 max-w-md mx-auto mb-8">
-              We couldn't find any communities matching your criteria. Try adjusting your search or filters.
+              We couldn't find any communities matching your criteria. Try adjusting your search or
+              filters.
             </p>
-            {(user?.role === 'creator' || user?.role === 'admin') ? (
+            {user?.role === 'creator' || user?.role === 'admin' ? (
               <Link href="/create-community" className="btn-primary inline-flex items-center">
                 <Plus className="h-5 w-5 mr-2" />
                 Create the First Community
@@ -285,4 +294,3 @@ const CommunityList = () => {
 };
 
 export default CommunityList;
-

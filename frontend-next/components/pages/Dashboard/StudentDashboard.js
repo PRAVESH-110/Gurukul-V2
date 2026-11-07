@@ -12,14 +12,18 @@ import {
   Clock,
   Award,
   Play,
-  MessageSquare
+  MessageSquare,
 } from 'lucide-react';
 import LoadingSpinner from '@/components/UI/LoadingSpinner';
 
 const StudentDashboard = () => {
-  const { data: dashboardData, isLoading, error } = useQuery({
+  const {
+    data: dashboardData,
+    isLoading,
+    error,
+  } = useQuery({
     queryKey: ['studentDashboard'],
-    queryFn: () => dashboardAPI.getStudentDashboard()
+    queryFn: () => dashboardAPI.getStudentDashboard(),
   });
 
   if (isLoading) {
@@ -64,7 +68,9 @@ const StudentDashboard = () => {
             <div className="p-3 bg-blue-50 rounded-xl group-hover:bg-blue-100 transition-colors">
               <BookOpen className="h-6 w-6 text-blue-600" />
             </div>
-            <span className="text-xs font-medium text-blue-600 bg-blue-50 px-2 py-1 rounded-full">Courses</span>
+            <span className="text-xs font-medium text-blue-600 bg-blue-50 px-2 py-1 rounded-full">
+              Courses
+            </span>
           </div>
           <div>
             <p className="text-3xl font-bold text-gray-900 mb-1">
@@ -79,7 +85,9 @@ const StudentDashboard = () => {
             <div className="p-3 bg-green-50 rounded-xl group-hover:bg-green-100 transition-colors">
               <Award className="h-6 w-6 text-green-600" />
             </div>
-            <span className="text-xs font-medium text-green-600 bg-green-50 px-2 py-1 rounded-full">Completed</span>
+            <span className="text-xs font-medium text-green-600 bg-green-50 px-2 py-1 rounded-full">
+              Completed
+            </span>
           </div>
           <div>
             <p className="text-3xl font-bold text-gray-900 mb-1">
@@ -94,7 +102,9 @@ const StudentDashboard = () => {
             <div className="p-3 bg-purple-50 rounded-xl group-hover:bg-purple-100 transition-colors">
               <Users className="h-6 w-6 text-purple-600" />
             </div>
-            <span className="text-xs font-medium text-purple-600 bg-purple-50 px-2 py-1 rounded-full">Social</span>
+            <span className="text-xs font-medium text-purple-600 bg-purple-50 px-2 py-1 rounded-full">
+              Social
+            </span>
           </div>
           <div>
             <p className="text-3xl font-bold text-gray-900 mb-1">
@@ -109,7 +119,9 @@ const StudentDashboard = () => {
             <div className="p-3 bg-orange-50 rounded-xl group-hover:bg-orange-100 transition-colors">
               <Play className="h-6 w-6 text-orange-600" />
             </div>
-            <span className="text-xs font-medium text-orange-600 bg-orange-50 px-2 py-1 rounded-full">Learning</span>
+            <span className="text-xs font-medium text-orange-600 bg-orange-50 px-2 py-1 rounded-full">
+              Learning
+            </span>
           </div>
           <div>
             <p className="text-3xl font-bold text-gray-900 mb-1">
@@ -139,7 +151,10 @@ const StudentDashboard = () => {
             {dashboard.enrolledCourses.length > 0 ? (
               <div className="space-y-6">
                 {dashboard.enrolledCourses.slice(0, 3).map((course) => (
-                  <div key={course._id} className="group flex items-center space-x-4 p-3 -mx-3 rounded-xl hover:bg-gray-50 transition-colors">
+                  <div
+                    key={course._id}
+                    className="group flex items-center space-x-4 p-3 -mx-3 rounded-xl hover:bg-gray-50 transition-colors"
+                  >
                     <div className="flex-shrink-0 relative">
                       {course.thumbnail ? (
                         <img
@@ -162,7 +177,9 @@ const StudentDashboard = () => {
                       </p>
                       <div className="mt-2">
                         <div className="flex items-center justify-between text-xs mb-1">
-                          <span className="font-medium text-gray-700">{course.progress}% Complete</span>
+                          <span className="font-medium text-gray-700">
+                            {course.progress}% Complete
+                          </span>
                         </div>
                         <div className="bg-gray-100 rounded-full h-1.5 overflow-hidden">
                           <div
@@ -214,23 +231,31 @@ const StudentDashboard = () => {
             {dashboard.upcomingEvents.length > 0 ? (
               <div className="space-y-4">
                 {dashboard.upcomingEvents.slice(0, 3).map((event) => (
-                  <div key={event._id} className="flex items-start space-x-4 p-4 rounded-xl border border-gray-100 hover:border-primary-200 hover:bg-primary-50/30 transition-all">
+                  <div
+                    key={event._id}
+                    className="flex items-start space-x-4 p-4 rounded-xl border border-gray-100 hover:border-primary-200 hover:bg-primary-50/30 transition-all"
+                  >
                     <div className="flex-shrink-0">
                       <div className="w-12 h-12 bg-primary-100 rounded-xl flex flex-col items-center justify-center text-primary-700">
-                        <span className="text-xs font-bold uppercase">{new Date(event.startDate).toLocaleString('default', { month: 'short' })}</span>
-                        <span className="text-lg font-bold leading-none">{new Date(event.startDate).getDate()}</span>
+                        <span className="text-xs font-bold uppercase">
+                          {new Date(event.startDate).toLocaleString('default', { month: 'short' })}
+                        </span>
+                        <span className="text-lg font-bold leading-none">
+                          {new Date(event.startDate).getDate()}
+                        </span>
                       </div>
                     </div>
                     <div className="flex-1 min-w-0">
-                      <h3 className="text-sm font-bold text-gray-900 truncate">
-                        {event.title}
-                      </h3>
+                      <h3 className="text-sm font-bold text-gray-900 truncate">{event.title}</h3>
                       <p className="text-xs text-primary-600 font-medium mt-0.5">
                         {event.community.name}
                       </p>
                       <div className="flex items-center mt-2 text-xs text-gray-500">
                         <Clock className="w-3 h-3 mr-1" />
-                        {new Date(event.startDate).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                        {new Date(event.startDate).toLocaleTimeString([], {
+                          hour: '2-digit',
+                          minute: '2-digit',
+                        })}
                       </div>
                     </div>
                   </div>
@@ -267,7 +292,10 @@ const StudentDashboard = () => {
           {dashboard.recentPosts.length > 0 ? (
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
               {dashboard.recentPosts.slice(0, 3).map((post) => (
-                <div key={post._id} className="flex flex-col h-full p-5 rounded-xl border border-gray-100 hover:border-primary-200 hover:shadow-md transition-all bg-gray-50/30 hover:bg-white">
+                <div
+                  key={post._id}
+                  className="flex flex-col h-full p-5 rounded-xl border border-gray-100 hover:border-primary-200 hover:shadow-md transition-all bg-gray-50/30 hover:bg-white"
+                >
                   <div className="flex items-center space-x-3 mb-3">
                     {post.author.avatar ? (
                       <img
@@ -284,18 +312,14 @@ const StudentDashboard = () => {
                       <p className="text-sm font-semibold text-gray-900 truncate">
                         {post.author.firstName} {post.author.lastName}
                       </p>
-                      <p className="text-xs text-gray-500 truncate">
-                        in {post.community.name}
-                      </p>
+                      <p className="text-xs text-gray-500 truncate">in {post.community.name}</p>
                     </div>
                   </div>
 
                   <h3 className="text-sm font-bold text-gray-900 mb-2 line-clamp-1">
                     {post.title}
                   </h3>
-                  <p className="text-sm text-gray-600 line-clamp-3 mb-4 flex-1">
-                    {post.content}
-                  </p>
+                  <p className="text-sm text-gray-600 line-clamp-3 mb-4 flex-1">{post.content}</p>
 
                   <div className="flex items-center justify-between pt-3 border-t border-gray-100 text-xs text-gray-500">
                     <span>{new Date(post.createdAt).toLocaleDateString()}</span>
@@ -329,4 +353,3 @@ const StudentDashboard = () => {
 };
 
 export default StudentDashboard;
-

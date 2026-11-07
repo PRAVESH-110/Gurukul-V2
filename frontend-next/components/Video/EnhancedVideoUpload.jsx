@@ -9,7 +9,7 @@ const EnhancedVideoUpload = ({
   onUploadComplete,
   onUploadError,
   maxSize = 104857600, // 100MB in bytes
-  acceptedFormats = ['video/mp4', 'video/mov', 'video/avi', 'video/mkv']
+  acceptedFormats = ['video/mp4', 'video/mov', 'video/avi', 'video/mkv'],
 }) => {
   const [uploadState, setUploadState] = useState({
     file: null,
@@ -17,50 +17,56 @@ const EnhancedVideoUpload = ({
     uploading: false,
     progress: 0,
     uploaded: false,
-    error: null
+    error: null,
   });
 
-  const validateFile = useCallback((file) => {
-    const errors = [];
+  const validateFile = useCallback(
+    (file) => {
+      const errors = [];
 
-    // Check file size (100MB limit)
-    if (file.size > maxSize) {
-      errors.push(`File size must be less than ${Math.round(maxSize / (1024 * 1024))}MB`);
-    }
+      // Check file size (100MB limit)
+      if (file.size > maxSize) {
+        errors.push(`File size must be less than ${Math.round(maxSize / (1024 * 1024))}MB`);
+      }
 
-    // Check file type
-    if (!acceptedFormats.includes(file.type)) {
-      errors.push('Supported formats: MP4, MOV, AVI, MKV');
-    }
+      // Check file type
+      if (!acceptedFormats.includes(file.type)) {
+        errors.push('Supported formats: MP4, MOV, AVI, MKV');
+      }
 
-    return errors;
-  }, [maxSize, acceptedFormats]);
+      return errors;
+    },
+    [maxSize, acceptedFormats],
+  );
 
-  const handleFileSelect = useCallback((event) => {
-    const file = event.target.files[0];
-    if (!file) return;
+  const handleFileSelect = useCallback(
+    (event) => {
+      const file = event.target.files[0];
+      if (!file) return;
 
-    const validationErrors = validateFile(file);
-    if (validationErrors.length > 0) {
-      setUploadState(prev => ({
+      const validationErrors = validateFile(file);
+      if (validationErrors.length > 0) {
+        setUploadState((prev) => ({
+          ...prev,
+          error: validationErrors.join('. '),
+        }));
+        toast.error(validationErrors[0]);
+        return;
+      }
+
+      // Create preview URL
+      const previewUrl = URL.createObjectURL(file);
+
+      setUploadState((prev) => ({
         ...prev,
-        error: validationErrors.join('. ')
+        file,
+        preview: previewUrl,
+        error: null,
+        uploaded: false,
       }));
-      toast.error(validationErrors[0]);
-      return;
-    }
-
-    // Create preview URL
-    const previewUrl = URL.createObjectURL(file);
-
-    setUploadState(prev => ({
-      ...prev,
-      file,
-      preview: previewUrl,
-      error: null,
-      uploaded: false
-    }));
-  }, [validateFile]);
+    },
+    [validateFile],
+  );
 
   const handleUpload = useCallback(async () => {
     if (!uploadState.file) {
@@ -68,20 +74,20 @@ const EnhancedVideoUpload = ({
       return;
     }
 
-    setUploadState(prev => ({
+    setUploadState((prev) => ({
       ...prev,
       uploading: true,
       progress: 0,
-      error: null
+      error: null,
     }));
 
     try {
       // Create a custom progress handler
       const progressHandler = (progress) => {
         console.log('Progress update received:', progress, '%');
-        setUploadState(prev => ({
+        setUploadState((prev) => ({
           ...prev,
-          progress
+          progress,
         }));
       };
 
@@ -90,16 +96,13 @@ const EnhancedVideoUpload = ({
 
       console.log('Starting upload with progress handler');
 
-      const response = await videoAPI.uploadVideoToImageKit(
-        uploadState.file,
-        progressHandler
-      );
+      const response = await videoAPI.uploadVideoToImageKit(uploadState.file, progressHandler);
 
-      setUploadState(prev => ({
+      setUploadState((prev) => ({
         ...prev,
         uploading: false,
         uploaded: true,
-        progress: 100
+        progress: 100,
       }));
 
       toast.success('Video uploaded successfully!', { id: 'video-upload' });
@@ -107,11 +110,11 @@ const EnhancedVideoUpload = ({
     } catch (error) {
       const errorMessage = error.message || 'Upload failed';
 
-      setUploadState(prev => ({
+      setUploadState((prev) => ({
         ...prev,
         uploading: false,
         error: errorMessage,
-        progress: 0
+        progress: 0,
       }));
 
       toast.error(errorMessage, { id: 'video-upload' });
@@ -130,7 +133,7 @@ const EnhancedVideoUpload = ({
       uploading: false,
       progress: 0,
       uploaded: false,
-      error: null
+      error: null,
     });
   }, [uploadState.preview]);
 
@@ -188,9 +191,7 @@ const EnhancedVideoUpload = ({
                     <p className="text-sm font-medium text-gray-900 truncate">
                       {uploadState.file.name}
                     </p>
-                    <p className="text-sm text-gray-500">
-                      {formatFileSize(uploadState.file.size)}
-                    </p>
+                    <p className="text-sm text-gray-500">{formatFileSize(uploadState.file.size)}</p>
                   </div>
 
                   <button

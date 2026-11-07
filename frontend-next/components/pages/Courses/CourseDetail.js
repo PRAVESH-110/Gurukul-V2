@@ -6,7 +6,18 @@ import { useParams } from 'next/navigation';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { courseAPI } from '@/services/api';
 import { useAuth } from '@/context/AuthContext';
-import { BookOpen, Play, Users, Clock, Star, Calendar, CheckCircle, Share2, Heart, AlertCircle } from 'lucide-react';
+import {
+  BookOpen,
+  Play,
+  Users,
+  Clock,
+  Star,
+  Calendar,
+  CheckCircle,
+  Share2,
+  Heart,
+  AlertCircle,
+} from 'lucide-react';
 import LoadingSpinner from '@/components/UI/LoadingSpinner';
 import toast from 'react-hot-toast';
 import { getImageUrl } from '@/utils/imageUtils';
@@ -19,16 +30,20 @@ const CourseDetail = () => {
   const queryClient = useQueryClient();
   const [isEnrolling, setIsEnrolling] = useState(false);
 
-  const { data: courseData, isLoading, error } = useQuery({
+  const {
+    data: courseData,
+    isLoading,
+    error,
+  } = useQuery({
     queryKey: ['course', id],
     queryFn: () => courseAPI.getCourse(id),
-    enabled: !!id
+    enabled: !!id,
   });
 
   const { data: videosData } = useQuery({
     queryKey: ['courseVideos', id],
     queryFn: () => courseAPI.getCourseVideos(id),
-    enabled: !!courseData?.data?.course && !!id
+    enabled: !!courseData?.data?.course && !!id,
   });
 
   const enrollMutation = useMutation({
@@ -43,7 +58,7 @@ const CourseDetail = () => {
     onError: (error) => {
       toast.error(error.response?.data?.message || 'Failed to enroll in course');
       setIsEnrolling(false);
-    }
+    },
   });
 
   const unenrollMutation = useMutation({
@@ -58,7 +73,7 @@ const CourseDetail = () => {
     onError: (error) => {
       toast.error(error.response?.data?.message || 'Failed to unenroll from course');
       setIsEnrolling(false);
-    }
+    },
   });
 
   const handleEnroll = () => {
@@ -87,7 +102,9 @@ const CourseDetail = () => {
             <AlertCircle className="h-8 w-8 text-red-600" />
           </div>
           <h3 className="text-lg font-bold text-gray-900 mb-2">Failed to load course details</h3>
-          <p className="text-gray-600 mb-6">We couldn't fetch the course information. Please try again later.</p>
+          <p className="text-gray-600 mb-6">
+            We couldn't fetch the course information. Please try again later.
+          </p>
           <Link href="/courses" className="btn-primary w-full inline-block">
             Back to Courses
           </Link>
@@ -98,9 +115,10 @@ const CourseDetail = () => {
 
   const course = courseData?.data?.course;
   const videos = videosData?.data?.data || [];
-  const isEnrolled = course?.enrolledStudents?.some(student =>
-    student?.user?.toString() === user?._id?.toString() ||
-    student?.user?.toString() === user?.id?.toString()
+  const isEnrolled = course?.enrolledStudents?.some(
+    (student) =>
+      student?.user?.toString() === user?._id?.toString() ||
+      student?.user?.toString() === user?.id?.toString(),
   );
 
   return (
@@ -114,7 +132,9 @@ const CourseDetail = () => {
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 lg:gap-12">
             <div className="lg:col-span-2">
               <div className="flex items-center space-x-2 text-primary-200 mb-6 text-sm font-medium">
-                <Link href="/courses" className="hover:text-white transition-colors">Courses</Link>
+                <Link href="/courses" className="hover:text-white transition-colors">
+                  Courses
+                </Link>
                 <span>/</span>
                 <span className="text-white truncate">{course?.title}</span>
               </div>
@@ -129,15 +149,18 @@ const CourseDetail = () => {
 
               <div className="flex flex-wrap items-center gap-6 text-sm">
                 <div className="flex items-center text-yellow-400">
-                  <span className="font-bold text-lg mr-1">{course?.rating?.average?.toFixed(1) || '0.0'}</span>
+                  <span className="font-bold text-lg mr-1">
+                    {course?.rating?.average?.toFixed(1) || '0.0'}
+                  </span>
                   <div className="flex mr-2">
                     {[...Array(5)].map((_, i) => (
                       <Star
                         key={i}
-                        className={`h-4 w-4 ${i < Math.floor(course?.rating?.average || 0)
-                          ? 'fill-current'
-                          : 'text-gray-600'
-                          }`}
+                        className={`h-4 w-4 ${
+                          i < Math.floor(course?.rating?.average || 0)
+                            ? 'fill-current'
+                            : 'text-gray-600'
+                        }`}
                       />
                     ))}
                   </div>
@@ -158,7 +181,8 @@ const CourseDetail = () => {
 
                 <div className="flex items-center text-gray-300">
                   <Calendar className="h-4 w-4 mr-2" />
-                  Last updated {new Date(course?.updatedAt || course?.createdAt).toLocaleDateString()}
+                  Last updated{' '}
+                  {new Date(course?.updatedAt || course?.createdAt).toLocaleDateString()}
                 </div>
               </div>
 
@@ -173,7 +197,8 @@ const CourseDetail = () => {
                   ) : (
                     <div className="w-10 h-10 bg-primary-600 rounded-full flex items-center justify-center border-2 border-gray-700">
                       <span className="text-sm font-bold text-white">
-                        {course?.creator?.firstName?.[0]}{course?.creator?.lastName?.[0]}
+                        {course?.creator?.firstName?.[0]}
+                        {course?.creator?.lastName?.[0]}
                       </span>
                     </div>
                   )}
@@ -217,13 +242,9 @@ const CourseDetail = () => {
               <div className="p-6">
                 <div className="flex items-center justify-between mb-6">
                   {course?.price > 0 ? (
-                    <div className="text-3xl font-bold text-gray-900">
-                      ${course.price}
-                    </div>
+                    <div className="text-3xl font-bold text-gray-900">${course.price}</div>
                   ) : (
-                    <div className="text-3xl font-bold text-green-600">
-                      Free
-                    </div>
+                    <div className="text-3xl font-bold text-green-600">Free</div>
                   )}
                 </div>
                 {user ? (
@@ -260,7 +281,7 @@ const CourseDetail = () => {
                   'Master the core concepts and advanced techniques',
                   'Build real-world projects to showcase your skills',
                   'Learn best practices and industry standards',
-                  'Get hands-on experience with practical exercises'
+                  'Get hands-on experience with practical exercises',
                 ].map((item, index) => (
                   <div key={index} className="flex items-start">
                     <CheckCircle className="h-5 w-5 text-green-500 mt-0.5 mr-3 flex-shrink-0" />
@@ -275,7 +296,8 @@ const CourseDetail = () => {
               <div className="flex items-center justify-between mb-6">
                 <h2 className="text-2xl font-bold text-gray-900">Course Content</h2>
                 <span className="text-sm text-gray-500">
-                  {videosData?.data?.count || course?.totalVideos || 0} lectures • {course?.duration || 'N/A'} total length
+                  {videosData?.data?.count || course?.totalVideos || 0} lectures •{' '}
+                  {course?.duration || 'N/A'} total length
                 </span>
               </div>
 
@@ -289,7 +311,7 @@ const CourseDetail = () => {
                         if (isEnrolled) {
                           window.open(video.videoUrl, '_blank');
                         } else {
-                          toast("Please enroll in the course to view this video.");
+                          toast('Please enroll in the course to view this video.');
                         }
                       }}
                     >
@@ -317,9 +339,7 @@ const CourseDetail = () => {
                           Play
                         </span>
                       ) : (
-                        <span className="text-xs text-gray-400">
-                          Locked
-                        </span>
+                        <span className="text-xs text-gray-400">Locked</span>
                       )}
                     </div>
                   ))}
@@ -363,7 +383,9 @@ const CourseDetail = () => {
                     </div>
                   </div>
                   <div className="absolute bottom-4 left-0 right-0 text-center">
-                    <span className="text-white font-medium text-sm drop-shadow-md">Preview this course</span>
+                    <span className="text-white font-medium text-sm drop-shadow-md">
+                      Preview this course
+                    </span>
                   </div>
                 </div>
 
@@ -413,7 +435,10 @@ const CourseDetail = () => {
                     </div>
                   ) : (
                     <div className="space-y-3">
-                      <Link href="/register" className="w-full btn-primary block text-center text-lg py-3">
+                      <Link
+                        href="/register"
+                        className="w-full btn-primary block text-center text-lg py-3"
+                      >
                         Sign up to Enroll
                       </Link>
                       <Link href="/login" className="w-full btn-outline block text-center">
@@ -458,4 +483,3 @@ const CourseDetail = () => {
 };
 
 export default CourseDetail;
-

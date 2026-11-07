@@ -1,23 +1,19 @@
 'use client';
 
 import { useQuery } from '@tanstack/react-query';
-import {
-  BookOpen,
-  DollarSign,
-  Plus,
-  Star,
-  TrendingUp,
-  Users,
-  Video
-} from 'lucide-react';
+import { BookOpen, DollarSign, Plus, Star, TrendingUp, Users, Video } from 'lucide-react';
 import Link from 'next/link';
 import LoadingSpinner from '@/components/UI/LoadingSpinner';
 import { dashboardAPI } from '@/services/api';
 
 const CreatorDashboard = () => {
-  const { data: dashboardData, isLoading, error } = useQuery({
+  const {
+    data: dashboardData,
+    isLoading,
+    error,
+  } = useQuery({
     queryKey: ['creatorDashboard'],
-    queryFn: () => dashboardAPI.getCreatorDashboard()
+    queryFn: () => dashboardAPI.getCreatorDashboard(),
   });
 
   if (isLoading) {
@@ -44,16 +40,20 @@ const CreatorDashboard = () => {
   return (
     <div className="space-y-8 animate-fade-in">
       {/* Welcome Section */}
-      <div className={`relative overflow-hidden rounded-2xl p-8 text-white shadow-lg ${dashboard?.user?.role === 'admin'
-        ? 'bg-gradient-to-br from-red-600 to-red-800 shadow-red-500/20'
-        : 'bg-gradient-to-br from-primary-600 to-primary-800 shadow-primary/20'
-        }`}>
+      <div
+        className={`relative overflow-hidden rounded-2xl p-8 text-white shadow-lg ${
+          dashboard?.user?.role === 'admin'
+            ? 'bg-gradient-to-br from-red-600 to-red-800 shadow-red-500/20'
+            : 'bg-gradient-to-br from-primary-600 to-primary-800 shadow-primary/20'
+        }`}
+      >
         <div className="absolute top-0 right-0 -mt-10 -mr-10 w-40 h-40 bg-white/10 rounded-full blur-2xl"></div>
         <div className="absolute bottom-0 left-0 -mb-10 -ml-10 w-40 h-40 bg-white/10 rounded-full blur-2xl"></div>
 
         <div className="relative z-10">
           <h1 className="text-3xl font-bold mb-3 tracking-tight">
-            Welcome back, {dashboard?.user?.role === 'admin' ? 'SUPERADMIN' : dashboard?.user?.firstName}!
+            Welcome back,{' '}
+            {dashboard?.user?.role === 'admin' ? 'SUPERADMIN' : dashboard?.user?.firstName}!
           </h1>
           <p className={dashboard?.user?.role === 'admin' ? 'text-red-100' : 'text-primary-100'}>
             Manage your courses and communities, track your success, and grow your audience.
@@ -63,41 +63,66 @@ const CreatorDashboard = () => {
 
       {/* Quick Actions */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
-        <Link href="/create-course" className="group flex flex-col items-center justify-center p-6 bg-white rounded-xl shadow-sm border border-gray-100 hover:shadow-md hover:border-primary-200 transition-all duration-200">
+        <Link
+          href="/create-course"
+          className="group flex flex-col items-center justify-center p-6 bg-white rounded-xl shadow-sm border border-gray-100 hover:shadow-md hover:border-primary-200 transition-all duration-200"
+        >
           <div className="w-12 h-12 bg-primary-50 rounded-full flex items-center justify-center mb-3 group-hover:bg-primary-100 transition-colors">
             <Plus className="h-6 w-6 text-primary-600" />
           </div>
-          <span className="font-semibold text-gray-900 group-hover:text-primary-600 transition-colors">Create Course</span>
+          <span className="font-semibold text-gray-900 group-hover:text-primary-600 transition-colors">
+            Create Course
+          </span>
         </Link>
 
-        <Link href="/create-community" className="group flex flex-col items-center justify-center p-6 bg-white rounded-xl shadow-sm border border-gray-100 hover:shadow-md hover:border-primary-200 transition-all duration-200">
+        <Link
+          href="/create-community"
+          className="group flex flex-col items-center justify-center p-6 bg-white rounded-xl shadow-sm border border-gray-100 hover:shadow-md hover:border-primary-200 transition-all duration-200"
+        >
           <div className="w-12 h-12 bg-purple-50 rounded-full flex items-center justify-center mb-3 group-hover:bg-purple-100 transition-colors">
             <Users className="h-6 w-6 text-purple-600" />
           </div>
-          <span className="font-semibold text-gray-900 group-hover:text-purple-600 transition-colors">Create Community</span>
+          <span className="font-semibold text-gray-900 group-hover:text-purple-600 transition-colors">
+            Create Community
+          </span>
         </Link>
 
         {dashboard?.user?.role !== 'admin' && (
-          <Link href="/upload-video" className="group flex flex-col items-center justify-center p-6 bg-white rounded-xl shadow-sm border border-gray-100 hover:shadow-md hover:border-green-200 transition-all duration-200">
+          <Link
+            href="/upload-video"
+            className="group flex flex-col items-center justify-center p-6 bg-white rounded-xl shadow-sm border border-gray-100 hover:shadow-md hover:border-green-200 transition-all duration-200"
+          >
             <div className="w-12 h-12 bg-green-50 rounded-full flex items-center justify-center mb-3 group-hover:bg-green-100 transition-colors">
               <Video className="h-6 w-6 text-green-600" />
             </div>
-            <span className="font-semibold text-gray-900 group-hover:text-green-600 transition-colors">Upload Video</span>
+            <span className="font-semibold text-gray-900 group-hover:text-green-600 transition-colors">
+              Upload Video
+            </span>
           </Link>
         )}
 
-        <Link href="/manage-courses" className="group flex flex-col items-center justify-center p-6 bg-white rounded-xl shadow-sm border border-gray-100 hover:shadow-md hover:border-orange-200 transition-all duration-200">
+        <Link
+          href="/manage-courses"
+          className="group flex flex-col items-center justify-center p-6 bg-white rounded-xl shadow-sm border border-gray-100 hover:shadow-md hover:border-orange-200 transition-all duration-200"
+        >
           <div className="w-12 h-12 bg-orange-50 rounded-full flex items-center justify-center mb-3 group-hover:bg-orange-100 transition-colors">
             <BookOpen className="h-6 w-6 text-orange-600" />
           </div>
-          <span className="font-semibold text-gray-900 group-hover:text-orange-600 transition-colors">Manage Courses</span>
+          <span className="font-semibold text-gray-900 group-hover:text-orange-600 transition-colors">
+            Manage Courses
+          </span>
         </Link>
 
-        <Link href="/analytics" className="group flex flex-col items-center justify-center p-6 bg-white rounded-xl shadow-sm border border-gray-100 hover:shadow-md hover:border-blue-200 transition-all duration-200">
+        <Link
+          href="/analytics"
+          className="group flex flex-col items-center justify-center p-6 bg-white rounded-xl shadow-sm border border-gray-100 hover:shadow-md hover:border-blue-200 transition-all duration-200"
+        >
           <div className="w-12 h-12 bg-blue-50 rounded-full flex items-center justify-center mb-3 group-hover:bg-blue-100 transition-colors">
             <TrendingUp className="h-6 w-6 text-blue-600" />
           </div>
-          <span className="font-semibold text-gray-900 group-hover:text-blue-600 transition-colors">Analytics</span>
+          <span className="font-semibold text-gray-900 group-hover:text-blue-600 transition-colors">
+            Analytics
+          </span>
         </Link>
       </div>
 
@@ -108,7 +133,9 @@ const CreatorDashboard = () => {
             <div className="p-3 bg-blue-50 rounded-xl group-hover:bg-blue-100 transition-colors">
               <BookOpen className="h-6 w-6 text-blue-600" />
             </div>
-            <span className="text-xs font-medium text-blue-600 bg-blue-50 px-2 py-1 rounded-full">Total</span>
+            <span className="text-xs font-medium text-blue-600 bg-blue-50 px-2 py-1 rounded-full">
+              Total
+            </span>
           </div>
           <div>
             <p className="text-3xl font-bold text-gray-900 mb-1">
@@ -123,7 +150,9 @@ const CreatorDashboard = () => {
             <div className="p-3 bg-green-50 rounded-xl group-hover:bg-green-100 transition-colors">
               <Users className="h-6 w-6 text-green-600" />
             </div>
-            <span className="text-xs font-medium text-green-600 bg-green-50 px-2 py-1 rounded-full">Students</span>
+            <span className="text-xs font-medium text-green-600 bg-green-50 px-2 py-1 rounded-full">
+              Students
+            </span>
           </div>
           <div>
             <p className="text-3xl font-bold text-gray-900 mb-1">
@@ -138,7 +167,9 @@ const CreatorDashboard = () => {
             <div className="p-3 bg-purple-50 rounded-xl group-hover:bg-purple-100 transition-colors">
               <DollarSign className="h-6 w-6 text-purple-600" />
             </div>
-            <span className="text-xs font-medium text-purple-600 bg-purple-50 px-2 py-1 rounded-full">Earnings</span>
+            <span className="text-xs font-medium text-purple-600 bg-purple-50 px-2 py-1 rounded-full">
+              Earnings
+            </span>
           </div>
           <div>
             <p className="text-3xl font-bold text-gray-900 mb-1">
@@ -153,11 +184,15 @@ const CreatorDashboard = () => {
             <div className="p-3 bg-orange-50 rounded-xl group-hover:bg-orange-100 transition-colors">
               <Star className="h-6 w-6 text-orange-600" />
             </div>
-            <span className="text-xs font-medium text-orange-600 bg-orange-50 px-2 py-1 rounded-full">Rating</span>
+            <span className="text-xs font-medium text-orange-600 bg-orange-50 px-2 py-1 rounded-full">
+              Rating
+            </span>
           </div>
           <div>
             <p className="text-3xl font-bold text-gray-900 mb-1">
-              {(typeof dashboard?.stats?.averageRating === 'number' ? dashboard.stats.averageRating.toFixed(1) : '0.0')}
+              {typeof dashboard?.stats?.averageRating === 'number'
+                ? dashboard.stats.averageRating.toFixed(1)
+                : '0.0'}
             </p>
             <p className="text-sm font-medium text-gray-500">Average Rating</p>
           </div>
@@ -183,7 +218,10 @@ const CreatorDashboard = () => {
             {dashboard?.createdCourses?.length > 0 ? (
               <div className="space-y-6">
                 {dashboard.createdCourses.slice(0, 3).map((course) => (
-                  <div key={course._id} className="group flex items-center space-x-4 p-3 -mx-3 rounded-xl hover:bg-gray-50 transition-colors">
+                  <div
+                    key={course._id}
+                    className="group flex items-center space-x-4 p-3 -mx-3 rounded-xl hover:bg-gray-50 transition-colors"
+                  >
                     <div className="flex-shrink-0 relative">
                       {course.thumbnail ? (
                         <img
@@ -251,7 +289,10 @@ const CreatorDashboard = () => {
             {dashboard?.createdCommunities?.length > 0 ? (
               <div className="space-y-6">
                 {dashboard.createdCommunities.slice(0, 3).map((community) => (
-                  <div key={community._id} className="group flex items-start space-x-4 p-3 -mx-3 rounded-xl hover:bg-gray-50 transition-colors">
+                  <div
+                    key={community._id}
+                    className="group flex items-start space-x-4 p-3 -mx-3 rounded-xl hover:bg-gray-50 transition-colors"
+                  >
                     <div className="flex-shrink-0">
                       <div className="w-12 h-12 bg-purple-50 rounded-xl flex items-center justify-center border border-purple-100 group-hover:bg-purple-100 transition-colors">
                         <Users className="h-6 w-6 text-purple-600" />
@@ -381,4 +422,3 @@ const CreatorDashboard = () => {
 };
 
 export default CreatorDashboard;
-

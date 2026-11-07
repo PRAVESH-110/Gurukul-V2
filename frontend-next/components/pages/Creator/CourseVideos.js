@@ -7,7 +7,21 @@ import { useAuth } from '@/context/AuthContext';
 import { courseAPI, videoAPI } from '@/services/api';
 import VideoUpload from '@/components/Video/VideoUpload';
 import VideoEditModal from '@/components/Video/VideoEditModal';
-import { ArrowLeft, Video, Plus, Edit, Trash2, Eye, Settings, Play, MoreVertical, Clock, HardDrive, FileText, AlertCircle } from 'lucide-react';
+import {
+  ArrowLeft,
+  Video,
+  Plus,
+  Edit,
+  Trash2,
+  Eye,
+  Settings,
+  Play,
+  MoreVertical,
+  Clock,
+  HardDrive,
+  FileText,
+  AlertCircle,
+} from 'lucide-react';
 
 const CourseVideos = () => {
   const params = useParams();
@@ -38,7 +52,7 @@ const CourseVideos = () => {
         // Fetch course details and videos
         const [courseRes, videosRes] = await Promise.all([
           courseAPI.getCourse(courseId),
-          videoAPI.getCourseVideos(courseId)
+          videoAPI.getCourseVideos(courseId),
         ]);
 
         // Handle course data
@@ -170,10 +184,7 @@ const CourseVideos = () => {
           </div>
           <h3 className="text-lg font-medium text-gray-900 mb-2">Error Loading Content</h3>
           <p className="text-gray-500 mb-6">{error}</p>
-          <button
-            onClick={() => window.location.reload()}
-            className="btn-primary"
-          >
+          <button onClick={() => window.location.reload()} className="btn-primary">
             Retry
           </button>
         </div>
@@ -219,19 +230,21 @@ const CourseVideos = () => {
           <div className="flex space-x-8 mt-6 -mb-px">
             <button
               onClick={() => setActiveTab('videos')}
-              className={`pb-4 text-sm font-medium border-b-2 transition-colors ${activeTab === 'videos'
-                ? 'border-primary-600 text-primary-600'
-                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                }`}
+              className={`pb-4 text-sm font-medium border-b-2 transition-colors ${
+                activeTab === 'videos'
+                  ? 'border-primary-600 text-primary-600'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+              }`}
             >
               Videos
             </button>
             <button
               onClick={() => setActiveTab('sections')}
-              className={`pb-4 text-sm font-medium border-b-2 transition-colors ${activeTab === 'sections'
-                ? 'border-primary-600 text-primary-600'
-                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                }`}
+              className={`pb-4 text-sm font-medium border-b-2 transition-colors ${
+                activeTab === 'sections'
+                  ? 'border-primary-600 text-primary-600'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+              }`}
             >
               Sections
             </button>
@@ -253,7 +266,12 @@ const CourseVideos = () => {
               >
                 <span className="sr-only">Close</span>
                 <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M6 18L18 6M6 6l12 12"
+                  />
                 </svg>
               </button>
             </div>
@@ -291,29 +309,43 @@ const CourseVideos = () => {
                     {/* Video List Header */}
                     <div className="px-6 py-4 border-b border-gray-100 bg-gray-50/50 flex items-center justify-between">
                       <h3 className="font-semibold text-gray-900">
-                        All Videos <span className="ml-2 text-sm font-normal text-gray-500 bg-white px-2 py-0.5 rounded-full border border-gray-200">{videos.length}</span>
+                        All Videos{' '}
+                        <span className="ml-2 text-sm font-normal text-gray-500 bg-white px-2 py-0.5 rounded-full border border-gray-200">
+                          {videos.length}
+                        </span>
                       </h3>
                       <div className="text-sm text-gray-500">
-                        Total Duration: {Math.round(videos.reduce((acc, v) => acc + (v.duration || 0), 0) / 60)} mins
+                        Total Duration:{' '}
+                        {Math.round(videos.reduce((acc, v) => acc + (v.duration || 0), 0) / 60)}{' '}
+                        mins
                       </div>
                     </div>
 
                     {/* Video List */}
                     <div className="divide-y divide-gray-100">
                       {videos.map((video, index) => (
-                        <div key={video._id} className="group p-6 hover:bg-gray-50 transition-colors">
+                        <div
+                          key={video._id}
+                          className="group p-6 hover:bg-gray-50 transition-colors"
+                        >
                           <div className="flex items-start space-x-4">
                             {/* Video Thumbnail/Icon */}
                             <div className="flex-shrink-0 relative">
                               {video.thumbnailUrl || video.videoUrl ? (
                                 <div className="relative w-32 aspect-video rounded-lg overflow-hidden shadow-sm group-hover:shadow-md transition-all">
                                   <img
-                                    src={video.thumbnailUrl || (video.videoUrl && video.videoUrl.includes('imagekit.io') ? `${video.videoUrl}/ik-thumbnail.jpg` : null)}
+                                    src={
+                                      video.thumbnailUrl ||
+                                      (video.videoUrl && video.videoUrl.includes('imagekit.io')
+                                        ? `${video.videoUrl}/ik-thumbnail.jpg`
+                                        : null)
+                                    }
                                     alt={video.title}
                                     className="w-full h-full object-cover"
                                     onError={(e) => {
                                       e.target.onerror = null;
-                                      e.target.src = 'https://placehold.co/600x400?text=No+Thumbnail';
+                                      e.target.src =
+                                        'https://placehold.co/600x400?text=No+Thumbnail';
                                     }}
                                   />
                                   <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors flex items-center justify-center">
@@ -326,7 +358,9 @@ const CourseVideos = () => {
                                 </div>
                               )}
                               <div className="absolute bottom-1 right-1 bg-black/70 text-white text-[10px] font-medium px-1.5 py-0.5 rounded">
-                                {video.duration ? `${Math.floor(video.duration / 60)}:${(video.duration % 60).toString().padStart(2, '0')}` : '0:00'}
+                                {video.duration
+                                  ? `${Math.floor(video.duration / 60)}:${(video.duration % 60).toString().padStart(2, '0')}`
+                                  : '0:00'}
                               </div>
                             </div>
 
@@ -358,10 +392,14 @@ const CourseVideos = () => {
                               <div className="flex items-center space-x-6 text-xs text-gray-500">
                                 <div className="flex items-center">
                                   <HardDrive className="h-3.5 w-3.5 mr-1.5" />
-                                  {video.size ? `${Math.round(video.size / (1024 * 1024))} MB` : 'Unknown size'}
+                                  {video.size
+                                    ? `${Math.round(video.size / (1024 * 1024))} MB`
+                                    : 'Unknown size'}
                                 </div>
                                 <div className="flex items-center">
-                                  <div className={`w-2 h-2 rounded-full mr-1.5 ${video.status === 'Ready' ? 'bg-green-500' : 'bg-yellow-500'}`}></div>
+                                  <div
+                                    className={`w-2 h-2 rounded-full mr-1.5 ${video.status === 'Ready' ? 'bg-green-500' : 'bg-yellow-500'}`}
+                                  ></div>
                                   {video.status || 'Processing'}
                                 </div>
                               </div>
@@ -407,7 +445,8 @@ const CourseVideos = () => {
                 </div>
                 <h2 className="text-lg font-bold text-gray-900 mb-2">Course Sections</h2>
                 <p className="text-gray-500 mb-6 max-w-md mx-auto">
-                  Organize your course content into sections and lectures. This feature is currently under development.
+                  Organize your course content into sections and lectures. This feature is currently
+                  under development.
                 </p>
                 <div className="inline-flex items-center px-4 py-2 rounded-lg bg-gray-100 text-gray-600 text-sm font-medium">
                   Coming Soon
@@ -430,4 +469,3 @@ const CourseVideos = () => {
 };
 
 export default CourseVideos;
-
