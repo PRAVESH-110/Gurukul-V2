@@ -22,7 +22,7 @@ const protect = async (req, res, next) => {
       return res.status(401).json({
         success: false,
         error: 'AUTH_REQUIRED',
-        message: 'Authentication required. Please log in.'
+        message: 'Authentication required. Please log in.',
       });
     }
 
@@ -33,7 +33,7 @@ const protect = async (req, res, next) => {
         return res.status(401).json({
           success: false,
           error: 'INVALID_TOKEN_TYPE',
-          message: 'A valid access token is required.'
+          message: 'A valid access token is required.',
         });
       }
 
@@ -41,14 +41,15 @@ const protect = async (req, res, next) => {
       // This requires a TokenBlacklist model or Redis cache
 
       // Get user from token
-      const user = await User.findById(decoded.id)
-        .select('-password -__v -resetPasswordToken -resetPasswordExpire');
+      const user = await User.findById(decoded.id).select(
+        '-password -__v -resetPasswordToken -resetPasswordExpire',
+      );
 
       if (!user) {
         return res.status(401).json({
           success: false,
           error: 'USER_NOT_FOUND',
-          message: 'The user belonging to this token no longer exists.'
+          message: 'The user belonging to this token no longer exists.',
         });
       }
 
@@ -57,7 +58,7 @@ const protect = async (req, res, next) => {
         return res.status(403).json({
           success: false,
           error: 'ACCOUNT_DEACTIVATED',
-          message: 'Your account has been deactivated. Please contact support.'
+          message: 'Your account has been deactivated. Please contact support.',
         });
       }
 
@@ -66,7 +67,7 @@ const protect = async (req, res, next) => {
         return res.status(401).json({
           success: false,
           error: 'PASSWORD_CHANGED',
-          message: 'Your password was recently changed. Please log in again.'
+          message: 'Your password was recently changed. Please log in again.',
         });
       }
 
@@ -95,7 +96,7 @@ const protect = async (req, res, next) => {
       return res.status(statusCode).json({
         success: false,
         error: errorCode,
-        message: errorMessage
+        message: errorMessage,
       });
     }
   } catch (error) {
@@ -109,7 +110,7 @@ const authorize = (...roles) => {
     if (!roles.includes(req.user.role)) {
       return res.status(403).json({
         success: false,
-        message: `User role ${req.user.role} is not authorized to access this route`
+        message: `User role ${req.user.role} is not authorized to access this route`,
       });
     }
     next();
@@ -125,15 +126,17 @@ const checkOwnership = (Model, resourceParam = 'id') => {
       if (!resource) {
         return res.status(404).json({
           success: false,
-          message: 'Resource not found'
+          message: 'Resource not found',
         });
       }
 
       // Check if user is the creator/owner
-      if (resource.creator && resource.creator.toString() !== req.user._id.toString() || req.user.role === 'admin') {
+      const isOwner = resource.creator && resource.creator.toString() === req.user._id.toString();
+      const isAdmin = req.user.role === 'admin';
+      if (!isOwner && !isAdmin) {
         return res.status(403).json({
           success: false,
-          message: 'Not authorized to access this resource'
+          message: 'Not authorized to access this resource',
         });
       }
 
@@ -156,19 +159,22 @@ const checkCommunityMembership = async (req, res, next) => {
     if (!community) {
       return res.status(404).json({
         success: false,
-        message: 'Community not found'
+        message: 'Community not found',
       });
     }
 
     // Check if user is a member or creator
-    const isMember = community.members.some(member => member.toString() === req.user._id.toString());
+    const isMember = community.members.some((member) => {
+      const memberId = member.user?._id || member.user;
+      return memberId && memberId.toString() === req.user._id.toString();
+    });
     const isCreator = community.creator.toString() === req.user._id.toString();
     const isAdmin = req.user.role === 'admin';
 
     if (!isMember && !isCreator && !isAdmin) {
       return res.status(403).json({
         success: false,
-        message: 'You must be a member to access this community'
+        message: 'You must be a member to access this community',
       });
     }
 
@@ -190,7 +196,7 @@ const checkCourseEnrollment = async (req, res, next) => {
     if (!course) {
       return res.status(404).json({
         success: false,
-        message: 'Course not found'
+        message: 'Course not found',
       });
     }
 
@@ -201,7 +207,7 @@ const checkCourseEnrollment = async (req, res, next) => {
     if (!isEnrolled && !isCreator && !isAdmin) {
       return res.status(403).json({
         success: false,
-        message: 'You must be enrolled to access this course'
+        message: 'You must be enrolled to access this course',
       });
     }
 
@@ -229,8 +235,9 @@ const optionalProtect = async (req, res, next) => {
       const decoded = jwt.verify(token, process.env.JWT_SECRET);
       if (decoded.type !== 'access') return next();
 
-      const user = await User.findById(decoded.id)
-        .select('-password -__v -resetPasswordToken -resetPasswordExpire');
+      const user = await User.findById(decoded.id).select(
+        '-password -__v -resetPasswordToken -resetPasswordExpire',
+      );
 
       if (user && user.isActive) {
         req.user = user;
@@ -253,5 +260,5 @@ module.exports = {
   checkOwnership,
   checkCommunityMembership,
   checkCourseEnrollment,
-  optionalProtect
+  optionalProtect,
 };

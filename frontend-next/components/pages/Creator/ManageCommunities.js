@@ -14,8 +14,9 @@ import {
   MessageSquare,
   Calendar,
   Eye,
+  EyeOff,
   MoreVertical,
-  Settings
+  Settings,
 } from 'lucide-react';
 import LoadingSpinner from '@/components/UI/LoadingSpinner';
 import toast from 'react-hot-toast';
@@ -25,9 +26,14 @@ const ManageCommunities = () => {
   const [statusFilter, setStatusFilter] = useState('all');
   const [sortBy, setSortBy] = useState('newest');
 
-  const { data: communitiesData, isLoading, error, refetch } = useQuery({
+  const {
+    data: communitiesData,
+    isLoading,
+    error,
+    refetch,
+  } = useQuery({
     queryKey: ['creatorCommunities'],
-    queryFn: () => communityAPI.getCreatorCommunities()
+    queryFn: () => communityAPI.getCreatorCommunities(),
   });
 
   const handleDeleteCommunity = async (communityId, communityName) => {
@@ -52,7 +58,9 @@ const ManageCommunities = () => {
     try {
       const newStatus = currentStatus === 'active' ? 'inactive' : 'active';
       await communityAPI.updateCommunityStatus(communityId, newStatus);
-      toast.success(`Community ${newStatus === 'active' ? 'activated' : 'deactivated'} successfully`);
+      toast.success(
+        `Community ${newStatus === 'active' ? 'activated' : 'deactivated'} successfully`,
+      );
       refetch();
     } catch (error) {
       toast.error('Failed to update community status');
@@ -86,8 +94,6 @@ const ManageCommunities = () => {
   console.log('is array?', Array.isArray(communities));
 
   return (
-
-
     <div className="space-y-6">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
@@ -146,7 +152,6 @@ const ManageCommunities = () => {
         </div>
       </div>
 
-
       {/* Community Stats */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
         <div className="bg-white p-6 rounded-lg shadow-sm border">
@@ -156,7 +161,6 @@ const ManageCommunities = () => {
             </div>
             <div className="ml-4">
               <p className="text-sm font-medium text-gray-600">Total Communities</p>
-
 
               <p className="text-2xl font-bold text-gray-900">
                 {communitiesData?.data?.data?.stats?.totalCommunities || 0}
@@ -217,8 +221,7 @@ const ManageCommunities = () => {
             <p className="text-gray-600 mb-6">
               {searchTerm || statusFilter !== 'all'
                 ? 'Try adjusting your search or filters'
-                : 'Get started by creating your first community'
-              }
+                : 'Get started by creating your first community'}
             </p>
             <Link href="/create-community" className="btn-primary">
               <Plus className="h-4 w-4 mr-2" />
@@ -272,8 +275,10 @@ const ManageCommunities = () => {
                           )}
                         </div>
                         <div className="ml-4">
-                          <Link href={`/communities/${community._id}`} // or community.slug, depending on your app
-                            className="text-sm font-medium text-gray-900 hover:text-primary-600 hover:underline">
+                          <Link
+                            href={`/communities/${community._id}`} // or community.slug, depending on your app
+                            className="text-sm font-medium text-gray-900 hover:text-primary-600 hover:underline"
+                          >
                             {community.name}
                           </Link>
                           <div className="text-sm text-gray-500">
@@ -283,10 +288,13 @@ const ManageCommunities = () => {
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${community.isActive
-                        ? 'bg-green-100 text-green-800'
-                        : 'bg-red-100 text-red-800'
-                        }`}>
+                      <span
+                        className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                          community.isActive
+                            ? 'bg-green-100 text-green-800'
+                            : 'bg-red-100 text-red-800'
+                        }`}
+                      >
                         {community.isActive ? 'Active' : 'Inactive'}
                       </span>
                     </td>
@@ -331,7 +339,22 @@ const ManageCommunities = () => {
                         >
                           <Settings className="h-4 w-4" />
                         </Link>
-
+                        <button
+                          onClick={() =>
+                            handleToggleStatus(
+                              community._id,
+                              community.isActive ? 'active' : 'inactive',
+                            )
+                          }
+                          className="text-blue-600 hover:text-blue-900"
+                          title={community.isActive ? 'Deactivate community' : 'Activate community'}
+                        >
+                          {community.isActive ? (
+                            <EyeOff className="h-4 w-4" />
+                          ) : (
+                            <Eye className="h-4 w-4" />
+                          )}
+                        </button>
 
                         <button
                           onClick={() => handleDeleteCommunity(community._id, community.name)}
@@ -354,4 +377,3 @@ const ManageCommunities = () => {
 };
 
 export default ManageCommunities;
-

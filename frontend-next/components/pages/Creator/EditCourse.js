@@ -10,7 +10,7 @@ import { getImageUrl } from '@/utils/imageUtils';
 
 const EditCourse = () => {
   const params = useParams();
-  const courseId = params?.courseId;
+  const courseId = params?.id;
   const router = useRouter();
   const queryClient = useQueryClient();
 

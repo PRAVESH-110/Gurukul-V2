@@ -8,7 +8,7 @@ const path = require('path');
 const imagekit = new ImageKit({
   publicKey: process.env.IMAGEKIT_PUBLIC_KEY,
   privateKey: process.env.IMAGEKIT_PRIVATE_KEY,
-  urlEndpoint: process.env.IMAGEKIT_URL_ENDPOINT
+  urlEndpoint: process.env.IMAGEKIT_URL_ENDPOINT,
 });
 
 // @desc    Upload a video
@@ -19,7 +19,7 @@ exports.uploadVideo = async (req, res, next) => {
     if (!req.files || !req.files.video) {
       return res.status(400).json({
         success: false,
-        message: 'No video file uploaded'
+        message: 'No video file uploaded',
       });
     }
 
@@ -31,7 +31,7 @@ exports.uploadVideo = async (req, res, next) => {
     if (videoFile.size > maxSize) {
       return res.status(400).json({
         success: false,
-        message: 'Video size exceeds 100MB limit'
+        message: 'Video size exceeds 100MB limit',
       });
     }
 
@@ -40,21 +40,20 @@ exports.uploadVideo = async (req, res, next) => {
     if (!allowedTypes.includes(videoFile.mimetype)) {
       return res.status(400).json({
         success: false,
-        message: 'Invalid file type. Only MP4, WebM, and OGG videos are allowed.'
+        message: 'Invalid file type. Only MP4, WebM, and OGG videos are allowed.',
       });
     }
 
     // Check if course exists and user is the creator
     const course = await Course.findOne({
       _id: courseId,
-      creator: req.user.id || req.user._id
-
+      creator: req.user.id || req.user._id,
     });
 
     if (!course) {
       return res.status(404).json({
         success: false,
-        message: 'Course not found or you are not authorized'
+        message: 'Course not found or you are not authorized',
       });
     }
 
@@ -62,17 +61,20 @@ exports.uploadVideo = async (req, res, next) => {
     const uploadResult = await new Promise((resolve, reject) => {
       const fileName = `${uuidv4()}${path.extname(videoFile.name)}`;
 
-      imagekit.upload({
-        file: videoFile.data.toString('base64'),
-        fileName: fileName,
-        folder: 'gurukul/videos',
-        useUniqueFileName: true,
-        tags: ['video', 'gurukul'],
-        responseFields: ['url', 'fileId', 'name', 'size', 'thumbnailUrl']
-      }, (error, result) => {
-        if (error) return reject(error);
-        resolve(result);
-      });
+      imagekit.upload(
+        {
+          file: videoFile.data.toString('base64'),
+          fileName: fileName,
+          folder: 'gurukul/videos',
+          useUniqueFileName: true,
+          tags: ['video', 'gurukul'],
+          responseFields: ['url', 'fileId', 'name', 'size', 'thumbnailUrl'],
+        },
+        (error, result) => {
+          if (error) return reject(error);
+          resolve(result);
+        },
+      );
     });
 
     if (!uploadResult || !uploadResult.url) {
@@ -94,10 +96,12 @@ exports.uploadVideo = async (req, res, next) => {
       creator: req.user.id,
       section: sectionId || 'main',
       status: 'processing',
-      resolution: uploadResult.height ? {
-        width: uploadResult.width,
-        height: uploadResult.height
-      } : undefined
+      resolution: uploadResult.height
+        ? {
+            width: uploadResult.width,
+            height: uploadResult.height,
+          }
+        : undefined,
     });
 
     // Add video to course section
@@ -107,27 +111,27 @@ exports.uploadVideo = async (req, res, next) => {
         section.lectures.push(video._id);
       } else {
         // If section doesn't exist, add to main section
-        if (!course.sections.some(s => s._id.toString() === 'main')) {
+        if (!course.sections.some((s) => s._id.toString() === 'main')) {
           course.sections.push({
             _id: 'main',
             title: 'Main Section',
-            lectures: [video._id]
+            lectures: [video._id],
           });
         } else {
-          const mainSection = course.sections.find(s => s._id.toString() === 'main');
+          const mainSection = course.sections.find((s) => s._id.toString() === 'main');
           mainSection.lectures.push(video._id);
         }
       }
     } else {
       // Add to main section if no section specified
-      if (!course.sections.some(s => s._id.toString() === 'main')) {
+      if (!course.sections.some((s) => s._id.toString() === 'main')) {
         course.sections.push({
           _id: 'main',
           title: 'Main Section',
-          lectures: [video._id]
+          lectures: [video._id],
         });
       } else {
-        const mainSection = course.sections.find(s => s._id.toString() === 'main');
+        const mainSection = course.sections.find((s) => s._id.toString() === 'main');
         mainSection.lectures.push(video._id);
       }
     }
@@ -135,7 +139,7 @@ exports.uploadVideo = async (req, res, next) => {
     // Recalculate totalVideos after adding video
     course.totalVideos = course.sections.reduce(
       (total, section) => total + (section.lectures?.length || 0),
-      0
+      0,
     );
 
     await course.save();
@@ -143,15 +147,14 @@ exports.uploadVideo = async (req, res, next) => {
     res.status(201).json({
       success: true,
       data: video,
-      message: 'Video uploaded successfully. Processing will begin shortly.'
+      message: 'Video uploaded successfully. Processing will begin shortly.',
     });
-
   } catch (error) {
     console.error('Error uploading video:', error);
     res.status(500).json({
       success: false,
       message: 'Error uploading video',
-      error: error.message
+      error: error.message,
     });
   }
 };
@@ -168,8 +171,15 @@ exports.getVideo = async (req, res, next) => {
     if (!video) {
       return res.status(404).json({
         success: false,
-        message: 'Video not found'
+        message: 'Video not found',
       });
+    }
+
+    const creatorId = video.creator?._id || video.creator;
+    const canViewUnpublished =
+      req.user.role === 'admin' || creatorId.toString() === req.user._id.toString();
+    if (!video.isPublished && !canViewUnpublished) {
+      return res.status(404).json({ success: false, message: 'Video not found' });
     }
 
     // Check if user has access to this video
@@ -177,62 +187,69 @@ exports.getVideo = async (req, res, next) => {
     if (!hasAccess) {
       return res.status(403).json({
         success: false,
-        message: 'You do not have permission to view this video'
+        message: 'You do not have permission to view this video',
       });
     }
+
+    const videoData = video.toObject();
+    const ownWatch = video.getWatchProgress(req.user._id);
+    delete videoData.watchedBy;
 
     res.status(200).json({
       success: true,
       data: {
         video: {
-          ...video.toObject(),
+          ...videoData,
+          userProgress:
+            ownWatch?.watchTime && video.duration
+              ? Math.round((ownWatch.watchTime / video.duration) * 100)
+              : 0,
+          hasWatched: Boolean(ownWatch?.completed),
           // Ensure qualities field is included and has fallbacks
           qualities: video.qualities || {
-            'auto': video.videoUrl,
+            auto: video.videoUrl,
             '1080p': video.videoUrl,
             '720p': video.videoUrl,
             '480p': video.videoUrl,
-            '360p': video.videoUrl
+            '360p': video.videoUrl,
           },
           // Add videoUrl field for compatibility
-          videoUrl: video.videoUrl
-        }
-      }
+          videoUrl: video.videoUrl,
+        },
+      },
     });
-
   } catch (error) {
     console.error('Error getting video:', error);
     res.status(500).json({
       success: false,
       message: 'Error getting video',
-      error: error.message
+      error: error.message,
     });
   }
 };
 
-
 // @desc    Get course videos
 // @route   GET /api/videos/course/:courseId
-// @access  Private 
+// @access  Private
 exports.getCourseVideos = async (req, res) => {
   try {
     const { courseId } = req.params;
 
     // Use the correct field name — your DB stores it as "course"
     const videos = await Video.find({ course: courseId })
-      .sort({ order: 1 })  // optional: sort by order
-      .select('-__v');     // optional: remove __v field
+      .sort({ order: 1 }) // optional: sort by order
+      .select('-__v'); // optional: remove __v field
 
     res.status(200).json({
       success: true,
       count: videos.length,
-      data: videos
+      data: videos,
     });
   } catch (error) {
-    console.error("Error fetching course videos:", error);
+    console.error('Error fetching course videos:', error);
     res.status(500).json({
       success: false,
-      message: "Server error fetching course videos"
+      message: 'Server error fetching course videos',
     });
   }
 };
@@ -248,15 +265,15 @@ exports.updateVideo = async (req, res, next) => {
     if (!video) {
       return res.status(404).json({
         success: false,
-        message: 'Video not found'
+        message: 'Video not found',
       });
     }
 
     // Check if user is the creator of the video
-    if (video.creator.toString() !== req.user.id) {
+    if (video.creator.toString() !== req.user.id && req.user.role !== 'admin') {
       return res.status(403).json({
         success: false,
-        message: 'Not authorized to update this video'
+        message: 'Not authorized to update this video',
       });
     }
 
@@ -267,12 +284,16 @@ exports.updateVideo = async (req, res, next) => {
 
     // If section is being updated
     if (sectionId && sectionId !== video.section.toString()) {
-      const course = await Course.findOne({ _id: video.course, creator: req.user.id });
+      const course = await Course.findOne(
+        req.user.role === 'admin'
+          ? { _id: video.course }
+          : { _id: video.course, creator: req.user.id },
+      );
 
       if (!course) {
         return res.status(404).json({
           success: false,
-          message: 'Course not found or you are not authorized'
+          message: 'Course not found or you are not authorized',
         });
       }
 
@@ -292,7 +313,7 @@ exports.updateVideo = async (req, res, next) => {
         targetSection = {
           _id: sectionId,
           title: `Section ${course.sections.length + 1}`,
-          lectures: []
+          lectures: [],
         };
         course.sections.push(targetSection);
       }
@@ -303,7 +324,7 @@ exports.updateVideo = async (req, res, next) => {
       // Recalculate totalVideos after updating section
       course.totalVideos = course.sections.reduce(
         (total, section) => total + (section.lectures?.length || 0),
-        0
+        0,
       );
 
       await course.save();
@@ -314,15 +335,14 @@ exports.updateVideo = async (req, res, next) => {
     res.status(200).json({
       success: true,
       data: video,
-      message: 'Video updated successfully'
+      message: 'Video updated successfully',
     });
-
   } catch (error) {
     console.error('Error updating video:', error);
     res.status(500).json({
       success: false,
       message: 'Error updating video',
-      error: error.message
+      error: error.message,
     });
   }
 };
@@ -337,7 +357,7 @@ exports.deleteVideo = async (req, res, next) => {
     if (!video) {
       return res.status(404).json({
         success: false,
-        message: 'Video not found'
+        message: 'Video not found',
       });
     }
 
@@ -345,12 +365,16 @@ exports.deleteVideo = async (req, res, next) => {
     if (video.creator.toString() !== req.user.id && req.user.role !== 'admin') {
       return res.status(403).json({
         success: false,
-        message: 'Not authorized to delete this video'
+        message: 'Not authorized to delete this video',
       });
     }
 
     // Get the course to update sections
-    const course = await Course.findOne({ _id: video.course, creator: req.user.id });
+    const course = await Course.findOne(
+      req.user.role === 'admin'
+        ? { _id: video.course }
+        : { _id: video.course, creator: req.user.id },
+    );
 
     if (course) {
       // Remove video from all sections
@@ -364,7 +388,7 @@ exports.deleteVideo = async (req, res, next) => {
       // Recalculate totalVideos after removing video
       course.totalVideos = course.sections.reduce(
         (total, section) => total + (section.lectures?.length || 0),
-        0
+        0,
       );
 
       await course.save();
@@ -390,14 +414,14 @@ exports.deleteVideo = async (req, res, next) => {
 
     res.status(200).json({
       success: true,
-      data: {}
+      data: {},
     });
   } catch (error) {
     console.error('Error deleting video:', error);
     res.status(500).json({
       success: false,
       message: 'Error deleting video',
-      error: error.message
+      error: error.message,
     });
   }
 };
@@ -425,7 +449,7 @@ exports.createVideo = async (req, res, next) => {
       resources,
       size,
       mimeType,
-      thumbnailUrl
+      thumbnailUrl,
     } = req.body;
 
     // Debug logging - log the entire request body to see what we're receiving
@@ -437,7 +461,7 @@ exports.createVideo = async (req, res, next) => {
     if (!title) {
       return res.status(400).json({
         success: false,
-        message: 'Video title is required'
+        message: 'Video title is required',
       });
     }
 
@@ -455,15 +479,15 @@ exports.createVideo = async (req, res, next) => {
         received: {
           hasUrl: !!url,
           hasVideoUrl: !!videoUrl,
-          hasFileId: !!fileId
-        }
+          hasFileId: !!fileId,
+        },
       });
     }
 
     if (!courseId) {
       return res.status(400).json({
         success: false,
-        message: 'Course ID is required'
+        message: 'Course ID is required',
       });
     }
 
@@ -474,32 +498,31 @@ exports.createVideo = async (req, res, next) => {
       videoUrl: videoUrlValue,
       fileId,
       userId: req.user.id,
-      userIdAlt: req.user._id
+      userIdAlt: req.user._id,
     });
 
     // Check if course exists and user is the creator
-    const course = await Course.findOne({
-      _id: courseId,
-      creator: req.user.id || req.user._id || req.user.role === 'admin'
-    });
+    const courseQuery = { _id: courseId };
+    if (req.user.role !== 'admin') courseQuery.creator = req.user.id || req.user._id;
+    const course = await Course.findOne(courseQuery);
 
     console.log('Course found:', course ? 'Yes' : 'No');
 
     if (!course) {
       return res.status(404).json({
         success: false,
-        message: 'Course not found or you are not authorized'
+        message: 'Course not found or you are not authorized',
       });
     }
 
     // Create video record with qualities support
     console.log('Creating video record...');
     const videoQualities = qualities || {
-      'auto': videoUrlValue,
+      auto: videoUrlValue,
       '1080p': videoUrlValue,
       '720p': videoUrlValue,
       '480p': videoUrlValue,
-      '360p': videoUrlValue
+      '360p': videoUrlValue,
     };
 
     // Prepare video data - use videoUrl (model field) not url
@@ -519,8 +542,9 @@ exports.createVideo = async (req, res, next) => {
       enableComments: enableComments !== false, // Default to true
       objectives: objectives || '',
       resources: resources || '',
+      size: Number(size) || 0,
       status: 'ready', // Assuming file is already uploaded and ready
-      isActive: true
+      isActive: true,
     };
 
     if (mimeType) videoData.mimeType = mimeType;
@@ -529,14 +553,25 @@ exports.createVideo = async (req, res, next) => {
 
     const video = await Video.create(videoData);
 
+    let mainSection = course.sections.find((section) => section.title === 'Main Section');
+    if (!mainSection) {
+      course.sections.push({ title: 'Main Section', order: 0, lectures: [video._id] });
+    } else if (!mainSection.lectures.some((id) => id.toString() === video._id.toString())) {
+      mainSection.lectures.push(video._id);
+    }
+    course.totalVideos = course.sections.reduce(
+      (total, section) => total + (section.lectures?.length || 0),
+      0,
+    );
+    await course.save();
+
     await video.populate('creator', 'firstName lastName avatar');
 
     res.status(201).json({
       success: true,
       data: video,
-      message: 'Video lesson created successfully'
+      message: 'Video lesson created successfully',
     });
-
   } catch (error) {
     console.error('Error creating video:', error);
     console.error('Error stack:', error.stack);
@@ -544,7 +579,9 @@ exports.createVideo = async (req, res, next) => {
     // Provide more specific error messages
     let errorMessage = 'Error creating video lesson';
     if (error.name === 'ValidationError') {
-      errorMessage = Object.values(error.errors).map(e => e.message).join(', ');
+      errorMessage = Object.values(error.errors)
+        .map((e) => e.message)
+        .join(', ');
     } else if (error.name === 'CastError') {
       errorMessage = 'Invalid ID format provided';
     }
@@ -552,24 +589,29 @@ exports.createVideo = async (req, res, next) => {
     res.status(500).json({
       success: false,
       message: errorMessage,
-      error: process.env.NODE_ENV === 'development' ? error.message : 'Internal server error'
+      error: process.env.NODE_ENV === 'development' ? error.message : 'Internal server error',
     });
   }
 };
 
 // Helper function to check if user has access to a video
 async function checkVideoAccess(user, video) {
+  const userId = user._id || user.id;
+  const creatorId = video.creator?._id || video.creator;
+  const courseId = video.course?._id || video.course;
   // Creator always has access
-  if (video.creator.toString() === user.id || user.role === 'admin') {
+  if (creatorId.toString() === userId.toString() || user.role === 'admin') {
     return true;
   }
 
   // Check if user is enrolled in the course
   const course = await Course.findOne({
-    _id: video.course,
-    'enrolledStudents.user': user.id,
-    isPublished: true
+    _id: courseId,
+    'enrolledStudents.user': userId,
+    isPublished: true,
   });
 
   return !!course;
 }
+
+exports.checkVideoAccess = checkVideoAccess;

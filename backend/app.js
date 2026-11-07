@@ -16,7 +16,11 @@ const allowedOrigins = getAllowedOrigins();
 const corsOptions = createCorsOptions(allowedOrigins);
 
 app.set('trust proxy', 1);
-app.use(helmet());
+app.use(
+  helmet({
+    crossOriginResourcePolicy: { policy: 'cross-origin' },
+  }),
+);
 app.use(compression());
 
 const apiLimiter = rateLimit({
@@ -24,8 +28,8 @@ const apiLimiter = rateLimit({
   max: 1000,
   message: JSON.stringify({
     success: false,
-    message: 'Too many requests from this IP, please try again later.'
-  })
+    message: 'Too many requests from this IP, please try again later.',
+  }),
 });
 
 app.use((req, res, next) => {
@@ -40,26 +44,13 @@ const authLimiter = rateLimit({
   max: 100,
   message: JSON.stringify({
     success: false,
-    message: 'Too many authentication attempts, please try again later.'
-  })
+    message: 'Too many authentication attempts, please try again later.',
+  }),
 });
 app.use('/api/auth', authLimiter);
 
 app.use(cors(corsOptions));
 app.options('*', cors(corsOptions));
-
-// Keep the legacy CORS headers while clients migrate to the configured CORS middleware.
-app.use((req, res, next) => {
-  const origin = req.headers.origin;
-  if (process.env.NODE_ENV === 'development' || (origin && allowedOrigins.includes(origin))) {
-    res.header('Access-Control-Allow-Origin', origin || '*');
-  }
-  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, PATCH, DELETE, OPTIONS, HEAD');
-  res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization, X-XSRF-TOKEN');
-  res.header('Access-Control-Allow-Credentials', 'true');
-  if (req.method === 'OPTIONS') return res.status(200).end();
-  return next();
-});
 
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
@@ -82,11 +73,13 @@ if (process.env.NODE_ENV === 'development') app.use(morgan('dev'));
 app.use('/api', apiRoutes);
 
 app.get('/health', (req, res) => res.status(200).json({ ok: true }));
-app.get('/api/health', (req, res) => res.status(200).json({
-  success: true,
-  message: 'Server is running',
-  timestamp: new Date().toISOString()
-}));
+app.get('/api/health', (req, res) =>
+  res.status(200).json({
+    success: true,
+    message: 'Server is running',
+    timestamp: new Date().toISOString(),
+  }),
+);
 
 app.use('*', (req, res) => res.status(404).json({ success: false, message: 'Route not found' }));
 app.use(errorHandler);

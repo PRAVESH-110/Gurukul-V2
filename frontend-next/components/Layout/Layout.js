@@ -4,11 +4,14 @@ import React from 'react';
 import Header from './Header';
 import Sidebar from './Sidebar';
 import { useAuth } from '@/context/AuthContext';
+import { usePathname } from 'next/navigation';
 
 import { Toaster } from 'react-hot-toast';
 
 const Layout = ({ children }) => {
   const { user } = useAuth();
+  const pathname = usePathname();
+  const isHomePage = pathname === '/';
   const [isMobile, setIsMobile] = React.useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = React.useState(false);
   const [sidebarWidth, setSidebarWidth] = React.useState(256);
@@ -32,7 +35,7 @@ const Layout = ({ children }) => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50/50 font-sans">
+    <div className="min-h-screen bg-gradient-to-b from-amber-50/60 via-yellow-50/40 to-amber-50/60 font-sans">
       <Toaster position="top-center" width={400} reverseOrder={false} />
       <Header toggleSidebar={toggleSidebar} isSidebarOpen={isSidebarOpen} />
       <div className="flex">
@@ -50,8 +53,11 @@ const Layout = ({ children }) => {
             marginLeft: user && isSidebarOpen && !isMobile ? `${sidebarWidth}px` : '0'
           }}
         >
-          <div className={`p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto w-full ${isSidebarOpen ? "pointer-events-none" : ""
-            }`}>
+          <div
+            className={`w-full ${
+              isHomePage ? 'p-0 max-w-none' : 'p-4 sm:p-6 lg:p-8 max-w-[1600px] mx-auto'
+            }`}
+          >
             {children}
           </div>
         </main>
@@ -61,4 +67,3 @@ const Layout = ({ children }) => {
 };
 
 export default Layout;
-

@@ -27,7 +27,7 @@ const getUsers = async (req, res, next) => {
       query.$or = [
         { firstName: { $regex: search, $options: 'i' } },
         { lastName: { $regex: search, $options: 'i' } },
-        { email: { $regex: search, $options: 'i' } }
+        { email: { $regex: search, $options: 'i' } },
       ];
     }
 
@@ -46,9 +46,9 @@ const getUsers = async (req, res, next) => {
       pagination: {
         page: parseInt(page),
         limit: parseInt(limit),
-        pages: Math.ceil(total / limit)
+        pages: Math.ceil(total / limit),
       },
-      users
+      users,
     });
   } catch (error) {
     next(error);
@@ -61,14 +61,16 @@ const getUsers = async (req, res, next) => {
 const getUser = async (req, res, next) => {
   try {
     const user = await User.findById(req.params.id)
-      .select('-password')
+      .select(
+        '-password -verificationToken -verificationExpires -resetPasswordToken -resetPasswordExpire -loginAttempts -lockUntil',
+      )
       .populate('joinedCommunities', 'name type coverImage memberCount')
       .populate('enrolledCourses', 'title thumbnail creator rating');
 
     if (!user || !user.isActive) {
       return res.status(404).json({
         success: false,
-        message: 'User not found'
+        message: 'User not found',
       });
     }
 
@@ -81,7 +83,7 @@ const getUser = async (req, res, next) => {
         avatar: user.avatar,
         bio: user.bio,
         role: user.role,
-        createdAt: user.createdAt
+        createdAt: user.createdAt,
       };
 
       // Add public communities and courses for creators
@@ -89,12 +91,12 @@ const getUser = async (req, res, next) => {
         const publicCommunities = await Community.find({
           creator: user._id,
           type: 'public',
-          isActive: true
+          isActive: true,
         }).select('name description coverImage memberCount');
 
         const publicCourses = await Course.find({
           creator: user._id,
-          isPublished: true
+          isPublished: true,
         }).select('title description thumbnail rating enrollmentCount');
 
         publicProfile.createdCommunities = publicCommunities;
@@ -103,13 +105,13 @@ const getUser = async (req, res, next) => {
 
       return res.status(200).json({
         success: true,
-        user: publicProfile
+        user: publicProfile,
       });
     }
 
     res.status(200).json({
       success: true,
-      user
+      user,
     });
   } catch (error) {
     next(error);
@@ -126,7 +128,7 @@ const updateUser = async (req, res, next) => {
     if (!user) {
       return res.status(404).json({
         success: false,
-        message: 'User not found'
+        message: 'User not found',
       });
     }
 
@@ -134,7 +136,7 @@ const updateUser = async (req, res, next) => {
     if (req.user._id.toString() !== user._id.toString() && req.user.role !== 'admin') {
       return res.status(403).json({
         success: false,
-        message: 'Not authorized to update this user'
+        message: 'Not authorized to update this user',
       });
     }
 
@@ -149,18 +151,18 @@ const updateUser = async (req, res, next) => {
         avatar: avatar || user.avatar,
         phone,
         address,
-        dateOfBirth
+        dateOfBirth,
       },
       {
         new: true,
-        runValidators: true
-      }
+        runValidators: true,
+      },
     ).select('-password');
 
     res.status(200).json({
       success: true,
       message: 'User updated successfully',
-      user: updatedUser
+      user: updatedUser,
     });
   } catch (error) {
     next(error);
@@ -177,7 +179,7 @@ const deleteUser = async (req, res, next) => {
     if (!user) {
       return res.status(404).json({
         success: false,
-        message: 'User not found'
+        message: 'User not found',
       });
     }
 
@@ -187,7 +189,7 @@ const deleteUser = async (req, res, next) => {
 
     res.status(200).json({
       success: true,
-      message: 'User deleted successfully'
+      message: 'User deleted successfully',
     });
   } catch (error) {
     next(error);
@@ -204,7 +206,7 @@ const getUserCommunities = async (req, res, next) => {
     if (!user || !user.isActive) {
       return res.status(404).json({
         success: false,
-        message: 'User not found'
+        message: 'User not found',
       });
     }
 
@@ -214,7 +216,7 @@ const getUserCommunities = async (req, res, next) => {
     if (req.user._id.toString() === user._id.toString()) {
       communities = await Community.find({
         'members.user': user._id,
-        isActive: true
+        isActive: true,
       })
         .populate('creator', 'firstName lastName avatar')
         .sort({ 'members.joinedAt': -1 });
@@ -223,7 +225,7 @@ const getUserCommunities = async (req, res, next) => {
       communities = await Community.find({
         'members.user': user._id,
         type: 'public',
-        isActive: true
+        isActive: true,
       })
         .populate('creator', 'firstName lastName avatar')
         .sort({ 'members.joinedAt': -1 });
@@ -231,7 +233,7 @@ const getUserCommunities = async (req, res, next) => {
 
     res.status(200).json({
       success: true,
-      communities
+      communities,
     });
   } catch (error) {
     next(error);
@@ -248,7 +250,7 @@ const getUserCourses = async (req, res, next) => {
     if (!user || !user.isActive) {
       return res.status(404).json({
         success: false,
-        message: 'User not found'
+        message: 'User not found',
       });
     }
 
@@ -256,53 +258,55 @@ const getUserCourses = async (req, res, next) => {
     if (req.user._id.toString() !== user._id.toString() && req.user.role !== 'admin') {
       return res.status(403).json({
         success: false,
-        message: 'Not authorized to view enrolled courses'
+        message: 'Not authorized to view enrolled courses',
       });
     }
 
     const courses = await Course.find({
       'enrolledStudents.user': user._id,
-      isPublished: true
+      isPublished: true,
     })
       .populate('creator', 'firstName lastName avatar')
       .sort({ updatedAt: -1 });
 
     // Extract user-specific enrollment data for each course
-    const coursesWithProgress = await Promise.all(courses.map(async (course) => {
-      const enrollment = course.enrolledStudents.find(
-        s => s.user && s.user.toString() === user._id.toString()
-      );
+    const coursesWithProgress = await Promise.all(
+      courses.map(async (course) => {
+        const enrollment = course.enrolledStudents.find(
+          (s) => s.user && s.user.toString() === user._id.toString(),
+        );
 
-      // Dynamically count videos for accuracy
-      const Video = require('../models/Video');
-      const videoCount = await Video.countDocuments({
-        course: course._id,
-        isActive: true
-      });
+        // Dynamically count videos for accuracy
+        const Video = require('../models/Video');
+        const videoCount = await Video.countDocuments({
+          course: course._id,
+          isActive: true,
+        });
 
-      return {
-        _id: course._id,
-        title: course.title,
-        description: course.description,
-        thumbnail: course.thumbnail,
-        creator: course.creator,
-        category: course.category,
-        level: course.level,
-        rating: course.rating,
-        enrollmentCount: course.enrollmentCount,
-        totalVideos: videoCount,
-        duration: course.duration,
-        progress: enrollment ? enrollment.progress : 0,
-        completedVideos: enrollment ? enrollment.completedVideos.length : 0,
-        enrolledAt: enrollment ? enrollment.enrolledAt : null
-      };
-    }));
+        return {
+          _id: course._id,
+          title: course.title,
+          description: course.description,
+          thumbnail: course.thumbnail,
+          creator: course.creator,
+          category: course.category,
+          level: course.level,
+          rating: course.rating,
+          enrollmentCount: course.enrollmentCount,
+          totalVideos: videoCount,
+          duration: course.duration,
+          progress: enrollment ? enrollment.progress : 0,
+          completedVideos: enrollment ? enrollment.completedVideos.length : 0,
+          enrolledAt: enrollment ? enrollment.enrolledAt : null,
+        };
+      }),
+    );
 
     res.status(200).json({
       success: true,
       data: {
-        courses: coursesWithProgress
-      }
+        courses: coursesWithProgress,
+      },
     });
   } catch (error) {
     next(error);
@@ -311,14 +315,49 @@ const getUserCourses = async (req, res, next) => {
 
 // Routes
 router.get('/', protect, authorize('admin'), getUsers);
+router.get('/me/wishlist', protect, async (req, res, next) => {
+  try {
+    const user = await User.findById(req.user._id).populate(
+      'wishlistCourses',
+      'title description thumbnail price rating creator',
+    );
+    return res.status(200).json({ success: true, courses: user?.wishlistCourses || [] });
+  } catch (error) {
+    return next(error);
+  }
+});
+router.post(
+  '/me/wishlist/:courseId',
+  protect,
+  validateObjectId('courseId'),
+  async (req, res, next) => {
+    try {
+      const course = await Course.findOne({ _id: req.params.courseId, isPublished: true }).select(
+        '_id',
+      );
+      if (!course) return res.status(404).json({ success: false, message: 'Course not found' });
+
+      const user = await User.findById(req.user._id).select('wishlistCourses');
+      const exists = user.wishlistCourses.some((id) => id.toString() === course._id.toString());
+      await User.findByIdAndUpdate(
+        req.user._id,
+        exists
+          ? { $pull: { wishlistCourses: course._id } }
+          : { $addToSet: { wishlistCourses: course._id } },
+      );
+      return res.status(200).json({ success: true, wishlisted: !exists });
+    } catch (error) {
+      return next(error);
+    }
+  },
+);
+// Self-scoped collection routes must precede the generic /:id route.
+router.get('/me/communities', protect, userController.getMyCommunities);
+router.get('/me/created-communities', protect, userController.getMyCreatedCommunities);
 router.get('/:id', protect, validateObjectId('id'), getUser);
 router.put('/:id', protect, validateObjectId('id'), updateUser);
 router.delete('/:id', protect, authorize('admin'), validateObjectId('id'), deleteUser);
 router.get('/:id/communities', protect, validateObjectId('id'), getUserCommunities);
 router.get('/:id/courses', protect, validateObjectId('id'), getUserCourses);
-
-// User's own communities
-router.get('/me/communities', protect, userController.getMyCommunities);
-router.get('/me/created-communities', protect, userController.getMyCreatedCommunities);
 
 module.exports = router;

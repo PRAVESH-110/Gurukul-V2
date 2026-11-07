@@ -15,7 +15,7 @@ import {
   Filter,
   BarChart3,
   PieChart,
-  LineChart
+  LineChart,
 } from 'lucide-react';
 import LoadingSpinner from '@/components/UI/LoadingSpinner';
 
@@ -23,10 +23,37 @@ const Analytics = () => {
   const [timeRange, setTimeRange] = useState('30d');
   const [selectedMetric, setSelectedMetric] = useState('overview');
 
-  const { data: analyticsData, isLoading, error } = useQuery({
+  const {
+    data: analyticsData,
+    isLoading,
+    error,
+  } = useQuery({
     queryKey: ['creatorAnalytics', timeRange],
-    queryFn: () => dashboardAPI.getAnalytics({ timeRange })
+    queryFn: () => dashboardAPI.getAnalytics({ timeRange }),
   });
+
+  const handleExport = () => {
+    const rows = analytics?.courses || [];
+    const csv = [
+      ['Course', 'Students', 'Revenue', 'Rating', 'Completion Rate'],
+      ...rows.map((course) => [
+        course.title,
+        course.enrollmentCount || 0,
+        course.revenue || 0,
+        course.rating || 0,
+        course.completionRate || 0,
+      ]),
+    ]
+      .map((row) => row.map((value) => `"${String(value).replaceAll('"', '""')}"`).join(','))
+      .join('\n');
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `gurukul-analytics-${timeRange}.csv`;
+    link.click();
+    URL.revokeObjectURL(url);
+  };
 
   if (isLoading) {
     return (
@@ -65,7 +92,7 @@ const Analytics = () => {
             <option value="90d">Last 3 months</option>
             <option value="1y">Last year</option>
           </select>
-          <button className="btn-outline">
+          <button className="btn-outline" onClick={handleExport}>
             <Download className="h-4 w-4 mr-2" />
             Export
           </button>
@@ -78,9 +105,7 @@ const Analytics = () => {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-gray-600">Total Revenue</p>
-              <p className="text-2xl font-bold text-gray-900">
-                ${analytics?.revenue?.total || 0}
-              </p>
+              <p className="text-2xl font-bold text-gray-900">${analytics?.revenue?.total || 0}</p>
               <p className="text-xs text-green-600 mt-1">
                 +{analytics?.revenue?.growth || 0}% from last period
               </p>
@@ -95,9 +120,7 @@ const Analytics = () => {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-gray-600">Total Students</p>
-              <p className="text-2xl font-bold text-gray-900">
-                {analytics?.students?.total || 0}
-              </p>
+              <p className="text-2xl font-bold text-gray-900">{analytics?.students?.total || 0}</p>
               <p className="text-xs text-blue-600 mt-1">
                 +{analytics?.students?.new || 0} new this period
               </p>
@@ -112,9 +135,7 @@ const Analytics = () => {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-gray-600">Course Views</p>
-              <p className="text-2xl font-bold text-gray-900">
-                {analytics?.views?.total || 0}
-              </p>
+              <p className="text-2xl font-bold text-gray-900">{analytics?.views?.total || 0}</p>
               <p className="text-xs text-purple-600 mt-1">
                 {analytics?.views?.avgPerCourse || 0} avg per course
               </p>
@@ -154,11 +175,29 @@ const Analytics = () => {
             </div>
           </div>
           <div className="p-6">
-            <div className="h-64 flex items-center justify-center bg-gray-50 rounded-lg">
-              <div className="text-center">
-                <BarChart3 className="h-12 w-12 text-gray-400 mx-auto mb-2" />
-                <p className="text-gray-500">Revenue chart would be displayed here</p>
-              </div>
+            <div className="h-64 flex items-end gap-3 bg-gray-50 rounded-lg p-6">
+              {(analytics?.courses || []).slice(0, 8).map((course) => {
+                const maxRevenue = Math.max(
+                  ...(analytics?.courses || []).map((item) => item.revenue || 0),
+                  1,
+                );
+                const height = Math.max(8, ((course.revenue || 0) / maxRevenue) * 100);
+                return (
+                  <div
+                    key={course._id}
+                    className="flex-1 h-full flex flex-col justify-end items-center gap-2"
+                  >
+                    <div
+                      className="w-full bg-green-500 rounded-t"
+                      style={{ height: `${height}%` }}
+                      title={`${course.title}: $${course.revenue || 0}`}
+                    />
+                    <span className="text-[10px] text-gray-500 truncate w-full text-center">
+                      {course.title}
+                    </span>
+                  </div>
+                );
+              })}
             </div>
           </div>
         </div>
@@ -172,11 +211,29 @@ const Analytics = () => {
             </div>
           </div>
           <div className="p-6">
-            <div className="h-64 flex items-center justify-center bg-gray-50 rounded-lg">
-              <div className="text-center">
-                <LineChart className="h-12 w-12 text-gray-400 mx-auto mb-2" />
-                <p className="text-gray-500">Enrollment chart would be displayed here</p>
-              </div>
+            <div className="h-64 flex items-end gap-3 bg-gray-50 rounded-lg p-6">
+              {(analytics?.courses || []).slice(0, 8).map((course) => {
+                const maxEnrollments = Math.max(
+                  ...(analytics?.courses || []).map((item) => item.enrollmentCount || 0),
+                  1,
+                );
+                const height = Math.max(8, ((course.enrollmentCount || 0) / maxEnrollments) * 100);
+                return (
+                  <div
+                    key={course._id}
+                    className="flex-1 h-full flex flex-col justify-end items-center gap-2"
+                  >
+                    <div
+                      className="w-full bg-blue-500 rounded-t"
+                      style={{ height: `${height}%` }}
+                      title={`${course.title}: ${course.enrollmentCount || 0} students`}
+                    />
+                    <span className="text-[10px] text-gray-500 truncate w-full text-center">
+                      {course.title}
+                    </span>
+                  </div>
+                );
+              })}
             </div>
           </div>
         </div>
@@ -227,12 +284,8 @@ const Analytics = () => {
                         )}
                       </div>
                       <div className="ml-4">
-                        <div className="text-sm font-medium text-gray-900">
-                          {course.title}
-                        </div>
-                        <div className="text-sm text-gray-500">
-                          {course.category}
-                        </div>
+                        <div className="text-sm font-medium text-gray-900">{course.title}</div>
+                        <div className="text-sm text-gray-500">{course.category}</div>
                       </div>
                     </div>
                   </td>
@@ -258,19 +311,17 @@ const Analytics = () => {
                           style={{ width: `${course.completionRate || 0}%` }}
                         />
                       </div>
-                      <span className="text-sm text-gray-900">
-                        {course.completionRate || 0}%
-                      </span>
+                      <span className="text-sm text-gray-900">{course.completionRate || 0}%</span>
                     </div>
                   </td>
                 </tr>
               )) || (
-                  <tr>
-                    <td colSpan="5" className="px-6 py-4 text-center text-gray-500">
-                      No course data available
-                    </td>
-                  </tr>
-                )}
+                <tr>
+                  <td colSpan="5" className="px-6 py-4 text-center text-gray-500">
+                    No course data available
+                  </td>
+                </tr>
+              )}
             </tbody>
           </table>
         </div>
@@ -288,20 +339,12 @@ const Analytics = () => {
               {analytics?.topContent?.map((content, index) => (
                 <div key={index} className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm font-medium text-gray-900">
-                      {content.title}
-                    </p>
-                    <p className="text-xs text-gray-500">
-                      {content.views} views
-                    </p>
+                    <p className="text-sm font-medium text-gray-900">{content.title}</p>
+                    <p className="text-xs text-gray-500">{content.views} views</p>
                   </div>
-                  <div className="text-sm font-medium text-green-600">
-                    #{index + 1}
-                  </div>
+                  <div className="text-sm font-medium text-green-600">#{index + 1}</div>
                 </div>
-              )) || (
-                  <p className="text-gray-500 text-center">No data available</p>
-                )}
+              )) || <p className="text-gray-500 text-center">No data available</p>}
             </div>
           </div>
         </div>
@@ -327,9 +370,7 @@ const Analytics = () => {
               </div>
               <div className="flex justify-between">
                 <span className="text-sm text-gray-600">Q&A Questions</span>
-                <span className="text-sm font-medium">
-                  {analytics?.engagement?.questions || 0}
-                </span>
+                <span className="text-sm font-medium">{analytics?.engagement?.questions || 0}</span>
               </div>
             </div>
           </div>
@@ -369,4 +410,3 @@ const Analytics = () => {
 };
 
 export default Analytics;
-

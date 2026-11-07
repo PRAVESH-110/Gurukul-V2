@@ -2,7 +2,12 @@ import axios from 'axios';
 import { toast } from 'react-hot-toast';
 import store from '@/providers/store';
 import { clearCredentials, setAuthTokens } from '@/providers/store/authSlice';
-import { clearStoredTokens, persistCsrfToken, persistTokens, readStoredTokens } from '@/providers/authStorage';
+import {
+  clearStoredTokens,
+  persistCsrfToken,
+  persistTokens,
+  readStoredTokens,
+} from '@/providers/authStorage';
 
 // Determine the base URL based on the environment
 const getBaseUrl = () => {
@@ -16,6 +21,18 @@ const getBaseUrl = () => {
 
 const baseURL = getBaseUrl();
 let refreshPromise = null;
+
+const redactDebugValue = (value) => {
+  if (!value || typeof value !== 'object') return value;
+  if (value instanceof FormData) return '[FormData]';
+  if (Array.isArray(value)) return value.map(redactDebugValue);
+  return Object.fromEntries(
+    Object.entries(value).map(([key, child]) => {
+      if (/password|token|secret|authorization/i.test(key)) return [key, '[REDACTED]'];
+      return [key, redactDebugValue(child)];
+    }),
+  );
+};
 
 const isAuthEndpoint = (url = '') => /\/auth\/(login|register|refresh|csrf|logout)(\?|$)/.test(url);
 
@@ -32,7 +49,11 @@ const tokenIsFresh = (token) => {
 const refreshAccessToken = async (failedAccessToken) => {
   const rotate = async () => {
     const latestAccessToken = readStoredTokens().accessToken;
-    if (latestAccessToken && latestAccessToken !== failedAccessToken && tokenIsFresh(latestAccessToken)) {
+    if (
+      latestAccessToken &&
+      latestAccessToken !== failedAccessToken &&
+      tokenIsFresh(latestAccessToken)
+    ) {
       return latestAccessToken;
     }
 
@@ -46,9 +67,13 @@ const refreshAccessToken = async (failedAccessToken) => {
       persistCsrfToken(csrfToken);
     }
 
-    const response = await rawClient.post('/auth/refresh', {}, {
-      headers: { 'X-XSRF-TOKEN': csrfToken }
-    });
+    const response = await rawClient.post(
+      '/auth/refresh',
+      {},
+      {
+        headers: { 'X-XSRF-TOKEN': csrfToken },
+      },
+    );
     const { accessToken, csrfToken: rotatedCsrfToken } = response.data;
     if (!accessToken || !rotatedCsrfToken) throw new Error('Invalid refresh response');
 
@@ -65,7 +90,9 @@ const refreshAccessToken = async (failedAccessToken) => {
 
 export const refreshAccessSession = () => {
   if (!refreshPromise) {
-    refreshPromise = refreshAccessToken(null).finally(() => { refreshPromise = null; });
+    refreshPromise = refreshAccessToken(null).finally(() => {
+      refreshPromise = null;
+    });
   }
   return refreshPromise;
 };
@@ -75,16 +102,16 @@ const api = axios.create({
   baseURL,
   timeout: 30000,
   headers: {
-    'Accept': 'application/json',
+    Accept: 'application/json',
     'Cache-Control': 'no-cache, no-store, must-revalidate',
-    'Pragma': 'no-cache',
-    'Expires': '0',
-    'X-Requested-With': 'XMLHttpRequest'
+    Pragma: 'no-cache',
+    Expires: '0',
+    'X-Requested-With': 'XMLHttpRequest',
   },
   withCredentials: true,
   validateStatus: (status) => status >= 200 && status < 500,
   crossDomain: true,
-  withXSRFToken: true
+  withXSRFToken: true,
 });
 
 // Request interceptor to handle form data vs JSON
@@ -97,7 +124,7 @@ api.interceptors.request.use((config) => {
 });
 
 // Add a request interceptor to handle credentials
-api.interceptors.request.use(config => {
+api.interceptors.request.use((config) => {
   const { accessToken, csrfToken } = readStoredTokens();
   if (accessToken) config.headers.Authorization = `Bearer ${accessToken}`;
   if (csrfToken) {
@@ -115,9 +142,10 @@ api.interceptors.request.use(
   (config) => {
     // Log request in development
     if (process.env.NEXT_PUBLIC_ENABLE_DEBUG_LOGS === 'true') {
-      console.log(`%c ${config.method?.toUpperCase()} ${config.url}`,
+      console.log(
+        `%c ${config.method?.toUpperCase()} ${config.url}`,
         'color: #0086b3; font-weight: bold',
-        { params: config.params, data: config.data }
+        { params: redactDebugValue(config.params), data: redactDebugValue(config.data) },
       );
     }
 
@@ -128,7 +156,7 @@ api.interceptors.request.use(
       console.error('Request Error:', error);
     }
     return Promise.reject(error);
-  }
+  },
 );
 
 // ─── Server Warm State (client-side only) ────────────────────────────────────
@@ -156,17 +184,25 @@ api.interceptors.response.use(
       console.log(
         `%c ${response.status} ${response.config.url}`,
         `color: ${response.status >= 200 && response.status < 300 ? '#4CAF50' : '#FFA000'}; font-weight: bold`,
-        response.data
+        response.data,
       );
     }
 
     const requestConfig = response.config;
-    if (response.status === 401 && requestConfig && !requestConfig._authRetried && !isAuthEndpoint(requestConfig.url)) {
+    if (
+      response.status === 401 &&
+      requestConfig &&
+      !requestConfig._authRetried &&
+      !isAuthEndpoint(requestConfig.url)
+    ) {
       requestConfig._authRetried = true;
       try {
-        const failedAccessToken = requestConfig.headers.Authorization || requestConfig.headers.get?.('Authorization');
+        const failedAccessToken =
+          requestConfig.headers.Authorization || requestConfig.headers.get?.('Authorization');
         if (!refreshPromise) {
-          refreshPromise = refreshAccessToken(failedAccessToken?.replace(/^Bearer\s+/i, '') || null).finally(() => {
+          refreshPromise = refreshAccessToken(
+            failedAccessToken?.replace(/^Bearer\s+/i, '') || null,
+          ).finally(() => {
             refreshPromise = null;
           });
         }
@@ -177,7 +213,10 @@ api.interceptors.response.use(
         if ([401, 403].includes(refreshError.response?.status)) {
           clearStoredTokens();
           store.dispatch(clearCredentials());
-          if (typeof window !== 'undefined' && !['/login', '/register'].includes(window.location.pathname)) {
+          if (
+            typeof window !== 'undefined' &&
+            !['/login', '/register'].includes(window.location.pathname)
+          ) {
             window.location.href = '/login?sessionExpired=true';
           }
         }
@@ -202,8 +241,15 @@ api.interceptors.response.use(
       // fail silently so the user can retry without scary error messages.
       // Auth/validation errors (4xx) always show immediately.
       if (!isServerWarm() && status >= 500) {
-        console.warn('First request failed (server warming up), suppressing error silently:', error.config?.url);
-        return Promise.reject({ silent: true, status, message: 'Server warming up, please retry.' });
+        console.warn(
+          'First request failed (server warming up), suppressing error silently:',
+          error.config?.url,
+        );
+        return Promise.reject({
+          silent: true,
+          status,
+          message: 'Server warming up, please retry.',
+        });
       }
 
       if (status === 401) {
@@ -245,7 +291,10 @@ api.interceptors.response.use(
       // ── Cold-start silent failure ──────────────────────────────────────────
       // Network errors on the first request are almost always a cold start.
       if (!isServerWarm()) {
-        console.warn('First request got no response (server cold start), suppressing error silently:', error.config?.url);
+        console.warn(
+          'First request got no response (server cold start), suppressing error silently:',
+          error.config?.url,
+        );
         return Promise.reject({ silent: true, message: 'Server warming up, please retry.' });
       }
       console.error('No response from server:', error.request);
@@ -257,7 +306,7 @@ api.interceptors.response.use(
     }
 
     return Promise.reject(error);
-  }
+  },
 );
 
 // Auth API
@@ -279,6 +328,8 @@ export const userAPI = {
   deleteUser: (id) => api.delete(`/users/${id}`),
   getUserCommunities: (id) => api.get(`/users/${id}/communities`),
   getUserCourses: (id) => api.get(`/users/${id}/courses`),
+  getWishlist: () => api.get('/users/me/wishlist'),
+  toggleWishlist: (courseId) => api.post(`/users/me/wishlist/${courseId}`),
 };
 
 // Community API
@@ -293,28 +344,31 @@ export const communityAPI = {
   joinCommunity: (id) => api.post(`/communities/${id}/join`),
   leaveCommunity: (id) => api.post(`/communities/${id}/leave`),
   getCommunityMembers: (id) => api.get(`/communities/${id}/members`),
+  updateMemberRole: (id, userId, role) => api.put(`/communities/${id}/members/${userId}`, { role }),
+  removeMember: (id, userId) => api.delete(`/communities/${id}/members/${userId}`),
   getCommunityPosts: (id, params) => api.get(`/communities/${id}/posts`, { params }),
-
 
   createPost: (communityId, formData) => {
     console.log(`Sending request to: /api/communities/${communityId}/posts`);
-    return api.post(`/communities/${communityId}/posts`, formData, {
-      headers: {
-        'Content-Type': 'multipart/form-data',
-      },
-    }).catch(error => {
-      console.error('API Error:', error);
-      if (error.response) {
-        console.error('Response data:', error.response.data);
-        console.error('Response status:', error.response.status);
-        console.error('Response headers:', error.response.headers);
-      } else if (error.request) {
-        console.error('No response received:', error.request);
-      } else {
-        console.error('Error:', error.message);
-      }
-      return Promise.reject(error);
-    });
+    return api
+      .post(`/communities/${communityId}/posts`, formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      })
+      .catch((error) => {
+        console.error('API Error:', error);
+        if (error.response) {
+          console.error('Response data:', error.response.data);
+          console.error('Response status:', error.response.status);
+          console.error('Response headers:', error.response.headers);
+        } else if (error.request) {
+          console.error('No response received:', error.request);
+        } else {
+          console.error('Error:', error.message);
+        }
+        return Promise.reject(error);
+      });
   },
   getCommunityEvents: (id, params) => api.get(`/communities/${id}/events`, { params }),
   createEvent: (communityId, data) => api.post(`/communities/${communityId}/events`, data),
@@ -347,10 +401,12 @@ export const videoAPI = {
     return api.post('/upload/video', formData, {
       headers: { 'Content-Type': 'multipart/form-data' },
       timeout: 600000, // 10 minutes for video upload (max 100MB)
-      onUploadProgress: onProgress ? (progressEvent) => {
-        const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
-        onProgress(percentCompleted);
-      } : undefined,
+      onUploadProgress: onProgress
+        ? (progressEvent) => {
+            const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+            onProgress(percentCompleted);
+          }
+        : undefined,
     });
   },
 
@@ -362,17 +418,23 @@ export const videoAPI = {
     return api.post('/upload/video', formData, {
       headers: { 'Content-Type': 'multipart/form-data' },
       timeout: 600000, // 10 minutes for video upload
-      onUploadProgress: onProgress ? (progressEvent) => {
-        const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
-        onProgress(percentCompleted);
-      } : undefined,
+      onUploadProgress: onProgress
+        ? (progressEvent) => {
+            const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+            onProgress(percentCompleted);
+          }
+        : undefined,
     });
   },
 
   // ImageKit.io video upload via server (primary method)
   uploadVideoToImageKit: async (file, onProgress) => {
     try {
-      console.log('🎬 Starting video upload:', file.name, `(${Math.round(file.size / 1024 / 1024)}MB)`);
+      console.log(
+        '🎬 Starting video upload:',
+        file.name,
+        `(${Math.round(file.size / 1024 / 1024)}MB)`,
+      );
       console.log('📡 Uploading via server to ImageKit...');
 
       const serverResponse = await videoAPI.uploadVideoToServer(file, onProgress);
@@ -383,9 +445,8 @@ export const videoAPI = {
         fileId: serverResponse.data.fileId,
         name: serverResponse.data.name,
         size: serverResponse.data.size,
-        thumbnailUrl: serverResponse.data.thumbnailUrl
+        thumbnailUrl: serverResponse.data.thumbnailUrl,
       };
-
     } catch (error) {
       console.error('❌ Video upload failed:', error);
       throw new Error(`Upload failed: ${error.response?.data?.message || error.message}`);
@@ -395,7 +456,8 @@ export const videoAPI = {
   getVideo: (id) => api.get(`/videos/${id}`),
   updateVideo: (id, data) => api.put(`/videos/${id}`, data),
   deleteVideo: (id) => api.delete(`/videos/${id}`),
-  updateWatchProgress: (id, progress) => api.post(`/videos/${id}/watch`, { progress }),
+  updateWatchProgress: (id, progress, watchTime = 0, position = 0) =>
+    api.post(`/videos/${id}/watch`, { progress, watchTime, position }),
   getVideoStream: (id) => `${api.defaults.baseURL}/videos/${id}/stream`,
   getImageKitAuth: () => api.get('/upload/imagekit-auth'),
   createVideoRecord: (data) => api.post('/videos', data), // Create video record after upload
@@ -409,7 +471,8 @@ export const postAPI = {
   deletePost: (id) => api.delete(`/posts/${id}`),
   toggleLike: (id) => api.post(`/posts/${id}/like`),
   addComment: (id, data) => api.post(`/posts/${id}/comments`, data),
-  updateComment: (postId, commentId, data) => api.put(`/posts/${postId}/comments/${commentId}`, data),
+  updateComment: (postId, commentId, data) =>
+    api.put(`/posts/${postId}/comments/${commentId}`, data),
   deleteComment: (postId, commentId) => api.delete(`/posts/${postId}/comments/${commentId}`),
 };
 
@@ -445,7 +508,7 @@ export const uploadAPI = {
       headers: { 'Content-Type': 'multipart/form-data' },
     });
   },
-  getImageKitAuth: () => api.get('/upload/auth'),
+  getImageKitAuth: () => api.get('/upload/imagekit-auth'),
 };
 
 // Search API

@@ -41,7 +41,7 @@ A modern, full-featured online learning platform that connects educators and stu
 
 ```mermaid
 graph TB
-    subgraph "Frontend (React + Vite)"
+    subgraph "Frontend (Next.js App Router)"
         A[Authentication] --> B[Student Dashboard]
         A --> C[Creator Dashboard]
         B --> D[Course Catalog]
@@ -87,9 +87,8 @@ graph TB
 ## 💻 Tech Stack
 
 ### Frontend
-- **React 18** - Modern UI library with hooks
-- **Vite** - Fast build tool and dev server
-- **React Router v6** - Client-side routing
+- **Next.js App Router** - Server-rendered pages and client islands
+- **React 19** - Modern UI library with hooks
 - **React Query** - Server state management
 - **Tailwind CSS** - Utility-first CSS framework
 - **Lucide React** - Beautiful icons

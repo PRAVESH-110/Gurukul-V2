@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { useQuery } from '@tanstack/react-query';
+import Image from 'next/image';
 import { courseAPI } from '@/services/api';
 import { Search, Filter, BookOpen, Star, Users, Clock, ArrowRight } from 'lucide-react';
 import LoadingSpinner from '@/components/UI/LoadingSpinner';
@@ -43,7 +44,7 @@ const CourseCatalog = () => {
             <BookOpen className="h-8 w-8 text-red-600" />
           </div>
           <h3 className="text-lg font-bold text-gray-900 mb-2">Failed to load courses</h3>
-          <p className="text-gray-600 mb-6">We couldn't fetch the course catalog. Please try again later.</p>
+          <p className="text-gray-600 mb-6">We couldn&apos;t fetch the course catalog. Please try again later.</p>
           <button
             onClick={() => window.location.reload()}
             className="btn-primary w-full"
@@ -61,7 +62,7 @@ const CourseCatalog = () => {
     <div className="min-h-screen bg-gray-50/50 font-sans">
       {/* Header Section */}
       <div className="bg-white border-b border-gray-200">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 lg:py-16">
+        <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-12 py-12 lg:py-16">
           <div className="max-w-3xl">
             <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-6 tracking-tight">
               Explore Our <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary-600 to-primary-500">Courses</span>
@@ -74,7 +75,7 @@ const CourseCatalog = () => {
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-12 py-8">
         {/* Search and Filters */}
         <div className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 mb-10 sticky top-4 z-30 backdrop-blur-xl bg-white/90 supports-[backdrop-filter]:bg-white/60">
           <div className="flex flex-col md:flex-row gap-4">
@@ -138,7 +139,7 @@ const CourseCatalog = () => {
               >
                 <div className="relative aspect-video overflow-hidden bg-gray-100">
                   {course.thumbnail ? (
-                    <img
+                    <Image
                       src={getImageUrl(course.thumbnail)}
                       alt={course.title}
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
@@ -212,7 +213,7 @@ const CourseCatalog = () => {
             </div>
             <h3 className="text-xl font-bold text-gray-900 mb-2">No courses found</h3>
             <p className="text-gray-600 max-w-md mx-auto">
-              We couldn't find any courses matching your criteria. Try adjusting your search or filters.
+              We couldnt find any courses matching your criteria. Try adjusting your search or filters.
             </p>
             <button
               onClick={() => {

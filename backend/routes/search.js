@@ -17,7 +17,7 @@ const searchCommunities = async (req, res, next) => {
     if (!q) {
       return res.status(400).json({
         success: false,
-        message: 'Search query is required'
+        message: 'Search query is required',
       });
     }
 
@@ -29,13 +29,14 @@ const searchCommunities = async (req, res, next) => {
           $or: [
             { name: { $regex: q, $options: 'i' } },
             { description: { $regex: q, $options: 'i' } },
-            { tags: { $in: [new RegExp(q, 'i')] } }
-          ]
-        }
-      ]
+            { tags: { $in: [new RegExp(q, 'i')] } },
+          ],
+        },
+      ],
     };
 
     const communities = await Community.find(query)
+      .select('-members')
       .populate('creator', 'firstName lastName avatar')
       .sort({ memberCount: -1, createdAt: -1 })
       .limit(limit * 1)
@@ -50,9 +51,9 @@ const searchCommunities = async (req, res, next) => {
       pagination: {
         page: parseInt(page),
         limit: parseInt(limit),
-        pages: Math.ceil(total / limit)
+        pages: Math.ceil(total / limit),
       },
-      communities
+      communities,
     });
   } catch (error) {
     next(error);
@@ -69,7 +70,7 @@ const searchCourses = async (req, res, next) => {
     if (!q) {
       return res.status(400).json({
         success: false,
-        message: 'Search query is required'
+        message: 'Search query is required',
       });
     }
 
@@ -81,10 +82,10 @@ const searchCourses = async (req, res, next) => {
             { title: { $regex: q, $options: 'i' } },
             { description: { $regex: q, $options: 'i' } },
             { category: { $regex: q, $options: 'i' } },
-            { tags: { $in: [new RegExp(q, 'i')] } }
-          ]
-        }
-      ]
+            { tags: { $in: [new RegExp(q, 'i')] } },
+          ],
+        },
+      ],
     };
 
     // Add category filter
@@ -98,6 +99,7 @@ const searchCourses = async (req, res, next) => {
     }
 
     const courses = await Course.find(query)
+      .select('-enrolledStudents -reviews')
       .populate('creator', 'firstName lastName avatar')
       .populate('community', 'name')
       .sort({ rating: -1, enrollmentCount: -1 })
@@ -113,9 +115,9 @@ const searchCourses = async (req, res, next) => {
       pagination: {
         page: parseInt(page),
         limit: parseInt(limit),
-        pages: Math.ceil(total / limit)
+        pages: Math.ceil(total / limit),
       },
-      courses
+      courses,
     });
   } catch (error) {
     next(error);
@@ -132,7 +134,7 @@ const searchUsers = async (req, res, next) => {
     if (!q) {
       return res.status(400).json({
         success: false,
-        message: 'Search query is required'
+        message: 'Search query is required',
       });
     }
 
@@ -143,10 +145,10 @@ const searchUsers = async (req, res, next) => {
           $or: [
             { firstName: { $regex: q, $options: 'i' } },
             { lastName: { $regex: q, $options: 'i' } },
-            { email: { $regex: q, $options: 'i' } }
-          ]
-        }
-      ]
+            { email: { $regex: q, $options: 'i' } },
+          ],
+        },
+      ],
     };
 
     // Add role filter
@@ -155,7 +157,7 @@ const searchUsers = async (req, res, next) => {
     }
 
     const users = await User.find(query)
-      .select('firstName lastName email avatar role bio')
+      .select('firstName lastName avatar role bio')
       .sort({ createdAt: -1 })
       .limit(limit * 1)
       .skip((page - 1) * limit);
@@ -169,9 +171,9 @@ const searchUsers = async (req, res, next) => {
       pagination: {
         page: parseInt(page),
         limit: parseInt(limit),
-        pages: Math.ceil(total / limit)
+        pages: Math.ceil(total / limit),
       },
-      users
+      users,
     });
   } catch (error) {
     next(error);
@@ -188,7 +190,7 @@ const searchPosts = async (req, res, next) => {
     if (!q) {
       return res.status(400).json({
         success: false,
-        message: 'Search query is required'
+        message: 'Search query is required',
       });
     }
 
@@ -196,12 +198,9 @@ const searchPosts = async (req, res, next) => {
       $and: [
         { isActive: true },
         {
-          $or: [
-            { title: { $regex: q, $options: 'i' } },
-            { content: { $regex: q, $options: 'i' } }
-          ]
-        }
-      ]
+          $or: [{ title: { $regex: q, $options: 'i' } }, { content: { $regex: q, $options: 'i' } }],
+        },
+      ],
     };
 
     // Add community filter
@@ -216,7 +215,7 @@ const searchPosts = async (req, res, next) => {
       joinedCommunityIds = null;
     } else {
       const user = await User.findById(req.user._id).populate('joinedCommunities');
-      joinedCommunityIds = user.joinedCommunities.map(c => c._id);
+      joinedCommunityIds = user.joinedCommunities.map((c) => c._id);
     }
 
     // Only show posts from communities user is a member of (unless admin)
@@ -240,9 +239,9 @@ const searchPosts = async (req, res, next) => {
       pagination: {
         page: parseInt(page),
         limit: parseInt(limit),
-        pages: Math.ceil(total / limit)
+        pages: Math.ceil(total / limit),
       },
-      posts
+      posts,
     });
   } catch (error) {
     next(error);
@@ -259,7 +258,7 @@ const globalSearch = async (req, res, next) => {
     if (!q) {
       return res.status(400).json({
         success: false,
-        message: 'Search query is required'
+        message: 'Search query is required',
       });
     }
 
@@ -273,10 +272,10 @@ const globalSearch = async (req, res, next) => {
         {
           $or: [
             { name: { $regex: q, $options: 'i' } },
-            { description: { $regex: q, $options: 'i' } }
-          ]
-        }
-      ]
+            { description: { $regex: q, $options: 'i' } },
+          ],
+        },
+      ],
     })
       .populate('creator', 'firstName lastName avatar')
       .limit(searchLimit);
@@ -289,10 +288,10 @@ const globalSearch = async (req, res, next) => {
           $or: [
             { title: { $regex: q, $options: 'i' } },
             { description: { $regex: q, $options: 'i' } },
-            { category: { $regex: q, $options: 'i' } }
-          ]
-        }
-      ]
+            { category: { $regex: q, $options: 'i' } },
+          ],
+        },
+      ],
     })
       .populate('creator', 'firstName lastName avatar')
       .limit(searchLimit);
@@ -304,10 +303,10 @@ const globalSearch = async (req, res, next) => {
         {
           $or: [
             { firstName: { $regex: q, $options: 'i' } },
-            { lastName: { $regex: q, $options: 'i' } }
-          ]
-        }
-      ]
+            { lastName: { $regex: q, $options: 'i' } },
+          ],
+        },
+      ],
     })
       .select('firstName lastName avatar role')
       .limit(searchLimit);
@@ -319,19 +318,16 @@ const globalSearch = async (req, res, next) => {
       joinedCommunityIds = null;
     } else {
       const user = await User.findById(req.user._id).populate('joinedCommunities');
-      joinedCommunityIds = user.joinedCommunities.map(c => c._id);
+      joinedCommunityIds = user.joinedCommunities.map((c) => c._id);
     }
 
     const postQuery = {
       $and: [
         { isActive: true },
         {
-          $or: [
-            { title: { $regex: q, $options: 'i' } },
-            { content: { $regex: q, $options: 'i' } }
-          ]
-        }
-      ]
+          $or: [{ title: { $regex: q, $options: 'i' } }, { content: { $regex: q, $options: 'i' } }],
+        },
+      ],
     };
 
     // Only filter by community if not admin
@@ -347,12 +343,12 @@ const globalSearch = async (req, res, next) => {
     res.status(200).json({
       success: true,
       results: {
-        communities: communities.map(c => ({ ...c.toObject(), type: 'community' })),
-        courses: courses.map(c => ({ ...c.toObject(), type: 'course' })),
-        users: users.map(u => ({ ...u.toObject(), type: 'user' })),
-        posts: posts.map(p => ({ ...p.toObject(), type: 'post' }))
+        communities: communities.map((c) => ({ ...c.toObject(), type: 'community' })),
+        courses: courses.map((c) => ({ ...c.toObject(), type: 'course' })),
+        users: users.map((u) => ({ ...u.toObject(), type: 'user' })),
+        posts: posts.map((p) => ({ ...p.toObject(), type: 'post' })),
       },
-      totalResults: communities.length + courses.length + users.length + posts.length
+      totalResults: communities.length + courses.length + users.length + posts.length,
     });
   } catch (error) {
     next(error);

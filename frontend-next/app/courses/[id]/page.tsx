@@ -1,3 +1,5 @@
+'use client';
+
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import { BookOpen, Play, Users, Clock, Star, Calendar, CheckCircle } from 'lucide-react';
@@ -40,7 +42,7 @@ export default async function CourseDetailPage(props: PageProps) {
             <div className="bg-gray-900 text-white py-12 lg:py-16 relative overflow-hidden">
                 <div className="absolute inset-0 bg-gradient-to-br from-primary-900/50 to-gray-900/50" />
                 <div className="absolute top-0 right-0 -mt-20 -mr-20 w-96 h-96 bg-primary-600 rounded-full blur-3xl opacity-20" />
-                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+                <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-12 relative z-10">
                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 lg:gap-12">
                         <div className="lg:col-span-2">
                             <div className="flex items-center space-x-2 text-primary-200 mb-6 text-sm font-medium">
@@ -87,7 +89,7 @@ export default async function CourseDetailPage(props: PageProps) {
                 </div>
             </div>
 
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 -mt-8 lg:-mt-32 relative z-20">
+            <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-12 -mt-8 lg:-mt-32 relative z-20">
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 lg:gap-12">
                     {/* Main Content */}
                     <div className="lg:col-span-2 space-y-8">

@@ -7,7 +7,7 @@ const handleValidationErrors = (req, res, next) => {
     return res.status(400).json({
       success: false,
       message: 'Validation failed',
-      errors: errors.array()
+      errors: errors.array(),
     });
   }
   next();
@@ -27,28 +27,16 @@ const validateUserRegistration = [
     .withMessage('Last name is required')
     .isLength({ max: 50 })
     .withMessage('Last name cannot exceed 50 characters'),
-  body('email')
-    .isEmail()
-    .normalizeEmail()
-    .withMessage('Please provide a valid email'),
-  body('password')
-    .isLength({ min: 6 })
-    .withMessage('Password must be at least 6 characters long'),
-  body('role')
-    .isIn(['student', 'creator', 'admin'])
-    .withMessage('Role must be either student or creator or admin'),
-  handleValidationErrors
+  body('email').isEmail().normalizeEmail().withMessage('Please provide a valid email'),
+  body('password').isLength({ min: 6 }).withMessage('Password must be at least 6 characters long'),
+  body('role').isIn(['student', 'creator']).withMessage('Role must be either student or creator'),
+  handleValidationErrors,
 ];
 
 const validateUserLogin = [
-  body('email')
-    .isEmail()
-    .normalizeEmail()
-    .withMessage('Please provide a valid email'),
-  body('password')
-    .notEmpty()
-    .withMessage('Password is required'),
-  handleValidationErrors
+  body('email').isEmail().normalizeEmail().withMessage('Please provide a valid email'),
+  body('password').notEmpty().withMessage('Password is required'),
+  handleValidationErrors,
 ];
 
 // Community validation rules
@@ -65,10 +53,8 @@ const validateCommunity = [
     .withMessage('Description is required')
     .isLength({ max: 1000 })
     .withMessage('Description cannot exceed 1000 characters'),
-  body('type')
-    .isIn(['public', 'private'])
-    .withMessage('Type must be either public or private'),
-  handleValidationErrors
+  body('type').isIn(['public', 'private']).withMessage('Type must be either public or private'),
+  handleValidationErrors,
 ];
 
 // Course validation rules
@@ -88,17 +74,14 @@ const validateCourse = [
   body('level')
     .isIn(['beginner', 'intermediate', 'advanced'])
     .withMessage('Level must be beginner, intermediate, or advanced'),
-  body('category')
-    .trim()
-    .notEmpty()
-    .withMessage('Category is required'),
+  body('category').trim().notEmpty().withMessage('Category is required'),
   body('price')
     .optional()
     .isNumeric()
     .withMessage('Price must be a number')
-    .custom(value => value >= 0)
+    .custom((value) => value >= 0)
     .withMessage('Price cannot be negative'),
-  handleValidationErrors
+  handleValidationErrors,
 ];
 
 // Post validation rules
@@ -115,7 +98,7 @@ const validatePost = [
     .withMessage('Content is required')
     .isLength({ max: 5000 })
     .withMessage('Content cannot exceed 5000 characters'),
-  handleValidationErrors
+  handleValidationErrors,
 ];
 
 // Event validation rules
@@ -135,7 +118,7 @@ const validateEvent = [
   body('startDate')
     .isISO8601()
     .withMessage('Start date must be a valid date')
-    .custom(value => {
+    .custom((value) => {
       if (new Date(value) <= new Date()) {
         throw new Error('Start date must be in the future');
       }
@@ -150,10 +133,7 @@ const validateEvent = [
       }
       return true;
     }),
-  body('isRecurring')
-    .optional()
-    .isBoolean()
-    .withMessage('isRecurring must be a boolean'),
+  body('isRecurring').optional().isBoolean().withMessage('isRecurring must be a boolean'),
   body('recurrencePattern')
     .optional()
     .if((value, { req }) => req.body.isRecurring === true)
@@ -169,7 +149,7 @@ const validateEvent = [
       }
       return true;
     }),
-  handleValidationErrors
+  handleValidationErrors,
 ];
 
 // Video validation rules
@@ -180,10 +160,8 @@ const validateVideo = [
     .withMessage('Video title is required')
     .isLength({ max: 200 })
     .withMessage('Title cannot exceed 200 characters'),
-  body('order')
-    .isInt({ min: 1 })
-    .withMessage('Order must be a positive integer'),
-  handleValidationErrors
+  body('order').isInt({ min: 1 }).withMessage('Order must be a positive integer'),
+  handleValidationErrors,
 ];
 
 // Comment validation rules
@@ -194,15 +172,13 @@ const validateComment = [
     .withMessage('Comment content is required')
     .isLength({ max: 1000 })
     .withMessage('Comment cannot exceed 1000 characters'),
-  handleValidationErrors
+  handleValidationErrors,
 ];
 
 // ObjectId validation
 const validateObjectId = (paramName) => [
-  param(paramName)
-    .isMongoId()
-    .withMessage(`Invalid ${paramName}`),
-  handleValidationErrors
+  param(paramName).isMongoId().withMessage(`Invalid ${paramName}`),
+  handleValidationErrors,
 ];
 
 module.exports = {
@@ -215,5 +191,5 @@ module.exports = {
   validateVideo,
   validateComment,
   validateObjectId,
-  handleValidationErrors
+  handleValidationErrors,
 };

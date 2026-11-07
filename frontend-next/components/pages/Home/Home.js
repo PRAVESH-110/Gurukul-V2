@@ -13,7 +13,6 @@ import {
 import './flow.css';
 import Image from 'next/image';
 
-import CursorDotsAnimation from '@/components/UI/CursorDotsAnimation';
 import ChatAssistant from './ChatAssistant';
 import HomeFAQSection from './HomeFAQSection';
 
@@ -51,72 +50,78 @@ const Home = () => {
   const { user } = useAuth();
 
   return (
-    <div className="min-h-screen bg-gray-60/50 font-sans relative mt-12">
-      <CursorDotsAnimation />
+    <div className="min-h-screen bg-gradient-to-b from-amber-50/60 via-yellow-50/40 to-amber-50/60 font-sans relative">
       {/* Hero Section */}
-      <section className="relative overflow-hidden">
-        <div className="absolute inset-0 bg-cover bg-center bg-no-repeat opacity-30" style={{ backgroundImage: "url('/assets/moneywallpaper.jpg')" }}></div>
-        <div className="absolute top-0 right-0 -mt-20 -mr-20 w-96 h-96 bg-primary-100 rounded-full blur-3xl opacity-30 animate-pulse"></div>
-        <div className="absolute bottom-0 left-0 -mb-20 -ml-20 w-96 h-96 bg-blue-100 rounded-full blur-3xl opacity-30 animate-pulse" style={{ animationDelay: '1s' }}></div>
+      <section className="relative w-full min-h-[460px] max-h-[100vh] py-16 md:py-24 flex items-center justify-center overflow-hidden">
+        {/* Next.js optimized high-quality background Image */}
+        <Image
+          src="/hero-woman.jpg"
+          alt="Gurukul learning and earning"
+          fill
+          priority
+          quality={100}
+          sizes="100vw"
+          className="object-cover object-center pointer-events-none select-none"
+        />
+        {/* Subtle dark gradient overlay to ensure text contrast while keeping background clean */}
+        <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/40 to-black/75" />
 
-        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-20 pb-15 lg:pt-30 lg:pb-28">
-          <div className="text-center max-w-4xl mx-auto ">
-            <div className="inline-flex items-center px-4 py-2 rounded-full bg-yellow-50 backdrop-blur-sm border-black border-2 text-black text-sm font-medium mb-8 animate-fade-in">
-              5.0 &nbsp;
-              <Star className="w-4 h-4 mr-2 fill-current text-yellow-500 " />
-              <div className="flex content-fit border-1 border-black gap-0 rounded-full overflow-hidden px-2">
-                <Image src="/stud2.jpg" alt="" width={20} height={20} className="rounded-full" />
-                <Image src="/stud3.jpg" alt="" width={20} height={20} className="rounded-full" />
-                <Image src="/stud4.webp" alt="" width={20} height={20} className="rounded-full" />
-                <Image src="/stud1.webp" alt="" width={20} height={20} className="rounded-full" />
-              </div>
-              50+ reviews
+        <div className="relative z-10 w-full max-w-[1600px] mx-auto px-6 sm:px-10 lg:px-16 py-12 md:py-20 flex flex-col items-start text-left">
+          <div className="inline-flex items-center px-4 py-2 rounded-full bg-white/95 backdrop-blur-md border border-white/40 text-gray-900 text-sm font-semibold mb-6 shadow-lg animate-fade-in">
+            <span>5.0</span>
+            <Star className="w-4 h-4 ml-1.5 mr-2 fill-current text-yellow-500" />
+            <div className="flex border rounded-full overflow-hidden px-1 mr-2">
+              <Image src="/stud2.jpg" alt="Student" width={20} height={20} className="rounded-full" />
+              <Image src="/stud3.jpg" alt="Student" width={20} height={20} className="rounded-full" />
+              <Image src="/stud4.webp" alt="Student" width={20} height={20} className="rounded-full" />
+              <Image src="/stud1.webp" alt="Student" width={20} height={20} className="rounded-full" />
             </div>
+            <span>50+ reviews</span>
+          </div>
 
-            <h1 className="text-yellow-300 bg-clip-text text-5xl md:text-6xl font-bold tracking-tight bg-gradient-to-r from-primary-600 to-primary-500">
-              <span style={{ filter: 'drop-shadow(5px 5px 5px rgba(0, 0, 0, 0.75))' }}>Create &nbsp;</span>
+          <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-semibold tracking-tight text-white mb-3 drop-shadow-xl leading-none max-w-none animate-slide-up">
+            <span className="whitespace-nowrap">Create what you love and</span>
+            <span className="block -mt-1 sm:-mt-2 md:-mt-3 font-medium text-amber-400 font-damion tracking-normal">
+              start earning
+            </span>
+          </h1>
 
-              <span className="text-5xl md:text-6xl font-heading font-bold tracking-tight text-gray-900 mb-10 animate-slide-up">
-                what you love and start earning
-              </span>
+          <p className="text-base sm:text-lg md:text-xl text-gray-200 max-w-xl leading-relaxed drop-shadow-md mb-6 animate-slide-up" style={{ animationDelay: '0.1s' }}>
+            Learn from a wide range of courses or start creating your own courses and get paid, no matter how small your audience.
+          </p>
 
-            </h1>
-            <p className="text-xl md:text-xl text-gray-600 mt-5 mb-10 max-w-5xl mx-auto leading-relaxed animate-slide-up" style={{ animationDelay: '0.1s' }}>
-              Learn from a wide range of courses or start creating your own courses and get paid, no matter how small your audience
-            </p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center animate-slide-up" style={{ animationDelay: '0.2s' }}>
-              {!user ? (
-                <>
-                  <Link
-                    href="/register"
-                    className="btn-primary px-5 py-2 text-md "
-                  >
-                    Get Started Free
-                  </Link>
-                  <Link
-                    href="/courses"
-                    className="btn-primary px-5 py-2 text-md text-gray-700 bg-white/80 border border-gray-300 hover:bg-white hover:border-gray-400  shadow-sm hover:shadow-md"
-                  >
-                    Browse Courses
-                  </Link>
-                </>
-              ) : (
+          <div className="flex flex-col sm:flex-row gap-4 justify-start w-full max-w-md animate-slide-up" style={{ animationDelay: '0.2s' }}>
+            {!user ? (
+              <>
                 <Link
-                  href="/dashboard"
-                  className="btn-primary px-5 py-2 text-lg hover:-translate-y-1 inline-flex items-center"
+                  href="/register"
+                  className="px-8 py-3.5 text-base font-semibold text-white bg-blue-600 hover:bg-blue-700 active:bg-blue-800 rounded-xl shadow-xl hover:shadow-2xl transition-all duration-200 transform hover:-translate-y-0.5 text-center inline-flex items-center justify-center"
                 >
-                  Go to Dashboard
-                  <ArrowRight className="ml-2 h-5 w-5" />
+                  Get Started Free
                 </Link>
-              )}
-            </div>
+                <Link
+                  href="/courses"
+                  className="px-8 py-3.5 text-base font-semibold text-blue-600 bg-white hover:bg-blue-50 border border-blue-200 rounded-xl shadow-xl hover:shadow-2xl transition-all duration-200 transform hover:-translate-y-0.5 text-center inline-flex items-center justify-center"
+                >
+                  Browse Courses
+                </Link>
+              </>
+            ) : (
+              <Link
+                href="/dashboard"
+                className="px-8 py-3.5 text-base md:text-lg font-semibold text-white bg-blue-600 hover:bg-blue-700 active:bg-blue-800 rounded-xl shadow-xl hover:shadow-2xl transition-all duration-200 transform hover:-translate-y-0.5 inline-flex items-center justify-center gap-2"
+              >
+                Go to Dashboard
+                <ArrowRight className="h-5 w-5" />
+              </Link>
+            )}
           </div>
         </div>
       </section>
 
       {/* flow diagram */}
-      <div className="border-black border-2 p-6 bg-white rounded-xl w-[90%] lg:w-[80%] mx-auto flex flex-col items-center gap-6 mt-10">
-        <div className="flow-wrapper w-full flex justify-center items-center gap-8 min-h-[50vh]">
+      <div className="p-6 md:p-10 bg-transparent w-[96%] max-w-[1600px] mx-auto flex flex-col items-center gap-6 mt-10">
+        <div className="flow-wrapper w-full flex justify-evenly items-center gap-6 md:gap-10 min-h-[50vh]">
           {/* Social Icons */}
           <div className="social-icons">
             <i className="fa-brands fa-youtube"></i>
@@ -126,55 +131,53 @@ const Home = () => {
             <i className="fa-solid fa-envelope"></i>
           </div>
 
-          <div className="flex flex-col items-center gap-2">
-            <h3 className="text-center text-sm font-medium">Gather audience</h3>
+          <div className="flex flex-col items-center gap-3">
+            <h3 className="text-center text-base md:text-lg font-semibold text-gray-800">Gather audience</h3>
             <i className="fa-solid fa-arrow-right arrow hidden md:block"></i>
           </div>
 
           {/* Uploadable Main Image */}
-          <div className="main-image flex flex-col items-center  rounded-3xl overflow-hidden shadow-sm">
-            <h3 className="w-full py-3 text-center text-md font-bold bg-gray-50 border-b border-gray-200">Create what you love</h3>
-            <div className="w-full bg-white flex justify-center p-4">
-              <div className="border-2 rounded-2xl overflow-hidden" style={{ borderColor: 'black' }}>
-                <Image
-                  src="/monetizehobby.png"
-                  alt="Main"
-                  width={300}
-                  height={400}
-                  className="object-cover"
-                />
-              </div>
+          <div className="main-image flex-1 max-w-[620px] flex flex-col items-center">
+            <h3 className="w-full py-2 mb-2 text-center text-lg md:text-xl font-bold text-gray-900">Create what you love</h3>
+            <div className="w-full flex justify-center rounded-2xl ">
+              <Image
+                src="/monetizehobby.png"
+                alt="Main course showcase"
+                width={610}
+                height={290}
+                className="object-contain w-full h-auto max-h-[340px] rounded-2xl"
+              />
             </div>
           </div>
 
-          <div className="flex flex-col items-center gap-2">
-            <h3 className="text-center text-sm font-medium">Start selling</h3>
+          <div className="flex flex-col items-center gap-3">
+            <h3 className="text-center text-base md:text-lg font-semibold text-gray-800">Start selling</h3>
             <i className="fa-solid fa-arrow-right arrow hidden md:block"></i>
           </div>
 
           {/* Profiles */}
           <div className="flex flex-col items-center">
-            <div className="profiles flex flex-row gap-2">
-              <Image src="/stud2.jpg" alt="" width={50} height={50} />
-              <Image src="/stud3.jpg" alt="" width={50} height={50} />
-              <Image src="/stud4.webp" alt="" width={50} height={50} />
-              <Image src="/stud1.webp" alt="" width={50} height={50} />
+            <div className="profiles flex flex-col gap-3">
+              <Image src="/stud2.jpg" alt="Student" width={68} height={68} className="rounded-full shadow-sm" />
+              <Image src="/stud3.jpg" alt="Student" width={68} height={68} className="rounded-full shadow-sm" />
+              <Image src="/stud4.webp" alt="Student" width={68} height={68} className="rounded-full shadow-sm" />
+              <Image src="/stud1.webp" alt="Student" width={68} height={68} className="rounded-full shadow-sm" />
             </div>
           </div>
         </div>
 
         {/* Down Arrow pointing to income */}
-        <i className="fa-solid fa-arrow-down text-5xl h-20 text-[#4f4b4b]"></i>
+        <i className="fa-solid fa-arrow-down text-5xl h-16 text-[#4f4b4b]"></i>
 
         {/* Income */}
-        <div className="income-box w-fit min-w-[max-content] px-8 border border-gray-100  bg-yellow-300">
-          <h3 className="font-bold">Get paid</h3>
+        <div className="income-box w-fit min-w-[max-content] px-10 py-3 border-2 border-black bg-yellow-300 rounded-full shadow-none">
+          <h3 className="font-bold text-lg md:text-xl text-gray-950">Get paid</h3>
         </div>
       </div>
 
       {/* Featured Courses Section */}
       <section className="py-24">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-12">
           <div className="flex justify-between items-end mb-12">
             <div>
               <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
@@ -256,77 +259,79 @@ const Home = () => {
       </section>
 
       {/* FAQ + AI Chat — client islands */}
-      <div id="faq-ai" className="faqsai flex justify-center gap-10 scroll-mt-24">
-        <HomeFAQSection />
-        <ChatAssistant />
-      </div>
+      <section className="pt-6 pb-16 md:pt-8 md:pb-20">
+        <div id="faq-ai" className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-12 scroll-mt-24">
+          <div className="flex flex-col lg:flex-row items-stretch gap-8 h-[600px] md:h-[650px] w-full">
+            <HomeFAQSection />
+            <ChatAssistant />
+          </div>
+        </div>
+      </section>
 
       {/* Footer */}
-      <footer className="bg-gray-900 text-gray-300 py-16 border-t border-gray-800">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <footer className="bg-white text-gray-800 py-16 border-t border-gray-200">
+        <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-12">
           <div className="grid md:grid-cols-4 gap-12">
             <div className="space-y-6">
               <div className="flex items-center space-x-3">
-                <div className="w-10 h-10 bg-gradient-to-br from-primary-500 to-primary-600 rounded-xl flex items-center justify-center shadow-lg shadow-primary/20">
+                <div className="w-10 h-10 bg-primary-600 rounded-xl flex items-center justify-center shadow-md">
                   <BookOpen className="w-6 h-6 text-white" />
                 </div>
-                <span className="text-2xl font-bold text-white tracking-tight">Gurukul</span>
+                <span className="text-2xl font-bold text-black tracking-tight">Gurukul</span>
               </div>
-              <p className="text-gray-400 leading-relaxed">
+              <p className="text-gray-700 leading-relaxed">
                 Empowering learners worldwide with quality education, interactive courses, and a supportive community.
               </p>
             </div>
 
             <div className="md:col-span-3 flex flex-col md:flex-row gap-8 w-full">
               <div className="flex-1">
-                <h3 className="text-white font-semibold text-lg mb-6">Platforms</h3>
+                <h3 className="text-black font-semibold text-lg mb-6">Platforms</h3>
                 <ul className="space-y-4">
                   <li>
-                    <a href="https://www.linkedin.com/in/pravesh-dhakal/" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 hover:text-primary-400 transition-colors cursor-pointer">
-                      <i className="fa-brands fa-linkedin text-xl"></i> <span>LinkedIn</span>
+                    <a href="https://www.linkedin.com/in/pravesh-dhakal/" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-black hover:text-primary-600 transition-colors cursor-pointer group">
+                      <i className="fa-brands fa-linkedin text-xl text-black"></i> <span className="text-black group-hover:text-primary-600 transition-colors">LinkedIn</span>
                     </a>
                   </li>
                   <li>
-                    <a href="https://github.com/PRAVESH-110/Gurukul-V2" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 hover:text-primary-400 transition-colors cursor-pointer">
-                      <i className="fa-brands fa-github text-xl"></i> <span>GitHub</span>
+                    <a href="https://github.com/PRAVESH-110/Gurukul-V2" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-black hover:text-primary-600 transition-colors cursor-pointer group">
+                      <i className="fa-brands fa-github text-xl text-black"></i> <span className="text-black group-hover:text-primary-600 transition-colors">GitHub</span>
                     </a>
                   </li>
                   <li>
-                    <a href="https://www.gmail.com/" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 hover:text-primary-400 transition-colors cursor-pointer">
-                      <i className="fa-solid fa-envelope text-xl"></i> <span>Gmail</span>
+                    <a href="https://www.gmail.com/" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-black hover:text-primary-600 transition-colors cursor-pointer group">
+                      <i className="fa-solid fa-envelope text-xl text-black"></i> <span className="text-black group-hover:text-primary-600 transition-colors">Gmail</span>
                     </a>
                   </li>
                 </ul>
               </div>
 
               <div className="flex-1">
-                <h3 className="text-white font-semibold text-lg mb-6">Support</h3>
+                <h3 className="text-black font-semibold text-lg mb-6">Support</h3>
                 <ul className="space-y-4">
-                  <li><a href="#faq-ai" className="hover:text-primary-400 transition-colors cursor-pointer">Help Center</a></li>
-                  <li><a href="https://www.gmail.com/" className="hover:text-primary-400 transition-colors">Contact Us</a></li>
-                  <li><a href="#" className="hover:text-primary-400 transition-colors">Terms of Service</a></li>
-                  <li><a href="#" className="hover:text-primary-400 transition-colors">Privacy Policy</a></li>
+                  <li><a href="#faq-ai" className="text-black hover:text-primary-600 transition-colors cursor-pointer">Help Center</a></li>
+                  <li><a href="https://www.gmail.com/" className="text-black hover:text-primary-600 transition-colors">Contact Us</a></li>
                 </ul>
               </div>
 
               <div className="flex-1">
-                <h3 className="text-white font-semibold text-lg mb-6">Stay Updated</h3>
-                <p className="text-gray-400 mb-4">Subscribe to our newsletter for the latest updates.</p>
+                <h3 className="text-black font-semibold text-lg mb-6">Stay Updated</h3>
+                <p className="text-gray-700 mb-4">Subscribe to our newsletter for the latest updates.</p>
                 <form className="flex gap-2">
                   <input
                     type="email"
                     placeholder="Enter your email"
-                    className="bg-gray-800 border-gray-700 text-white rounded-lg px-4 py-2 w-full focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none transition-all"
+                    className="bg-gray-50 border border-gray-300 text-black placeholder-gray-500 rounded-lg px-4 py-2 w-full focus:ring-2 focus:ring-black focus:border-transparent outline-none transition-all"
                   />
-                  <button className="bg-yellow-600 hover:bg-primary-700 text-white px-4 py-2 rounded-lg transition-colors">
-                    <ArrowRight className="w-5 h-5" />
+                  <button className="bg-primary-600 hover:bg-primary-700 text-white px-4 py-2 rounded-lg transition-colors shadow-sm flex items-center justify-center">
+                    <ArrowRight className="w-5 h-5 text-white" />
                   </button>
                 </form>
               </div>
             </div>
           </div>
 
-          <div className="border-t border-gray-800 mt-16 pt-8 flex flex-col md:flex-row justify-between items-center gap-4 text-sm text-gray-500">
+          <div className="border-t border-gray-200 mt-16 pt-8 flex flex-col md:flex-row justify-between items-center gap-4 text-sm text-gray-600">
             <p>&copy; 2024 Gurukul Platform. All rights reserved.</p>
           </div>
         </div>

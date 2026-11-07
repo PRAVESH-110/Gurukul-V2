@@ -1,3 +1,5 @@
+'use client';
+
 import { Globe, Lock, Users } from 'lucide-react';
 import { serverGet } from '@/lib/serverFetch';
 import CommunityActions from '@/components/pages/Communities/CommunityActions';
@@ -29,7 +31,7 @@ export default async function CommunityDetailPage(props: PageProps) {
                     <div className="absolute top-10 left-10 w-32 h-32 bg-white/10 rounded-full blur-2xl" />
                 </div>
 
-                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-12">
                     <div className="relative -mt-16 md:-mt-20 mb-8 flex flex-col md:flex-row items-start md:items-end gap-6">
                         {/* Avatar */}
                         <div className="w-32 h-32 md:w-40 md:h-40 rounded-2xl border-4 border-white shadow-lg bg-white flex items-center justify-center flex-shrink-0">
@@ -74,7 +76,7 @@ export default async function CommunityDetailPage(props: PageProps) {
             </div>
 
             {/* Body */}
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-12 py-8">
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                     {/* Main: tabs + posts (client island handles this since posts need auth) */}
                     <div className="lg:col-span-2">

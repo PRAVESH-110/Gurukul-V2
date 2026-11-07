@@ -1,20 +1,21 @@
 .flow-wrapper {
     display: flex;
     align-items: center;
-    justify-content: center;
-    gap: 40px;
+    justify-content: space-evenly;
+    gap: 24px;
+    width: 100%;
     flex-wrap: wrap;
 }
 
 .social-icons {
     display: flex;
     flex-direction: column;
-    gap: 15px;
-    font-size: 35px;
+    gap: 20px;
+    font-size: 48px;
 }
 
 .arrow {
-    font-size: 30px;
+    font-size: 42px;
     color: #4f4b4b;
 }
 
@@ -30,19 +31,19 @@
 .profiles {
     display: flex;
     flex-direction: column;
-    gap: 12px;
+    gap: 16px;
 }
 
 .profiles img {
     border-radius: 50%;
     object-fit: cover;
-    width: 45px;
-    height: 45px;
+    width: 68px;
+    height: 68px;
 }
 
 .income-box {
     border: 2px solid #989191;
-    padding: 10px;
+    padding: 12px 32px;
     border-radius: 25px;
     text-align: center;
     min-width: 10px;
@@ -84,9 +85,3 @@
         height: auto;
     }
 }
-
-/* @media (max-width: 425px) {
-    .footer {
-        flex-direction: column;
-    }
-} */

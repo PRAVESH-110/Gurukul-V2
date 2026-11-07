@@ -7,24 +7,25 @@ import { useEffect } from 'react';
 import LoadingSpinner from '@/components/UI/LoadingSpinner';
 
 export default function DashboardPage() {
-    const { user, loading } = useAuth();
-    const router = useRouter();
+  const { user, loading } = useAuth();
+  const router = useRouter();
 
-    useEffect(() => {
-        if (!loading && !user) {
-            router.push('/login');
-        }
-    }, [user, loading, router]);
-
-    if (loading) {
-        return (
-            <div className="flex items-center justify-center min-h-screen">
-                <LoadingSpinner size="lg" />
-            </div>
-        );
+  useEffect(() => {
+    if (!loading && !user) {
+      router.push('/login');
     }
+  }, [user, loading, router]);
 
-    if (!user) return null;
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <LoadingSpinner size="lg" />
+      </div>
+    );
+  }
 
-    return user.role === 'creator' ? <CreatorDashboard /> : <StudentDashboard />;
+  if (!user) return null;
+
+  const role = (user as { role?: string }).role;
+  return role === 'creator' || role === 'admin' ? <CreatorDashboard /> : <StudentDashboard />;
 }

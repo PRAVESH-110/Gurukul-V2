@@ -19,7 +19,7 @@ const getCommunityPosts = async (req, res, next) => {
 
     const posts = await Post.find({
       community: communityId,
-      isActive: true
+      isActive: true,
     })
       .populate('author', 'firstName lastName avatar')
       .populate('comments.author', 'firstName lastName avatar')
@@ -29,7 +29,7 @@ const getCommunityPosts = async (req, res, next) => {
 
     const total = await Post.countDocuments({
       community: communityId,
-      isActive: true
+      isActive: true,
     });
 
     res.status(200).json({
@@ -39,9 +39,9 @@ const getCommunityPosts = async (req, res, next) => {
       pagination: {
         page: parseInt(page),
         limit: parseInt(limit),
-        pages: Math.ceil(total / limit)
+        pages: Math.ceil(total / limit),
       },
-      posts
+      posts,
     });
   } catch (error) {
     next(error);
@@ -64,15 +64,19 @@ const createPost = async (req, res, next) => {
       console.log('Missing required fields:', { title, content });
       return res.status(400).json({
         success: false,
-        message: 'Title and content are required'
+        message: 'Title and content are required',
       });
     }
 
     // For private communities, only admins can post (or system admin)
-    if (community.type === 'private' && !community.isAdmin(req.user._id) && req.user.role !== 'admin') {
+    if (
+      community.type === 'private' &&
+      !community.isAdmin(req.user._id) &&
+      req.user.role !== 'admin'
+    ) {
       return res.status(403).json({
         success: false,
-        message: 'Only admins can post in private communities'
+        message: 'Only admins can post in private communities',
       });
     }
 
@@ -82,7 +86,7 @@ const createPost = async (req, res, next) => {
       console.log('Processing uploaded file:', req.file);
       try {
         // Ensure uploads directory exists
-        const uploadDir = path.join(__dirname, '../../uploads/images');
+        const uploadDir = path.join(__dirname, '../uploads/images');
         if (!fs.existsSync(uploadDir)) {
           fs.mkdirSync(uploadDir, { recursive: true });
         }
@@ -100,7 +104,7 @@ const createPost = async (req, res, next) => {
         return res.status(500).json({
           success: false,
           message: 'Error processing file upload',
-          error: fileError.message
+          error: process.env.NODE_ENV === 'development' ? fileError.message : undefined,
         });
       }
     }
@@ -110,7 +114,7 @@ const createPost = async (req, res, next) => {
       content,
       images: imageUrl ? [imageUrl] : [],
       author: req.user._id,
-      community: communityId
+      community: communityId,
     };
 
     console.log('Creating post with data:', postData);
@@ -123,7 +127,7 @@ const createPost = async (req, res, next) => {
     res.status(201).json({
       success: true,
       message: 'Post created successfully',
-      post
+      post,
     });
   } catch (error) {
     console.error('Error in createPost:', error);
@@ -131,13 +135,13 @@ const createPost = async (req, res, next) => {
       return res.status(400).json({
         success: false,
         message: 'Validation error',
-        error: error.message
+        error: error.message,
       });
     }
     res.status(500).json({
       success: false,
       message: 'Failed to create post',
-      error: error.message
+      error: error.message,
     });
   }
 };
@@ -155,7 +159,7 @@ const getPost = async (req, res, next) => {
     if (!post || !post.isActive) {
       return res.status(404).json({
         success: false,
-        message: 'Post not found'
+        message: 'Post not found',
       });
     }
 
@@ -168,13 +172,13 @@ const getPost = async (req, res, next) => {
     if (!isMember && !isCreator && !isAdmin) {
       return res.status(403).json({
         success: false,
-        message: 'You must be a member to view this post'
+        message: 'You must be a member to view this post',
       });
     }
 
     res.status(200).json({
       success: true,
-      post
+      post,
     });
   } catch (error) {
     next(error);
@@ -192,7 +196,7 @@ const updatePost = async (req, res, next) => {
     if (!post || !post.isActive) {
       return res.status(404).json({
         success: false,
-        message: 'Post not found'
+        message: 'Post not found',
       });
     }
 
@@ -205,7 +209,7 @@ const updatePost = async (req, res, next) => {
     if (!isAuthor && !isAdmin && !isSystemAdmin) {
       return res.status(403).json({
         success: false,
-        message: 'Not authorized to update this post'
+        message: 'Not authorized to update this post',
       });
     }
 
@@ -214,18 +218,18 @@ const updatePost = async (req, res, next) => {
       {
         title: title || post.title,
         content: content || post.content,
-        images: images || post.images
+        images: images || post.images,
       },
       {
         new: true,
-        runValidators: true
-      }
+        runValidators: true,
+      },
     ).populate('author', 'firstName lastName avatar');
 
     res.status(200).json({
       success: true,
       message: 'Post updated successfully',
-      post: updatedPost
+      post: updatedPost,
     });
   } catch (error) {
     next(error);
@@ -242,7 +246,7 @@ const deletePost = async (req, res, next) => {
     if (!post) {
       return res.status(404).json({
         success: false,
-        message: 'Post not found'
+        message: 'Post not found',
       });
     }
 
@@ -255,7 +259,7 @@ const deletePost = async (req, res, next) => {
     if (!isAuthor && !isAdmin && !isSystemAdmin) {
       return res.status(403).json({
         success: false,
-        message: 'Not authorized to delete this post'
+        message: 'Not authorized to delete this post',
       });
     }
 
@@ -265,7 +269,7 @@ const deletePost = async (req, res, next) => {
 
     res.status(200).json({
       success: true,
-      message: 'Post deleted successfully'
+      message: 'Post deleted successfully',
     });
   } catch (error) {
     next(error);
@@ -282,7 +286,7 @@ const toggleLike = async (req, res, next) => {
     if (!post || !post.isActive) {
       return res.status(404).json({
         success: false,
-        message: 'Post not found'
+        message: 'Post not found',
       });
     }
 
@@ -295,7 +299,7 @@ const toggleLike = async (req, res, next) => {
     if (!isMember && !isCreator && !isAdmin) {
       return res.status(403).json({
         success: false,
-        message: 'You must be a member to like this post'
+        message: 'You must be a member to like this post',
       });
     }
 
@@ -306,7 +310,7 @@ const toggleLike = async (req, res, next) => {
       success: true,
       message: liked ? 'Post liked' : 'Post unliked',
       liked,
-      likeCount: post.likeCount
+      likeCount: post.likeCount,
     });
   } catch (error) {
     next(error);
@@ -324,7 +328,7 @@ const addComment = async (req, res, next) => {
     if (!post || !post.isActive) {
       return res.status(404).json({
         success: false,
-        message: 'Post not found'
+        message: 'Post not found',
       });
     }
 
@@ -337,7 +341,7 @@ const addComment = async (req, res, next) => {
     if (!isMember && !isCreator && !isAdmin) {
       return res.status(403).json({
         success: false,
-        message: 'You must be a member to comment on this post'
+        message: 'You must be a member to comment on this post',
       });
     }
 
@@ -349,7 +353,7 @@ const addComment = async (req, res, next) => {
     res.status(201).json({
       success: true,
       message: 'Comment added successfully',
-      comment: post.comments[post.comments.length - 1]
+      comment: post.comments[post.comments.length - 1],
     });
   } catch (error) {
     next(error);
@@ -369,7 +373,7 @@ const updateComment = async (req, res, next) => {
     if (!post || !post.isActive) {
       return res.status(404).json({
         success: false,
-        message: 'Post not found'
+        message: 'Post not found',
       });
     }
 
@@ -378,7 +382,7 @@ const updateComment = async (req, res, next) => {
     if (!comment) {
       return res.status(404).json({
         success: false,
-        message: 'Comment not found'
+        message: 'Comment not found',
       });
     }
 
@@ -386,7 +390,7 @@ const updateComment = async (req, res, next) => {
     if (comment.author.toString() !== req.user._id.toString() && req.user.role !== 'admin') {
       return res.status(403).json({
         success: false,
-        message: 'Not authorized to update this comment'
+        message: 'Not authorized to update this comment',
       });
     }
 
@@ -396,7 +400,7 @@ const updateComment = async (req, res, next) => {
     res.status(200).json({
       success: true,
       message: 'Comment updated successfully',
-      comment
+      comment,
     });
   } catch (error) {
     next(error);
@@ -415,7 +419,7 @@ const deleteComment = async (req, res, next) => {
     if (!post) {
       return res.status(404).json({
         success: false,
-        message: 'Post not found'
+        message: 'Post not found',
       });
     }
 
@@ -424,7 +428,7 @@ const deleteComment = async (req, res, next) => {
     if (!comment) {
       return res.status(404).json({
         success: false,
-        message: 'Comment not found'
+        message: 'Comment not found',
       });
     }
 
@@ -437,7 +441,7 @@ const deleteComment = async (req, res, next) => {
     if (!isAuthor && !isAdmin && !isSystemAdmin) {
       return res.status(403).json({
         success: false,
-        message: 'Not authorized to delete this comment'
+        message: 'Not authorized to delete this comment',
       });
     }
 
@@ -446,7 +450,7 @@ const deleteComment = async (req, res, next) => {
 
     res.status(200).json({
       success: true,
-      message: 'Comment deleted successfully'
+      message: 'Comment deleted successfully',
     });
   } catch (error) {
     next(error);
@@ -461,7 +465,7 @@ router.post(
   checkCommunityMembership,
   upload.single('image'), // 'image' should match the field name in your frontend form data
   validatePost,
-  createPost
+  createPost,
 );
 router.get('/:id', protect, validateObjectId('id'), getPost);
 router.put('/:id', protect, validateObjectId('id'), updatePost);

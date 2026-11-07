@@ -22,7 +22,7 @@ const sendTokenResponse = async (user, statusCode, res, message) => {
     message,
     accessToken: session.accessToken,
     csrfToken: session.csrfToken,
-    user: authTokenService.serializeUser(user)
+    user: authTokenService.serializeUser(user),
   });
 };
 
@@ -37,7 +37,7 @@ const register = async (req, res, next) => {
         success: false,
         error: 'VALIDATION_ERROR',
         message: 'Validation failed',
-        errors: errors.array()
+        errors: errors.array(),
       });
     }
 
@@ -49,7 +49,8 @@ const register = async (req, res, next) => {
       return res.status(400).json({
         success: false,
         error: 'EMAIL_EXISTS',
-        message: 'An account with this email already exists. Please use a different email or log in.'
+        message:
+          'An account with this email already exists. Please use a different email or log in.',
       });
     }
 
@@ -63,7 +64,7 @@ const register = async (req, res, next) => {
       isActive: true,
       emailVerified: false,
       verificationToken: crypto.randomBytes(20).toString('hex'),
-      verificationExpires: Date.now() + 24 * 60 * 60 * 1000 // 24 hours
+      verificationExpires: Date.now() + 24 * 60 * 60 * 1000, // 24 hours
     });
 
     // Send verification email
@@ -82,7 +83,7 @@ const register = async (req, res, next) => {
           <p>Or copy and paste this link in your browser:</p>
           <p>${verificationUrl}</p>
           <p>This link will expire in 24 hours.</p>
-        `
+        `,
       });
     } catch (emailError) {
       console.error('Error sending verification email:', emailError);
@@ -94,7 +95,12 @@ const register = async (req, res, next) => {
     user.verificationToken = undefined;
     user.verificationExpires = undefined;
 
-    await sendTokenResponse(user, 201, res, 'Registration successful! Please check your email to verify your account.');
+    await sendTokenResponse(
+      user,
+      201,
+      res,
+      'Registration successful! Please check your email to verify your account.',
+    );
   } catch (error) {
     next(error);
   }
@@ -113,7 +119,7 @@ const login = async (req, res, next) => {
     if (!user) {
       return res.status(401).json({
         success: false,
-        message: 'Invalid credentials'
+        message: 'Invalid credentials',
       });
     }
 
@@ -121,7 +127,7 @@ const login = async (req, res, next) => {
     if (!user.isActive) {
       return res.status(401).json({
         success: false,
-        message: 'Account is deactivated'
+        message: 'Account is deactivated',
       });
     }
 
@@ -131,7 +137,7 @@ const login = async (req, res, next) => {
     if (!isPasswordMatch) {
       return res.status(401).json({
         success: false,
-        message: 'Invalid credentials'
+        message: 'Invalid credentials',
       });
     }
 
@@ -151,12 +157,15 @@ const login = async (req, res, next) => {
 const getMe = async (req, res, next) => {
   try {
     const user = await User.findById(req.user._id)
+      .select(
+        '-password -verificationToken -verificationExpires -resetPasswordToken -resetPasswordExpire -loginAttempts -lockUntil',
+      )
       .populate('joinedCommunities', 'name type coverImage')
       .populate('enrolledCourses', 'title thumbnail creator');
 
     res.status(200).json({
       success: true,
-      user
+      user,
     });
   } catch (error) {
     next(error);
@@ -176,18 +185,18 @@ const updateProfile = async (req, res, next) => {
         firstName: firstName || req.user.firstName,
         lastName: lastName || req.user.lastName,
         bio: bio !== undefined ? bio : req.user.bio,
-        avatar: avatar || req.user.avatar
+        avatar: avatar || req.user.avatar,
       },
       {
         new: true,
-        runValidators: true
-      }
+        runValidators: true,
+      },
     );
 
     res.status(200).json({
       success: true,
       message: 'Profile updated successfully',
-      user
+      user,
     });
   } catch (error) {
     next(error);
@@ -202,7 +211,11 @@ const logout = async (req, res, next) => {
     const refreshToken = req.cookies?.[authTokenService.REFRESH_COOKIE];
     if (refreshToken && !hasValidCsrf(req)) {
       authTokenService.clearSessionCookies(res);
-      return res.status(403).json({ success: false, error: 'CSRF_VALIDATION_FAILED', message: 'Invalid security token' });
+      return res.status(403).json({
+        success: false,
+        error: 'CSRF_VALIDATION_FAILED',
+        message: 'Invalid security token',
+      });
     }
     await authTokenService.revokeSession(refreshToken);
     authTokenService.clearSessionCookies(res);
@@ -214,10 +227,14 @@ const logout = async (req, res, next) => {
 
 const refreshSession = async (req, res, next) => {
   try {
-    const session = await authTokenService.rotateSession(req.cookies?.[authTokenService.REFRESH_COOKIE]);
+    const session = await authTokenService.rotateSession(
+      req.cookies?.[authTokenService.REFRESH_COOKIE],
+    );
     if (!session) {
       authTokenService.clearSessionCookies(res);
-      return res.status(401).json({ success: false, message: 'Refresh session expired. Please log in again.' });
+      return res
+        .status(401)
+        .json({ success: false, message: 'Refresh session expired. Please log in again.' });
     }
 
     authTokenService.setSessionCookies(res, session);
@@ -225,7 +242,7 @@ const refreshSession = async (req, res, next) => {
       success: true,
       accessToken: session.accessToken,
       csrfToken: session.csrfToken,
-      user: authTokenService.serializeUser(session.user)
+      user: authTokenService.serializeUser(session.user),
     });
   } catch (error) {
     return next(error);
@@ -248,37 +265,35 @@ const getCsrfToken = async (req, res, next) => {
 };
 
 // Additional auth routes
-router.post('/forgot-password', [
-  body('email').isEmail().withMessage('Please provide a valid email')
-], async (req, res) => {
-  try {
-    const { email } = req.body;
-    const user = await User.findOne({ email });
+router.post(
+  '/forgot-password',
+  [body('email').isEmail().withMessage('Please provide a valid email')],
+  async (req, res) => {
+    try {
+      const { email } = req.body;
+      const user = await User.findOne({ email });
 
-    if (!user) {
-      return res.status(200).json({
-        success: true,
-        message: 'If an account with that email exists, a password reset link has been sent.'
-      });
-    }
+      if (!user) {
+        return res.status(200).json({
+          success: true,
+          message: 'If an account with that email exists, a password reset link has been sent.',
+        });
+      }
 
-    // Generate reset token
-    const resetToken = crypto.randomBytes(20).toString('hex');
-    user.resetPasswordToken = crypto
-      .createHash('sha256')
-      .update(resetToken)
-      .digest('hex');
-    user.resetPasswordExpire = Date.now() + 10 * 60 * 1000; // 10 minutes
+      // Generate reset token
+      const resetToken = crypto.randomBytes(20).toString('hex');
+      user.resetPasswordToken = crypto.createHash('sha256').update(resetToken).digest('hex');
+      user.resetPasswordExpire = Date.now() + 10 * 60 * 1000; // 10 minutes
 
-    await user.save({ validateBeforeSave: false });
+      await user.save({ validateBeforeSave: false });
 
-    // Send email with reset link
-    const resetUrl = `${process.env.CLIENT_URL}/reset-password?token=${resetToken}`;
+      // Send email with reset link
+      const resetUrl = `${process.env.CLIENT_URL}/reset-password?token=${resetToken}`;
 
-    await sendEmail({
-      to: user.email,
-      subject: 'Password Reset Request - Gurukul Platform',
-      html: `
+      await sendEmail({
+        to: user.email,
+        subject: 'Password Reset Request - Gurukul Platform',
+        html: `
         <h2>Password Reset Request</h2>
         <p>You are receiving this email because you (or someone else) has requested a password reset.</p>
         <p>Click the link below to reset your password:</p>
@@ -289,89 +304,93 @@ router.post('/forgot-password', [
         <p>${resetUrl}</p>
         <p>This link will expire in 10 minutes.</p>
         <p>If you did not request this, please ignore this email and your password will remain unchanged.</p>
-      `
-    });
+      `,
+      });
 
-    res.status(200).json({
-      success: true,
-      message: 'If an account with that email exists, a password reset link has been sent.'
-    });
-  } catch (error) {
-    console.error('Forgot password error:', error);
-    res.status(500).json({
-      success: false,
-      error: 'SERVER_ERROR',
-      message: 'Error processing forgot password request'
-    });
-  }
-});
-
-router.post('/reset-password', [
-  body('token').notEmpty().withMessage('Reset token is required'),
-  body('password').isLength({ min: 8 }).withMessage('Password must be at least 8 characters long')
-], async (req, res) => {
-  try {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      return res.status(400).json({
+      res.status(200).json({
+        success: true,
+        message: 'If an account with that email exists, a password reset link has been sent.',
+      });
+    } catch (error) {
+      console.error('Forgot password error:', error);
+      res.status(500).json({
         success: false,
-        error: 'VALIDATION_ERROR',
-        message: 'Validation failed',
-        errors: errors.array()
+        error: 'SERVER_ERROR',
+        message: 'Error processing forgot password request',
       });
     }
+  },
+);
 
-    const { token, password } = req.body;
+router.post(
+  '/reset-password',
+  [
+    body('token').notEmpty().withMessage('Reset token is required'),
+    body('password')
+      .isLength({ min: 8 })
+      .withMessage('Password must be at least 8 characters long'),
+  ],
+  async (req, res) => {
+    try {
+      const errors = validationResult(req);
+      if (!errors.isEmpty()) {
+        return res.status(400).json({
+          success: false,
+          error: 'VALIDATION_ERROR',
+          message: 'Validation failed',
+          errors: errors.array(),
+        });
+      }
 
-    // Hash the token from the URL to match the hashed token in the database
-    const resetPasswordToken = crypto
-      .createHash('sha256')
-      .update(token)
-      .digest('hex');
+      const { token, password } = req.body;
 
-    const user = await User.findOne({
-      resetPasswordToken,
-      resetPasswordExpire: { $gt: Date.now() }
-    });
+      // Hash the token from the URL to match the hashed token in the database
+      const resetPasswordToken = crypto.createHash('sha256').update(token).digest('hex');
 
-    if (!user) {
-      return res.status(400).json({
-        success: false,
-        error: 'INVALID_TOKEN',
-        message: 'Invalid or expired reset token'
+      const user = await User.findOne({
+        resetPasswordToken,
+        resetPasswordExpire: { $gt: Date.now() },
       });
-    }
 
-    // Set new password
-    user.password = password;
-    user.resetPasswordToken = undefined;
-    user.resetPasswordExpire = undefined;
-    await user.save();
-    await RefreshToken.deleteMany({ userId: user._id });
+      if (!user) {
+        return res.status(400).json({
+          success: false,
+          error: 'INVALID_TOKEN',
+          message: 'Invalid or expired reset token',
+        });
+      }
 
-    // Send confirmation email
-    await sendEmail({
-      to: user.email,
-      subject: 'Password Reset Successful - Gurukul Platform',
-      html: `
+      // Set new password
+      user.password = password;
+      user.resetPasswordToken = undefined;
+      user.resetPasswordExpire = undefined;
+      await user.save();
+      await RefreshToken.deleteMany({ userId: user._id });
+
+      // Send confirmation email
+      await sendEmail({
+        to: user.email,
+        subject: 'Password Reset Successful - Gurukul Platform',
+        html: `
         <h2>Password Reset Successful</h2>
         <p>Your password has been successfully reset. If you did not make this change, please contact support immediately.</p>
-      `
-    });
+      `,
+      });
 
-    res.status(200).json({
-      success: true,
-      message: 'Password reset successful. You can now log in with your new password.'
-    });
-  } catch (error) {
-    console.error('Reset password error:', error);
-    res.status(500).json({
-      success: false,
-      error: 'SERVER_ERROR',
-      message: 'Error resetting password'
-    });
-  }
-});
+      res.status(200).json({
+        success: true,
+        message: 'Password reset successful. You can now log in with your new password.',
+      });
+    } catch (error) {
+      console.error('Reset password error:', error);
+      res.status(500).json({
+        success: false,
+        error: 'SERVER_ERROR',
+        message: 'Error resetting password',
+      });
+    }
+  },
+);
 
 // Email verification route
 router.get('/verify-email', async (req, res) => {
@@ -382,20 +401,20 @@ router.get('/verify-email', async (req, res) => {
       return res.status(400).json({
         success: false,
         error: 'MISSING_TOKEN',
-        message: 'Verification token is required'
+        message: 'Verification token is required',
       });
     }
 
     const user = await User.findOne({
       verificationToken: token,
-      verificationExpires: { $gt: Date.now() }
+      verificationExpires: { $gt: Date.now() },
     });
 
     if (!user) {
       return res.status(400).json({
         success: false,
         error: 'INVALID_TOKEN',
-        message: 'Invalid or expired verification token'
+        message: 'Invalid or expired verification token',
       });
     }
 
@@ -412,7 +431,7 @@ router.get('/verify-email', async (req, res) => {
     res.status(500).json({
       success: false,
       error: 'SERVER_ERROR',
-      message: 'Error verifying email'
+      message: 'Error verifying email',
     });
   }
 });
@@ -421,7 +440,7 @@ router.get('/verify-email', async (req, res) => {
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
   max: 100, // limit each IP to 100 requests per windowMs
-  message: 'Too many requests from this IP, please try again later.'
+  message: 'Too many requests from this IP, please try again later.',
 });
 
 // Export the router and route handlers

@@ -1,13 +1,28 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import { useQuery } from '@tanstack/react-query';
 import { videoAPI, courseAPI } from '@/services/api';
 import { useAuth } from '@/context/AuthContext';
 import ReactPlayer from 'react-player';
-import { Play, Pause, Volume2, VolumeX, Maximize, ArrowLeft, BookOpen, CheckCircle, Settings, Monitor, ChevronLeft, ChevronRight, Clock, FileText } from 'lucide-react';
+import {
+  Play,
+  Pause,
+  Volume2,
+  VolumeX,
+  Maximize,
+  ArrowLeft,
+  BookOpen,
+  CheckCircle,
+  Settings,
+  Monitor,
+  ChevronLeft,
+  ChevronRight,
+  Clock,
+  FileText,
+} from 'lucide-react';
 import LoadingSpinner from '@/components/UI/LoadingSpinner';
 
 // Custom CSS for video controls
@@ -46,7 +61,7 @@ const sliderStyles = `
 
 const VideoPlayer = () => {
   const params = useParams();
-  const videoId = params?.videoId;
+  const videoId = params?.id;
   const { user } = useAuth();
   const [playing, setPlaying] = useState(false);
   const [volume, setVolume] = useState(0.8);
@@ -66,7 +81,7 @@ const VideoPlayer = () => {
     { value: '1080p', label: '1080p HD' },
     { value: '720p', label: '720p HD' },
     { value: '480p', label: '480p' },
-    { value: '360p', label: '360p' }
+    { value: '360p', label: '360p' },
   ];
 
   // Available speed options
@@ -76,31 +91,37 @@ const VideoPlayer = () => {
     { value: 1, label: '1x' },
     { value: 1.25, label: '1.25x' },
     { value: 1.5, label: '1.5x' },
-    { value: 2, label: '2x' }
+    { value: 2, label: '2x' },
   ];
 
-  const { data: videoData, isLoading: videoLoading, error: videoError } = useQuery({
+  const {
+    data: videoData,
+    isLoading: videoLoading,
+    error: videoError,
+  } = useQuery({
     queryKey: ['video', videoId],
     queryFn: () => videoAPI.getVideo(videoId),
-    enabled: !!videoId
-  });
-
-  const { data: courseData } = useQuery({
-    queryKey: ['course', videoData?.data?.video?.course],
-    queryFn: () => courseAPI.getCourse(videoData.data.video.course),
-    enabled: !!videoData?.data?.video?.course
-  });
-
-  const { data: courseVideos } = useQuery({
-    queryKey: ['courseVideos', videoData?.data?.video?.course],
-    queryFn: () => courseAPI.getCourseVideos(videoData.data.video.course),
-    enabled: !!videoData?.data?.video?.course
+    enabled: !!videoId,
   });
 
   const video = videoData?.data?.video;
+  const courseId = video?.course?._id || video?.course;
+
+  const { data: courseData } = useQuery({
+    queryKey: ['course', courseId],
+    queryFn: () => courseAPI.getCourse(courseId),
+    enabled: !!courseId,
+  });
+
+  const { data: courseVideos } = useQuery({
+    queryKey: ['courseVideos', courseId],
+    queryFn: () => courseAPI.getCourseVideos(courseId),
+    enabled: !!courseId,
+  });
+
   const course = courseData?.data?.course;
-  const videos = courseVideos?.data?.videos || [];
-  const currentVideoIndex = videos.findIndex(v => v._id === videoId);
+  const videos = courseVideos?.data?.data || courseVideos?.data?.videos || [];
+  const currentVideoIndex = videos.findIndex((v) => v._id === videoId);
 
   // Helper function to get video URL based on quality
   const getVideoUrl = (quality = 'auto') => {
@@ -118,15 +139,17 @@ const VideoPlayer = () => {
   // Filter available qualities based on what's actually available for this video
   const getAvailableQualities = () => {
     if (!video || !video.qualities) {
-      return qualityOptions.filter(q => q.value === 'auto');
+      return qualityOptions.filter((q) => q.value === 'auto');
     }
 
-    return qualityOptions.filter(q =>
-      video.qualities[q.value] && video.qualities[q.value] !== null
+    return qualityOptions.filter(
+      (q) => video.qualities[q.value] && video.qualities[q.value] !== null,
     );
   };
 
   const availableQualities = getAvailableQualities();
+  const savedProgress = Number(video?.userProgress || 0);
+  const visibleProgress = Math.max(progress, savedProgress);
 
   // Handle quality change
   const handleQualityChange = (newQuality) => {
@@ -158,9 +181,9 @@ const VideoPlayer = () => {
 
   // Update watch progress
   const updateProgress = async (progressPercent) => {
-    if (progressPercent > progress) {
+    if (progressPercent > visibleProgress) {
       try {
-        await videoAPI.updateWatchProgress(videoId, progressPercent);
+        await videoAPI.updateWatchProgress(videoId, progressPercent, playedSeconds, playedSeconds);
         setProgress(progressPercent);
       } catch (error) {
         console.error('Failed to update progress:', error);
@@ -173,7 +196,10 @@ const VideoPlayer = () => {
     setPlayedSeconds(state.playedSeconds);
 
     // Update progress every 10% or when video completes
-    if (progressPercent > progress && (progressPercent % 10 === 0 || progressPercent >= 90)) {
+    if (
+      progressPercent > visibleProgress &&
+      (progressPercent % 10 === 0 || progressPercent >= 90)
+    ) {
       updateProgress(progressPercent);
     }
   };
@@ -197,7 +223,9 @@ const VideoPlayer = () => {
       <div className="min-h-screen flex items-center justify-center bg-gray-900 text-white">
         <div className="text-center p-8 bg-gray-800 rounded-2xl shadow-xl max-w-md mx-4">
           <p className="text-red-400 text-lg font-medium mb-4">Failed to load video</p>
-          <Link href="/dashboard" className="btn-primary">Return to Dashboard</Link>
+          <Link href="/dashboard" className="btn-primary">
+            Return to Dashboard
+          </Link>
         </div>
       </div>
     );
@@ -209,7 +237,7 @@ const VideoPlayer = () => {
 
       {/* Top Navigation Bar */}
       <div className="bg-gray-800 border-b border-gray-700 sticky top-0 z-20">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+        <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-12 h-16 flex items-center justify-between">
           <Link
             href={course ? `/courses/${course._id}` : '/my-courses'}
             className="flex items-center text-gray-300 hover:text-white transition-colors"
@@ -217,14 +245,12 @@ const VideoPlayer = () => {
             <ChevronLeft className="h-5 w-5 mr-1" />
             <span className="font-medium">Back to Course</span>
           </Link>
-          <div className="text-sm font-medium text-gray-400 hidden md:block">
-            {course?.title}
-          </div>
+          <div className="text-sm font-medium text-gray-400 hidden md:block">{course?.title}</div>
           <div className="w-24"></div> {/* Spacer for centering */}
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-12 py-8">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Main Content Area */}
           <div className="lg:col-span-2 space-y-6">
@@ -248,9 +274,9 @@ const VideoPlayer = () => {
                   config={{
                     file: {
                       attributes: {
-                        controlsList: 'nodownload'
-                      }
-                    }
+                        controlsList: 'nodownload',
+                      },
+                    },
                   }}
                 />
               </div>
@@ -269,7 +295,7 @@ const VideoPlayer = () => {
                     onMouseUp={handleSeekMouseUp}
                     className="w-full bg-white/20 rounded-lg appearance-none cursor-pointer video-slider h-1 group-hover/slider:h-2 transition-all"
                     style={{
-                      background: `linear-gradient(to right, #3b82f6 0%, #3b82f6 ${(playedSeconds / duration) * 100 || 0}%, rgba(255,255,255,0.2) ${(playedSeconds / duration) * 100 || 0}%, rgba(255,255,255,0.2) 100%)`
+                      background: `linear-gradient(to right, #3b82f6 0%, #3b82f6 ${(playedSeconds / duration) * 100 || 0}%, rgba(255,255,255,0.2) ${(playedSeconds / duration) * 100 || 0}%, rgba(255,255,255,0.2) 100%)`,
                     }}
                   />
                 </div>
@@ -280,7 +306,11 @@ const VideoPlayer = () => {
                       onClick={() => setPlaying(!playing)}
                       className="text-white hover:text-primary-400 transition-colors p-1"
                     >
-                      {playing ? <Pause className="h-6 w-6" /> : <Play className="h-6 w-6 fill-current" />}
+                      {playing ? (
+                        <Pause className="h-6 w-6" />
+                      ) : (
+                        <Play className="h-6 w-6 fill-current" />
+                      )}
                     </button>
 
                     <div className="flex items-center space-x-2 group/volume">
@@ -318,9 +348,11 @@ const VideoPlayer = () => {
                       {/* Settings Menu */}
                       <div className="absolute bottom-full right-0 mb-2 w-48 bg-gray-900/95 backdrop-blur-md rounded-xl border border-gray-700 shadow-xl p-2 hidden group-hover/settings:block">
                         <div className="space-y-2">
-                          <div className="px-2 py-1 text-xs font-semibold text-gray-400 uppercase tracking-wider">Speed</div>
+                          <div className="px-2 py-1 text-xs font-semibold text-gray-400 uppercase tracking-wider">
+                            Speed
+                          </div>
                           <div className="flex flex-wrap gap-1 px-2">
-                            {speedOptions.map(speed => (
+                            {speedOptions.map((speed) => (
                               <button
                                 key={speed.value}
                                 onClick={() => handleSpeedChange(speed.value)}
@@ -333,16 +365,20 @@ const VideoPlayer = () => {
 
                           <div className="border-t border-gray-700 my-2"></div>
 
-                          <div className="px-2 py-1 text-xs font-semibold text-gray-400 uppercase tracking-wider">Quality</div>
+                          <div className="px-2 py-1 text-xs font-semibold text-gray-400 uppercase tracking-wider">
+                            Quality
+                          </div>
                           <div className="flex flex-col px-2">
-                            {availableQualities.map(quality => (
+                            {availableQualities.map((quality) => (
                               <button
                                 key={quality.value}
                                 onClick={() => handleQualityChange(quality.value)}
                                 className={`px-2 py-1.5 text-xs rounded text-left flex items-center justify-between ${selectedQuality === quality.value ? 'bg-primary-600 text-white' : 'text-gray-300 hover:bg-gray-700'}`}
                               >
                                 <span>{quality.label}</span>
-                                {selectedQuality === quality.value && <CheckCircle className="h-3 w-3" />}
+                                {selectedQuality === quality.value && (
+                                  <CheckCircle className="h-3 w-3" />
+                                )}
                               </button>
                             ))}
                           </div>
@@ -365,7 +401,7 @@ const VideoPlayer = () => {
                   <h1 className="text-2xl font-bold text-white mb-2">{video.title}</h1>
                   <p className="text-gray-400 leading-relaxed">{video.description}</p>
                 </div>
-                {progress >= 90 && (
+                {visibleProgress >= 90 && (
                   <div className="flex items-center text-green-400 bg-green-400/10 px-4 py-2 rounded-full border border-green-400/20">
                     <CheckCircle className="h-5 w-5 mr-2" />
                     <span className="font-medium">Completed</span>
@@ -380,14 +416,14 @@ const VideoPlayer = () => {
                   </div>
                   <div>
                     <div className="text-sm text-gray-400">Your Progress</div>
-                    <div className="font-bold text-white">{progress}% Complete</div>
+                    <div className="font-bold text-white">{visibleProgress}% Complete</div>
                   </div>
                 </div>
                 <div className="w-1/3 max-w-xs">
                   <div className="h-2 bg-gray-700 rounded-full overflow-hidden">
                     <div
                       className="h-full bg-primary-500 rounded-full transition-all duration-500"
-                      style={{ width: `${progress}%` }}
+                      style={{ width: `${visibleProgress}%` }}
                     ></div>
                   </div>
                 </div>
@@ -407,7 +443,9 @@ const VideoPlayer = () => {
                     <div className="font-medium">Previous Video</div>
                   </div>
                 </Link>
-              ) : <div></div>}
+              ) : (
+                <div></div>
+              )}
 
               {currentVideoIndex < videos.length - 1 && (
                 <Link
@@ -433,7 +471,9 @@ const VideoPlayer = () => {
                   Course Content
                 </h3>
                 <div className="text-sm text-gray-400 mt-1">
-                  {videos.length} videos • {Math.round(videos.reduce((acc, v) => acc + (v.duration || 0), 0) / 60)} mins total
+                  {videos.length} videos •{' '}
+                  {Math.round(videos.reduce((acc, v) => acc + (v.duration || 0), 0) / 60)} mins
+                  total
                 </div>
               </div>
 
@@ -443,17 +483,18 @@ const VideoPlayer = () => {
                     <Link
                       key={v._id}
                       href={`/video-player/${v._id}`}
-                      className={`flex items-start p-3 rounded-xl transition-all duration-200 group ${v._id === videoId
-                        ? 'bg-primary-600/10 border border-primary-500/50'
-                        : 'hover:bg-gray-700/50 border border-transparent'
-                        }`}
+                      className={`flex items-start p-3 rounded-xl transition-all duration-200 group ${
+                        v._id === videoId
+                          ? 'bg-primary-600/10 border border-primary-500/50'
+                          : 'hover:bg-gray-700/50 border border-transparent'
+                      }`}
                     >
                       <div className="flex-shrink-0 mt-1 mr-3">
                         {v._id === videoId ? (
                           <div className="w-6 h-6 rounded-full bg-primary-500 flex items-center justify-center shadow-lg shadow-primary-500/30">
                             <Play className="h-3 w-3 text-white fill-current" />
                           </div>
-                        ) : v.progress >= 90 ? (
+                        ) : (v.userProgress || v.progress || 0) >= 90 ? (
                           <div className="w-6 h-6 rounded-full bg-green-500/20 flex items-center justify-center border border-green-500/30">
                             <CheckCircle className="h-4 w-4 text-green-500" />
                           </div>
@@ -465,8 +506,13 @@ const VideoPlayer = () => {
                       </div>
 
                       <div className="flex-1 min-w-0">
-                        <h4 className={`text-sm font-medium mb-1 leading-snug ${v._id === videoId ? 'text-primary-400' : 'text-gray-300 group-hover:text-white'
-                          }`}>
+                        <h4
+                          className={`text-sm font-medium mb-1 leading-snug ${
+                            v._id === videoId
+                              ? 'text-primary-400'
+                              : 'text-gray-300 group-hover:text-white'
+                          }`}
+                        >
                           {v.title}
                         </h4>
                         <div className="flex items-center text-xs text-gray-500">
@@ -492,4 +538,3 @@ const VideoPlayer = () => {
 };
 
 export default VideoPlayer;
-

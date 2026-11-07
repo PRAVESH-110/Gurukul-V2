@@ -14,7 +14,7 @@ import LoadingSpinner from '@/components/UI/LoadingSpinner';
 const UploadVideo = () => {
   const router = useRouter();
   const params = useParams();
-  const courseId = params?.courseId;
+  const courseId = params?.id;
   const [videoData, setVideoData] = useState(null);
   const [selectedCourse, setSelectedCourse] = useState(courseId);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -625,4 +625,3 @@ const UploadVideo = () => {
 };
 
 export default UploadVideo;
-

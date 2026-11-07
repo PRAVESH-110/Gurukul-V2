@@ -1,20 +1,19 @@
 const express = require('express');
-const path = require('path');
 const fs = require('fs');
 const ImageKit = require('imagekit');
 
 const imagekit = new ImageKit({
   publicKey: process.env.IMAGEKIT_PUBLIC_KEY,
   privateKey: process.env.IMAGEKIT_PRIVATE_KEY,
-  urlEndpoint: process.env.IMAGEKIT_URL_ENDPOINT
+  urlEndpoint: process.env.IMAGEKIT_URL_ENDPOINT,
 });
 const Course = require('../models/Course');
 const Video = require('../models/Video');
 const User = require('../models/User');
 const Notification = require('../models/Notification');
 const notificationService = require('../services/notifications.service');
-const { protect, authorize, checkCourseEnrollment, optionalProtect } = require('../middleware/auth');
-const { validateCourse, validateObjectId } = require('../middleware/validation');
+const { protect, authorize, optionalProtect } = require('../middleware/auth');
+const { validateObjectId } = require('../middleware/validation');
 const { upload, handleUploadErrors } = require('../middleware/upload');
 
 const router = express.Router();
@@ -74,6 +73,7 @@ const getCourses = async (req, res, next) => {
     console.log('Sort option:', sortOption);
 
     const courses = await Course.find(query)
+      .select('-enrolledStudents -reviews')
       .populate('creator', 'firstName lastName avatar')
       .populate('community', 'name')
       .sort(sortOption)
@@ -89,9 +89,9 @@ const getCourses = async (req, res, next) => {
       pagination: {
         page: parseInt(page),
         limit: parseInt(limit),
-        pages: Math.ceil(total / limit)
+        pages: Math.ceil(total / limit),
       },
-      courses
+      courses,
     });
   } catch (error) {
     console.error('getCourses error:', error);
@@ -122,7 +122,7 @@ const createCourse = async (req, res, next) => {
       language,
       isPublished,
       visibility,
-      allowComments
+      allowComments,
     } = req.body;
 
     // Validate required fields manually to provide better error messages
@@ -136,7 +136,7 @@ const createCourse = async (req, res, next) => {
       return res.status(400).json({
         success: false,
         message: 'Validation failed',
-        errors
+        errors,
       });
     }
 
@@ -150,10 +150,12 @@ const createCourse = async (req, res, next) => {
         parsedTags = typeof tags === 'string' ? JSON.parse(tags) : tags;
       }
       if (requirements) {
-        parsedRequirements = typeof requirements === 'string' ? JSON.parse(requirements) : requirements;
+        parsedRequirements =
+          typeof requirements === 'string' ? JSON.parse(requirements) : requirements;
       }
       if (learningOutcomes) {
-        parsedLearningOutcomes = typeof learningOutcomes === 'string' ? JSON.parse(learningOutcomes) : learningOutcomes;
+        parsedLearningOutcomes =
+          typeof learningOutcomes === 'string' ? JSON.parse(learningOutcomes) : learningOutcomes;
       }
     } catch (parseError) {
       console.error('Error parsing arrays:', parseError);
@@ -167,15 +169,18 @@ const createCourse = async (req, res, next) => {
       try {
         const fileBuffer = fs.readFileSync(req.file.path);
         const result = await new Promise((resolve, reject) => {
-          imagekit.upload({
-            file: fileBuffer.toString('base64'),
-            fileName: req.file.filename,
-            folder: 'gurukul/images',
-            useUniqueFileName: true
-          }, (error, result) => {
-            if (error) return reject(error);
-            resolve(result);
-          });
+          imagekit.upload(
+            {
+              file: fileBuffer.toString('base64'),
+              fileName: req.file.filename,
+              folder: 'gurukul/images',
+              useUniqueFileName: true,
+            },
+            (error, result) => {
+              if (error) return reject(error);
+              resolve(result);
+            },
+          );
         });
 
         thumbnailUrl = result.url;
@@ -203,8 +208,9 @@ const createCourse = async (req, res, next) => {
       learningOutcomes: parsedLearningOutcomes,
       language: language || 'English',
       isPublished: isPublished !== 'false' && isPublished !== false,
-      visibility: visibility || (isPublished !== 'false' && isPublished !== false ? 'public' : 'private'),
-      allowComments: allowComments !== 'false' && allowComments !== false
+      visibility:
+        visibility || (isPublished !== 'false' && isPublished !== false ? 'public' : 'private'),
+      allowComments: allowComments !== 'false' && allowComments !== false,
     };
 
     console.log('Creating course with data:', courseData);
@@ -216,7 +222,7 @@ const createCourse = async (req, res, next) => {
     const creatorNotif = await Notification.create({
       recipient: req.user._id,
       type: 'COURSE_CREATION',
-      content: `Your course "${course.title}" has been successfully created!`
+      content: `Your course "${course.title}" has been successfully created!`,
     });
 
     const io = req.app.get('io');
@@ -225,16 +231,17 @@ const createCourse = async (req, res, next) => {
       io.to(req.user._id.toString()).emit('new_notification', creatorNotif);
 
       // Broadcast new course announcement to everyone online
-      if (course.isPublished) await notificationService.notifyConnectedUsers(io, {
-        type: 'NEW_COURSE',
-        content: `🎉 New Course: "${course.title}" has just been published by ${req.user.firstName} ${req.user.lastName}! Check it out!`
-      });
+      if (course.isPublished)
+        await notificationService.notifyConnectedUsers(io, {
+          type: 'NEW_COURSE',
+          content: `🎉 New Course: "${course.title}" has just been published by ${req.user.firstName} ${req.user.lastName}! Check it out!`,
+        });
     }
 
     res.status(201).json({
       success: true,
       message: 'Course created successfully',
-      course
+      course,
     });
   } catch (error) {
     console.error('Course creation error:', error);
@@ -255,31 +262,45 @@ const getCourse = async (req, res, next) => {
     if (!course) {
       return res.status(404).json({
         success: false,
-        message: 'Course not found'
+        message: 'Course not found',
       });
+    }
+
+    const isCreator = course.creator?._id
+      ? course.creator._id.toString() === req.user?._id?.toString()
+      : course.creator.toString() === req.user?._id?.toString();
+    const isAdmin = req.user?.role === 'admin';
+    const isEnrolled = req.user ? course.isEnrolled(req.user._id) : false;
+    if (!course.isPublished && !isEnrolled && !isCreator && !isAdmin) {
+      return res.status(404).json({ success: false, message: 'Course not found' });
     }
 
     // Get course videos (only preview videos for non-enrolled users)
     let videos = [];
-    if (req.user && (course.isEnrolled(req.user._id) || course.creator.toString() === req.user._id.toString() || req.user.role === 'admin')) {
+    if (req.user && (isEnrolled || isCreator || isAdmin)) {
       // User is enrolled or is the creator - show all videos
-      videos = await Video.find({ course: course._id, isActive: true })
+      const videoQuery = { course: course._id, isActive: true };
+      if (!isCreator && !isAdmin) videoQuery.isPublished = true;
+      videos = await Video.find(videoQuery)
         .sort({ order: 1 })
-        .select('title description duration order isPreview thumbnail');
+        .select('title description duration order isPreview thumbnailUrl');
     } else {
       // Show only preview videos
       videos = await Video.find({ course: course._id, isPreview: true, isActive: true })
         .sort({ order: 1 })
-        .select('title description duration order isPreview thumbnail');
+        .select('title description duration order isPreview thumbnailUrl');
     }
+
+    const courseData = course.toObject();
+    delete courseData.enrolledStudents;
 
     res.status(200).json({
       success: true,
       course: {
-        ...course.toObject(),
+        ...courseData,
         videos,
-        isEnrolled: req.user ? course.isEnrolled(req.user._id) : false
-      }
+        isEnrolled,
+      },
     });
   } catch (error) {
     next(error);
@@ -296,33 +317,94 @@ const updateCourse = async (req, res, next) => {
     if (!course) {
       return res.status(404).json({
         success: false,
-        message: 'Course not found'
+        message: 'Course not found',
       });
     }
 
     // Check if user is creator
-    if (course.creator.toString() !== req.user._id.toString()) {
+    if (course.creator.toString() !== req.user._id.toString() && req.user.role !== 'admin') {
       return res.status(403).json({
         success: false,
-        message: 'Not authorized to update this course'
+        message: 'Not authorized to update this course',
       });
     }
 
-    // Update fields
-    Object.keys(req.body).forEach(key => {
-      course[key] = req.body[key];
+    // Handle thumbnail file upload if present
+    if (req.file) {
+      try {
+        const fileBuffer = fs.readFileSync(req.file.path);
+        const result = await new Promise((resolve, reject) => {
+          imagekit.upload(
+            {
+              file: fileBuffer.toString('base64'),
+              fileName: req.file.filename,
+              folder: 'gurukul/courses',
+              useUniqueFileName: true,
+            },
+            (error, result) => {
+              if (error) return reject(error);
+              resolve(result);
+            },
+          );
+        });
+
+        course.thumbnail = result.url;
+        if (fs.existsSync(req.file.path)) {
+          fs.unlinkSync(req.file.path);
+        }
+      } catch (uploadError) {
+        console.error('ImageKit upload failed during course update:', uploadError);
+      }
+    }
+
+    // Update only creator-editable fields. Enrollment, ownership, stats, and
+    // approval fields are server-controlled.
+    const editableFields = [
+      'title',
+      'subtitle',
+      'description',
+      'community',
+      'price',
+      'level',
+      'category',
+      'subcategory',
+      'language',
+      'tags',
+      'requirements',
+      'learningOutcomes',
+      'isPublished',
+      'visibility',
+      'settings',
+      'seo',
+    ];
+    const arrayFields = new Set(['tags', 'requirements', 'learningOutcomes']);
+    editableFields.forEach((key) => {
+      if (req.body[key] === undefined || (key === 'thumbnail' && req.file)) return;
+      let value = req.body[key];
+      if (arrayFields.has(key) && typeof value === 'string') {
+        try {
+          value = JSON.parse(value);
+        } catch {
+          return;
+        }
+      }
+      if (key === 'price') value = Number(value);
+      if (key === 'isPublished') value = value === true || value === 'true';
+      course[key] = value;
     });
 
     await course.save();
 
     // Populate after save
-    const updatedCourse = await Course.findById(course._id)
-      .populate('creator', 'firstName lastName avatar');
+    const updatedCourse = await Course.findById(course._id).populate(
+      'creator',
+      'firstName lastName avatar',
+    );
 
     res.status(200).json({
       success: true,
       message: 'Course updated successfully',
-      course: updatedCourse
+      course: updatedCourse,
     });
   } catch (error) {
     next(error);
@@ -339,15 +421,17 @@ const deleteCourse = async (req, res, next) => {
     if (!course) {
       return res.status(404).json({
         success: false,
-        message: 'Course not found'
+        message: 'Course not found',
       });
     }
 
     // Check if user is creator
-    if (course.creator.toString() !== req.user._id.toString() || req.user.role !== 'admin') {
+    const isOwner = course.creator.toString() === req.user._id.toString();
+    const isAdmin = req.user.role === 'admin';
+    if (!isOwner && !isAdmin) {
       return res.status(403).json({
         success: false,
-        message: 'Not authorized to delete this course'
+        message: 'Not authorized to delete this course',
       });
     }
 
@@ -358,13 +442,12 @@ const deleteCourse = async (req, res, next) => {
 
     res.status(200).json({
       success: true,
-      message: 'Course deleted successfully'
+      message: 'Course deleted successfully',
     });
   } catch (error) {
     next(error);
   }
 };
-
 
 // @desc    Enroll in course
 // @route   POST /api/courses/:id/enroll
@@ -376,7 +459,7 @@ const enrollInCourse = async (req, res, next) => {
     if (!course || !course.isPublished) {
       return res.status(404).json({
         success: false,
-        message: 'Course not found or not published'
+        message: 'Course not found or not published',
       });
     }
 
@@ -384,7 +467,7 @@ const enrollInCourse = async (req, res, next) => {
     if (course.isEnrolled(req.user._id)) {
       return res.status(400).json({
         success: false,
-        message: 'You are already enrolled in this course'
+        message: 'You are already enrolled in this course',
       });
     }
 
@@ -393,27 +476,27 @@ const enrollInCourse = async (req, res, next) => {
       user: req.user._id,
       enrolledAt: new Date(),
       completedVideos: [],
-      progress: 0
+      progress: 0,
     });
     await course.save();
 
     // Add course to user's enrolled courses
     await User.findByIdAndUpdate(req.user._id, {
-      $addToSet: { enrolledCourses: course._id }
+      $addToSet: { enrolledCourses: course._id },
     });
 
     // 1. Create the permanent notification in MongoDB for the enrolling student
     const newNotif = await Notification.create({
       recipient: req.user._id,
       type: 'ENROLLMENT',
-      content: `You have successfully enrolled in ${course.title}!`
+      content: `You have successfully enrolled in ${course.title}!`,
     });
 
     // 2. Create the permanent notification for the course creator
     const creatorNotif = await Notification.create({
       recipient: course.creator,
       type: 'ENROLLMENT_CREATOR',
-      content: `👤 ${req.user.firstName} ${req.user.lastName} has enrolled in your course "${course.title}"!`
+      content: `👤 ${req.user.firstName} ${req.user.lastName} has enrolled in your course "${course.title}"!`,
     });
 
     // 3. Push them instantly to their respective Socket.io rooms
@@ -425,7 +508,7 @@ const enrollInCourse = async (req, res, next) => {
 
     res.status(200).json({
       success: true,
-      message: 'Successfully enrolled in the course'
+      message: 'Successfully enrolled in the course',
     });
   } catch (error) {
     next(error);
@@ -443,7 +526,7 @@ const unenrollFromCourse = async (req, res, next) => {
     if (!course) {
       return res.status(404).json({
         success: false,
-        message: 'Course not found'
+        message: 'Course not found',
       });
     }
 
@@ -451,24 +534,24 @@ const unenrollFromCourse = async (req, res, next) => {
     if (!course.isEnrolled(req.user._id)) {
       return res.status(400).json({
         success: false,
-        message: 'You are not enrolled in this course'
+        message: 'You are not enrolled in this course',
       });
     }
 
     // Remove student from course
     course.enrolledStudents = course.enrolledStudents.filter(
-      student => student.user.toString() !== req.user._id.toString()
+      (student) => student.user.toString() !== req.user._id.toString(),
     );
     await course.save();
 
     // Remove course from user's enrolled courses
     await User.findByIdAndUpdate(req.user._id, {
-      $pull: { enrolledCourses: course._id }
+      $pull: { enrolledCourses: course._id },
     });
 
     res.status(200).json({
       success: true,
-      message: 'Successfully unenrolled from the course'
+      message: 'Successfully unenrolled from the course',
     });
   } catch (error) {
     next(error);
@@ -485,7 +568,7 @@ const getCourseVideos = async (req, res, next) => {
     if (!course) {
       return res.status(404).json({
         success: false,
-        message: 'Course not found'
+        message: 'Course not found',
       });
     }
 
@@ -500,33 +583,47 @@ const getCourseVideos = async (req, res, next) => {
       isAdmin = req.user.role === 'admin';
     }
 
-    const videos = await Video.find({ course: course._id, isActive: true })
-      .sort({ order: 1 });
+    if (!course.isPublished && !isEnrolled && !isCreator && !isAdmin) {
+      return res.status(404).json({ success: false, message: 'Course not found' });
+    }
+
+    const videoQuery = { course: course._id, isActive: true };
+    if (!isCreator && !isAdmin) videoQuery.isPublished = true;
+    const videos = await Video.find(videoQuery).sort({ order: 1 });
 
     // If user has full access, return everything
     if (isEnrolled || isCreator || isAdmin) {
-      const videosWithProgress = videos.map(video => ({
-        ...video.toObject(),
-        userProgress: 0, // You can implement actual progress tracking later
-        hasWatched: false
-      }));
+      const videosWithProgress = videos.map((video) => {
+        const videoData = video.toObject();
+        delete videoData.watchedBy;
+        const watch = video.getWatchProgress(req.user._id);
+        return {
+          ...videoData,
+          userProgress:
+            watch?.watchTime && video.duration
+              ? Math.round((watch.watchTime / video.duration) * 100)
+              : 0,
+          hasWatched: Boolean(watch?.completed),
+        };
+      });
 
       return res.status(200).json({
         success: true,
-        videos: videosWithProgress
+        videos: videosWithProgress,
       });
     }
 
     // If no full access, return metadata only (exclude sensitive fields)
-    const videosMetadata = videos.map(video => {
+    const videosMetadata = videos.map((video) => {
       const vidObj = video.toObject();
+      delete vidObj.watchedBy;
 
       // If it's a preview video, keep the URL/fileId
       if (vidObj.isPreview) {
         return {
           ...vidObj,
           userProgress: 0,
-          hasWatched: false
+          hasWatched: false,
         };
       }
 
@@ -543,13 +640,13 @@ const getCourseVideos = async (req, res, next) => {
         videoUrl: null,
         fileId: null,
         userProgress: 0,
-        hasWatched: false
+        hasWatched: false,
       };
     });
 
     res.status(200).json({
       success: true,
-      videos: videosMetadata
+      videos: videosMetadata,
     });
   } catch (error) {
     next(error);
@@ -561,27 +658,31 @@ const getCourseVideos = async (req, res, next) => {
 // @access  Private (Creator or Admin only)
 const getEnrolledStudents = async (req, res, next) => {
   try {
-    const course = await Course.findById(req.params.id)
-      .populate('enrolledStudents', 'firstName lastName email avatar');
+    const course = await Course.findById(req.params.id).populate(
+      'enrolledStudents.user',
+      'firstName lastName email avatar',
+    );
 
     if (!course) {
       return res.status(404).json({
         success: false,
-        message: 'Course not found'
+        message: 'Course not found',
       });
     }
 
     // Check if user is creator or admin
-    if (course.creator.toString() !== req.user._id.toString() || req.user.role !== 'admin') {
+    const isOwner = course.creator.toString() === req.user._id.toString();
+    const isAdmin = req.user.role === 'admin';
+    if (!isOwner && !isAdmin) {
       return res.status(403).json({
         success: false,
-        message: 'Not authorized to view students'
+        message: 'Not authorized to view students',
       });
     }
 
     res.status(200).json({
       success: true,
-      students: course.enrolledStudents
+      students: course.enrolledStudents,
     });
   } catch (error) {
     next(error);
@@ -599,7 +700,7 @@ const addCourseReview = async (req, res, next) => {
     if (!course) {
       return res.status(404).json({
         success: false,
-        message: 'Course not found'
+        message: 'Course not found',
       });
     }
 
@@ -607,19 +708,19 @@ const addCourseReview = async (req, res, next) => {
     if (!course.isEnrolled(req.user._id)) {
       return res.status(403).json({
         success: false,
-        message: 'You must be enrolled to review this course'
+        message: 'You must be enrolled to review this course',
       });
     }
 
     // Check if user already reviewed
     const existingReview = course.reviews.find(
-      review => review.student.toString() === req.user._id.toString()
+      (review) => review.student.toString() === req.user._id.toString(),
     );
 
     if (existingReview) {
       return res.status(400).json({
         success: false,
-        message: 'You have already reviewed this course'
+        message: 'You have already reviewed this course',
       });
     }
 
@@ -628,7 +729,7 @@ const addCourseReview = async (req, res, next) => {
       student: req.user._id,
       rating,
       comment,
-      createdAt: new Date()
+      createdAt: new Date(),
     });
 
     // Recalculate average rating
@@ -637,7 +738,7 @@ const addCourseReview = async (req, res, next) => {
 
     res.status(201).json({
       success: true,
-      message: 'Review added successfully'
+      message: 'Review added successfully',
     });
   } catch (error) {
     next(error);
@@ -652,9 +753,7 @@ const getCreatorCourses = async (req, res, next) => {
     console.log('getCreatorCourses called by user:', req.user._id, 'role:', req.user.role);
 
     // For admins, show all courses; for creators, show only their own
-    const courses = await Course.find(
-      req.user.role === 'admin' ? {} : { creator: req.user._id }
-    )
+    const courses = await Course.find(req.user.role === 'admin' ? {} : { creator: req.user._id })
       .populate('creator', 'firstName lastName avatar')
       .sort({ createdAt: -1 });
 
@@ -665,7 +764,7 @@ const getCreatorCourses = async (req, res, next) => {
       courses.map(async (course) => {
         const videoCount = await Video.countDocuments({
           course: course._id,
-          isActive: true
+          isActive: true,
         });
 
         const enrollmentCount = course.enrolledStudents?.length || 0;
@@ -679,21 +778,28 @@ const getCreatorCourses = async (req, res, next) => {
           enrollmentCount,
           rating: course.rating?.average || 0,
           ratingCount: course.rating?.count || 0,
-          revenue: courseRevenue
+          revenue: courseRevenue,
         };
-      })
+      }),
     );
 
     // Calculate overall stats
     const totalCourses = courses.length;
-    const totalStudents = courses.reduce((sum, course) => sum + (course.enrolledStudents?.length || 0), 0);
+    const totalStudents = courses.reduce(
+      (sum, course) => sum + (course.enrolledStudents?.length || 0),
+      0,
+    );
     const totalRevenue = coursesWithStats.reduce((sum, course) => sum + (course.revenue || 0), 0);
 
     // Calculate average rating across all courses
-    const coursesWithRatings = courses.filter(course => course.rating && course.rating.average > 0);
-    const averageRating = coursesWithRatings.length > 0
-      ? coursesWithRatings.reduce((sum, course) => sum + (course.rating.average || 0), 0) / coursesWithRatings.length
-      : 0;
+    const coursesWithRatings = courses.filter(
+      (course) => course.rating && course.rating.average > 0,
+    );
+    const averageRating =
+      coursesWithRatings.length > 0
+        ? coursesWithRatings.reduce((sum, course) => sum + (course.rating.average || 0), 0) /
+          coursesWithRatings.length
+        : 0;
 
     res.status(200).json({
       success: true,
@@ -704,9 +810,9 @@ const getCreatorCourses = async (req, res, next) => {
           totalCourses,
           totalStudents,
           totalRevenue,
-          averageRating
-        }
-      }
+          averageRating,
+        },
+      },
     });
   } catch (error) {
     console.error('getCreatorCourses error:', error);
@@ -724,7 +830,14 @@ router.get('/test', (req, res) => {
   res.json({ message: 'GET test works' });
 });
 router.get('/creator/me', protect, authorize('creator', 'admin'), getCreatorCourses);
-router.post('/', protect, authorize('creator'), uploadThumbnail, handleUploadErrors, createCourse);
+router.post(
+  '/',
+  protect,
+  authorize('creator', 'admin'),
+  uploadThumbnail,
+  handleUploadErrors,
+  createCourse,
+);
 
 // Specific routes that come before the generic :id route
 router.post('/:id/enroll', protect, validateObjectId('id'), enrollInCourse);
@@ -733,7 +846,7 @@ router.delete('/:id/unenroll', protect, validateObjectId('id'), (req, res, next)
     method: req.method,
     url: req.url,
     params: req.params,
-    user: req.user?._id
+    user: req.user?._id,
   });
   unenrollFromCourse(req, res, next);
 });
@@ -750,7 +863,15 @@ router.post('/:id/review', protect, validateObjectId('id'), addCourseReview);
 
 // Generic routes that should come last
 router.get('/:id', optionalProtect, validateObjectId('id'), getCourse);
-router.put('/:id', protect, validateObjectId('id'), updateCourse);
+router.put(
+  '/:id',
+  protect,
+  authorize('creator', 'admin'),
+  validateObjectId('id'),
+  uploadThumbnail,
+  handleUploadErrors,
+  updateCourse,
+);
 router.delete('/:id', protect, validateObjectId('id'), deleteCourse);
 
 module.exports = router;

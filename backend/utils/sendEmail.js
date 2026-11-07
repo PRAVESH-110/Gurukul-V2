@@ -1,21 +1,19 @@
 const nodemailer = require('nodemailer');
-const { promisify } = require('util');
 const { google } = require('googleapis');
 const ejs = require('ejs');
 const path = require('path');
 const fs = require('fs');
-const { log } = require('console');
 
 // Create a transporter using Gmail SMTP
 const createTransporter = async () => {
   const oauth2Client = new google.auth.OAuth2(
     process.env.GOOGLE_CLIENT_ID,
     process.env.GOOGLE_CLIENT_SECRET,
-    'https://developers.google.com/oauthplayground'
+    'https://developers.google.com/oauthplayground',
   );
 
   oauth2Client.setCredentials({
-    refresh_token: process.env.GOOGLE_REFRESH_TOKEN
+    refresh_token: process.env.GOOGLE_REFRESH_TOKEN,
     //loading saved refresh token from .env
   });
 
@@ -36,8 +34,8 @@ const createTransporter = async () => {
       accessToken,
       clientId: process.env.GOOGLE_CLIENT_ID,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-      refreshToken: process.env.GOOGLE_REFRESH_TOKEN
-    }
+      refreshToken: process.env.GOOGLE_REFRESH_TOKEN,
+    },
   });
 };
 
@@ -49,7 +47,7 @@ const renderTemplate = async (templateName, data) => {
     return ejs.render(template, data);
   } catch (error) {
     console.error('Error rendering email template:', error);
-    throw new Error('Failed to render email template');
+    throw new Error('Failed to render email template', { cause: error });
   }
 };
 
@@ -61,7 +59,6 @@ const sendEmail = async (options) => {
       console.log('Email not sent in development mode. Email details:', {
         to: options.to,
         subject: options.subject,
-        html: options.html
       });
       return { message: 'Email not sent in development mode' };
     }
@@ -73,7 +70,7 @@ const sendEmail = async (options) => {
       to: options.to,
       subject: options.subject,
       html: options.html,
-      attachments: options.attachments
+      attachments: options.attachments,
     };
 
     const info = await transporter.sendMail(mailOptions);
@@ -81,7 +78,7 @@ const sendEmail = async (options) => {
     return { message: 'Email sent successfully', messageId: info.messageId };
   } catch (error) {
     console.error('Error sending email:', error);
-    throw new Error('Failed to send email');
+    throw new Error('Failed to send email', { cause: error });
   }
 };
 

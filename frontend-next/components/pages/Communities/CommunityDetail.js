@@ -2,12 +2,25 @@
 
 import ReactMarkdown from 'react-markdown';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { Calendar, Globe, Lock, MessageSquare, Settings, Users, Heart, Share2, MoreHorizontal, Clock, MapPin } from 'lucide-react';
+import {
+  Calendar,
+  Globe,
+  Lock,
+  MessageSquare,
+  Settings,
+  Users,
+  Heart,
+  Share2,
+  MoreHorizontal,
+  Clock,
+  MapPin,
+} from 'lucide-react';
 import { useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import LoadingSpinner from '@/components/UI/LoadingSpinner';
+import { getImageUrl } from '@/utils/imageUtils';
 import { useAuth } from '@/context/AuthContext';
-import { communityAPI } from '@/services/api';
+import { communityAPI, eventAPI } from '@/services/api';
 import toast from 'react-hot-toast';
 
 const CommunityDetail = () => {
@@ -19,22 +32,31 @@ const CommunityDetail = () => {
   const [joining, setJoining] = useState(false);
   const queryClient = useQueryClient();
 
-  const { data: communityData, isLoading, error } = useQuery({
+  const {
+    data: communityData,
+    isLoading,
+    error,
+  } = useQuery({
     queryKey: ['community', id],
     queryFn: () => communityAPI.getCommunity(id),
-    enabled: !!id
+    enabled: !!id,
   });
 
   const { data: postsData } = useQuery({
     queryKey: ['communityPosts', id],
     queryFn: () => communityAPI.getCommunityPosts(id),
-    enabled: !!communityData && activeTab === 'posts' && !!id
+    enabled: !!communityData && activeTab === 'posts' && !!id,
   });
 
   const { data: eventsData } = useQuery({
     queryKey: ['communityEvents', id],
     queryFn: () => communityAPI.getCommunityEvents(id),
-    enabled: !!communityData && activeTab === 'events' && !!id
+    enabled: !!communityData && activeTab === 'events' && !!id,
+  });
+  const { data: membersData } = useQuery({
+    queryKey: ['communityMembers', id],
+    queryFn: () => communityAPI.getCommunityMembers(id),
+    enabled: !!communityData && activeTab === 'members' && !!id,
   });
 
   const joinMutation = useMutation({
@@ -48,7 +70,7 @@ const CommunityDetail = () => {
     onError: (error) => {
       setJoining(false);
       toast.error(error.response?.data?.message || 'Failed to join community');
-    }
+    },
   });
 
   const handleJoin = () => {
@@ -72,11 +94,10 @@ const CommunityDetail = () => {
             <Users className="h-8 w-8 text-red-600" />
           </div>
           <h3 className="text-lg font-bold text-gray-900 mb-2">Failed to load community details</h3>
-          <p className="text-gray-600 mb-6">We couldn't fetch the community information. Please try again later.</p>
-          <button
-            onClick={() => router.push('/communities')}
-            className="btn-primary w-full"
-          >
+          <p className="text-gray-600 mb-6">
+            We couldn&apos;t fetch the community information. Please try again later.
+          </p>
+          <button onClick={() => router.push('/communities')} className="btn-primary w-full">
             Back to Communities
           </button>
         </div>
@@ -88,31 +109,39 @@ const CommunityDetail = () => {
   const posts = postsData?.data?.posts || [];
   const events = eventsData?.data?.events || [];
 
-  const isMember = community?.members?.some(
-    (m) => m?.user?._id?.toString() === user?._id?.toString() || m?.user === user?._id
-  );
+  const isMember = community?.isMember === true;
 
   return (
     <div className="min-h-screen bg-gray-50/50 font-sans pb-12">
       {/* Hero Section */}
       <div className="bg-white border-b border-gray-200">
         <div className="h-48 md:h-64 bg-gradient-to-r from-primary-600 to-blue-600 relative overflow-hidden">
+          {community?.coverImage ? (
+            <img
+              src={getImageUrl(community.coverImage)}
+              alt={community.name}
+              className="w-full h-full object-cover"
+              onError={(e) => {
+                e.target.style.display = 'none';
+              }}
+            />
+          ) : null}
           <div className="absolute inset-0 bg-black/20"></div>
           <div className="absolute -bottom-10 -right-10 w-64 h-64 bg-white/10 rounded-full blur-3xl"></div>
           <div className="absolute top-10 left-10 w-32 h-32 bg-white/10 rounded-full blur-2xl"></div>
         </div>
 
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-12 relative z-20">
           <div className="relative -mt-16 md:-mt-20 mb-8 flex flex-col md:flex-row items-start md:items-end gap-6">
-            <div className="w-32 h-32 md:w-40 md:h-40 rounded-2xl border-4 border-white shadow-lg bg-white flex items-center justify-center flex-shrink-0">
+            <div className="w-32 h-32 md:w-40 md:h-40 rounded-2xl border-4 border-white shadow-xl bg-white flex items-center justify-center flex-shrink-0 relative z-30 ring-1 ring-black/5">
               {community?.creator?.avatar ? (
                 <img
-                  src={community.creator.avatar}
+                  src={getImageUrl(community.creator.avatar)}
                   alt={community.name}
                   className="w-full h-full rounded-xl object-cover"
                 />
               ) : (
-                <div className="w-full h-full bg-primary-50 rounded-xl flex items-center justify-center text-primary-600 font-bold text-4xl">
+                <div className="w-full h-full bg-primary-50 rounded-xl flex items-center justify-center text-primary-600 font-bold text-4xl shadow-inner">
                   {community?.name?.[0] || 'C'}
                 </div>
               )}
@@ -181,30 +210,33 @@ const CommunityDetail = () => {
           <div className="flex space-x-8 border-b border-gray-200">
             <button
               onClick={() => setActiveTab('posts')}
-              className={`pb-4 px-1 border-b-2 font-medium text-sm transition-colors ${activeTab === 'posts'
-                ? 'border-primary-500 text-primary-600'
-                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                }`}
+              className={`pb-4 px-1 border-b-2 font-medium text-sm transition-colors ${
+                activeTab === 'posts'
+                  ? 'border-primary-500 text-primary-600'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+              }`}
             >
               <MessageSquare className="h-4 w-4 mr-2 inline" />
               Discussion
             </button>
             <button
               onClick={() => setActiveTab('events')}
-              className={`pb-4 px-1 border-b-2 font-medium text-sm transition-colors ${activeTab === 'events'
-                ? 'border-primary-500 text-primary-600'
-                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                }`}
+              className={`pb-4 px-1 border-b-2 font-medium text-sm transition-colors ${
+                activeTab === 'events'
+                  ? 'border-primary-500 text-primary-600'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+              }`}
             >
               <Calendar className="h-4 w-4 mr-2 inline" />
               Events
             </button>
             <button
               onClick={() => setActiveTab('members')}
-              className={`pb-4 px-1 border-b-2 font-medium text-sm transition-colors ${activeTab === 'members'
-                ? 'border-primary-500 text-primary-600'
-                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                }`}
+              className={`pb-4 px-1 border-b-2 font-medium text-sm transition-colors ${
+                activeTab === 'members'
+                  ? 'border-primary-500 text-primary-600'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+              }`}
             >
               <Users className="h-4 w-4 mr-2 inline" />
               Members
@@ -213,17 +245,23 @@ const CommunityDetail = () => {
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-12 py-8">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Main Content */}
           <div className="lg:col-span-2 space-y-6">
             {/* Create Post Input */}
             {activeTab === 'posts' && user && (
-              <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 flex gap-4 items-center cursor-pointer hover:border-primary-200 transition-colors"
-                onClick={() => router.push(`/communities/${id}/create-post`)}>
+              <div
+                className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 flex gap-4 items-center cursor-pointer hover:border-primary-200 transition-colors"
+                onClick={() => router.push(`/communities/${id}/create-post`)}
+              >
                 <div className="w-10 h-10 rounded-full bg-gray-100 flex-shrink-0 overflow-hidden">
                   {user.avatar ? (
-                    <img src={user.avatar} alt={user.firstName} className="w-full h-full object-cover" />
+                    <img
+                      src={user.avatar}
+                      alt={user.firstName}
+                      className="w-full h-full object-cover"
+                    />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center bg-primary-100 text-primary-600 font-bold">
                       {user.firstName?.[0]}
@@ -241,7 +279,10 @@ const CommunityDetail = () => {
               <div className="space-y-6">
                 {posts.length > 0 ? (
                   posts.map((post) => (
-                    <div key={post._id} className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 hover:shadow-md transition-shadow">
+                    <div
+                      key={post._id}
+                      className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 hover:shadow-md transition-shadow"
+                    >
                       <div className="flex items-start justify-between mb-4">
                         <div className="flex items-center gap-3">
                           <div className="w-10 h-10 rounded-full bg-gray-100 overflow-hidden">
@@ -298,7 +339,9 @@ const CommunityDetail = () => {
                       <MessageSquare className="h-8 w-8 text-gray-400" />
                     </div>
                     <h3 className="text-lg font-bold text-gray-900 mb-2">No discussions yet</h3>
-                    <p className="text-gray-600 mb-6">Be the first to start a conversation in this community!</p>
+                    <p className="text-gray-600 mb-6">
+                      Be the first to start a conversation in this community!
+                    </p>
                     {user && (
                       <button
                         onClick={() => router.push(`/communities/${id}/create-post`)}
@@ -317,7 +360,9 @@ const CommunityDetail = () => {
                 {(user?.role === 'creator' || user?.role === 'admin') && (
                   <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 text-center">
                     <h3 className="text-lg font-bold text-gray-900 mb-2">Host an Event</h3>
-                    <p className="text-gray-600 mb-4">Create a new event for your community members to join.</p>
+                    <p className="text-gray-600 mb-4">
+                      Create a new event for your community members to join.
+                    </p>
                     <button
                       onClick={() => router.push(`/communities/${id}/create-event`)}
                       className="btn-primary"
@@ -330,17 +375,41 @@ const CommunityDetail = () => {
 
                 {events.length > 0 ? (
                   events.map((event) => (
-                    <div key={event._id} className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-md transition-shadow flex flex-col md:flex-row">
+                    <div
+                      key={event._id}
+                      className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-md transition-shadow flex flex-col md:flex-row"
+                    >
                       <div className="md:w-48 bg-primary-50 flex flex-col items-center justify-center p-6 text-primary-700 border-b md:border-b-0 md:border-r border-gray-100">
-                        <span className="text-3xl font-bold">{new Date(event.startDate).getDate()}</span>
-                        <span className="text-lg font-medium uppercase">{new Date(event.startDate).toLocaleString('default', { month: 'short' })}</span>
-                        <span className="text-sm opacity-75 mt-1">{new Date(event.startDate).getFullYear()}</span>
+                        <span className="text-3xl font-bold">
+                          {new Date(event.startDate).getDate()}
+                        </span>
+                        <span className="text-lg font-medium uppercase">
+                          {new Date(event.startDate).toLocaleString('default', { month: 'short' })}
+                        </span>
+                        <span className="text-sm opacity-75 mt-1">
+                          {new Date(event.startDate).getFullYear()}
+                        </span>
                       </div>
 
                       <div className="p-6 flex-1">
                         <div className="flex justify-between items-start mb-2">
                           <h3 className="text-xl font-bold text-gray-900">{event.title}</h3>
-                          {user && <button className="btn-outline text-sm py-1.5 px-3">RSVP</button>}
+                          {user && (
+                            <button
+                              className="btn-outline text-sm py-1.5 px-3"
+                              onClick={async () => {
+                                try {
+                                  await eventAPI.rsvpToEvent(event._id, 'going');
+                                  toast.success('RSVP updated');
+                                  queryClient.invalidateQueries(['communityEvents', id]);
+                                } catch (error) {
+                                  toast.error(error.message || 'Unable to RSVP');
+                                }
+                              }}
+                            >
+                              RSVP
+                            </button>
+                          )}
                         </div>
 
                         <p className="text-gray-600 mb-4 line-clamp-2">{event.description}</p>
@@ -348,7 +417,10 @@ const CommunityDetail = () => {
                         <div className="flex flex-wrap gap-4 text-sm text-gray-500">
                           <div className="flex items-center">
                             <Clock className="h-4 w-4 mr-2 text-gray-400" />
-                            {new Date(event.startDate).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                            {new Date(event.startDate).toLocaleTimeString([], {
+                              hour: '2-digit',
+                              minute: '2-digit',
+                            })}
                           </div>
                           <div className="flex items-center">
                             <MapPin className="h-4 w-4 mr-2 text-gray-400" />
@@ -368,9 +440,28 @@ const CommunityDetail = () => {
                       <Calendar className="h-8 w-8 text-gray-400" />
                     </div>
                     <h3 className="text-lg font-bold text-gray-900 mb-2">No upcoming events</h3>
-                    <p className="text-gray-600">Check back later for new events or host one yourself!</p>
+                    <p className="text-gray-600">
+                      Check back later for new events or host one yourself!
+                    </p>
                   </div>
                 )}
+              </div>
+            )}
+            {activeTab === 'members' && (
+              <div className="bg-white rounded-2xl border border-gray-100 divide-y divide-gray-100">
+                {(membersData?.data?.members || []).map((member) => (
+                  <div key={member._id || member.user?._id} className="p-4 flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-full bg-primary-100 text-primary-700 flex items-center justify-center font-semibold">
+                      {member.user?.firstName?.[0] || '?'}
+                    </div>
+                    <div>
+                      <p className="font-medium text-gray-900">
+                        {member.user?.firstName} {member.user?.lastName}
+                      </p>
+                      <p className="text-xs text-gray-500 capitalize">{member.role || 'member'}</p>
+                    </div>
+                  </div>
+                ))}
               </div>
             )}
           </div>
@@ -396,7 +487,9 @@ const CommunityDetail = () => {
                 </div>
                 <div className="flex items-center justify-between text-sm">
                   <span className="text-gray-500">Category</span>
-                  <span className="font-medium text-gray-900">{community?.category || 'General'}</span>
+                  <span className="font-medium text-gray-900">
+                    {community?.category || 'General'}
+                  </span>
                 </div>
               </div>
             </div>
@@ -433,4 +526,3 @@ const CommunityDetail = () => {
 };
 
 export default CommunityDetail;
-

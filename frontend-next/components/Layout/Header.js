@@ -19,7 +19,7 @@ import api from '@/services/api';
 import toast from 'react-hot-toast';
 import NotificationModal from '../Notifications/Notificationdropdown';
 
-const Header = ({ toggleSidebar }) => {
+const Header = ({ toggleSidebar, isSidebarOpen }) => {
   const { user, token, logout } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
@@ -28,8 +28,37 @@ const Header = ({ toggleSidebar }) => {
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
+  const [isVisible, setIsVisible] = useState(true);
+  const [isAtTop, setIsAtTop] = useState(true);
+  const lastScrollY = useRef(0);
   const userMenuRef = useRef(null);
   const notificationRef = useRef(null);
+
+  // Scroll listener: hides on scroll downward, reappears on scroll up / top
+  useEffect(() => {
+    const handleScroll = () => {
+      const currentScrollY = window.scrollY;
+
+      if (currentScrollY <= 15) {
+        setIsAtTop(true);
+        setIsVisible(true);
+      } else {
+        setIsAtTop(false);
+        if (currentScrollY < lastScrollY.current) {
+          // Scrolling upwards
+          setIsVisible(true);
+        } else if (currentScrollY > lastScrollY.current && currentScrollY > 70) {
+          // Scrolling downwards past header height
+          setIsVisible(false);
+        }
+      }
+
+      lastScrollY.current = currentScrollY;
+    };
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
   // WebSocket connection for real-time notifications
   useEffect(() => {
@@ -114,15 +143,31 @@ const Header = ({ toggleSidebar }) => {
   };
 
   return (
-    <header className={`${isHomePage ? 'absolute' : 'sticky bg-white/80 backdrop-blur-md border-b border-gray-100'} top-0 z-50 w-full transition-all duration-300`}>
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <header
+      className={`fixed top-0 z-50 w-full transition-all duration-300 transform ${
+        isVisible || isSidebarOpen ? 'translate-y-0 opacity-100' : '-translate-y-full opacity-0 pointer-events-none'
+      } ${
+        isHomePage
+          ? isSidebarOpen
+            ? 'bg-black/60 backdrop-blur-md border-b border-white/10 shadow-sm'
+            : isAtTop
+            ? 'bg-transparent border-transparent'
+            : 'bg-black/40 backdrop-blur-md border-b border-white/10 shadow-sm'
+          : isSidebarOpen
+          ? 'bg-white/95 backdrop-blur-md border-b border-gray-100 shadow-sm'
+          : isAtTop
+          ? 'bg-transparent border-transparent'
+          : 'bg-white/90 backdrop-blur-md border-b border-gray-100 shadow-sm'
+      }`}
+    >
+      <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-12">
         <div className="flex justify-between items-center h-16">
           {/* Logo and Brand */}
           <div className="flex items-center">
             {user && (
               <button
                 onClick={toggleSidebar}
-                className="mr-4 p-2 rounded-lg text-gray-500 hover:bg-gray-100 hover:text-gray-700 transition-colors focus:outline-none focus:ring-2 focus:ring-primary-500/20"
+                className={`mr-4 p-2 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-primary-500/20 ${isHomePage ? "text-white hover:bg-white/10" : "text-gray-500 hover:bg-gray-100 hover:text-gray-700"}`}
               >
                 <Menu className="h-6 w-6" />
               </button>
@@ -130,25 +175,11 @@ const Header = ({ toggleSidebar }) => {
             <Link href="/" className="flex items-center space-x-3 group">
               {/* <img src={logo} alt="Gurukul Logo" className="w-10 h-10 rounded-full shadow-lg shadow-primary/20 group-hover:scale-105 transition-transform duration-200" /> */}
               <Image src={logo} alt="Gurukul Logo" width={36} height={36} className="w-10 h-10 rounded-full shadow-lg shadow-primary/20 group-hover:scale-105 transition-transform duration-200" />
-              <span className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-gray-900 to-gray-700 tracking-tight">Gurukul</span>
+              <span className={`text-2xl font-bold tracking-tight ${isHomePage ? "text-white drop-shadow-md" : "bg-clip-text text-transparent bg-gradient-to-r from-gray-900 to-gray-700"}`}>Gurukul</span>
             </Link>
           </div>
 
-          {/* Search Bar */}
-          <div className="hidden md:flex flex-1 max-w-md mx-8">
-            <form onSubmit={handleSearch} className="relative w-full group">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <Search className="h-4 w-4 text-gray-400 group-focus-within:text-primary-500 transition-colors" />
-              </div>
-              <input
-                type="text"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search for anything..."
-                className="block w-full pl-10 pr-4 py-2.5 border border-gray-400 rounded-lg leading-5 bg-gray-50/50 placeholder-gray-500 focus:outline-none focus:bg-white focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-all duration-200 ease-in-out"
-              />
-            </form>
-          </div>
+
 
           {/* Navigation and User Menu */}
           <div className="flex items-center space-x-2 sm:space-x-4">
@@ -157,26 +188,42 @@ const Header = ({ toggleSidebar }) => {
               <div className="flex items-center space-x-2 sm:space-x-4">
                 <Link
                   href="/courses"
-                  className="hidden sm:block text-gray-600 hover:text-black px-3 py-2 text-sm font-medium transition-colors hover:bg-gray-50 border border-transparent hover:border-gray-400 rounded-3xl"
+                  className={`hidden sm:block px-3 py-2 text-sm font-medium transition-colors rounded-3xl ${
+                    isHomePage
+                      ? "text-white/90 hover:text-white hover:bg-white/10"
+                      : "text-gray-700 hover:text-black hover:bg-gray-100"
+                  }`}
                 >
                   Courses
                 </Link>
                 <Link
                   href="/communities"
-                  className="hidden sm:block text-gray-600 hover:text-black px-3 py-2 text-sm font-medium transition-colors hover:bg-gray-50 border border-transparent hover:border-gray-400 rounded-3xl"
+                  className={`hidden sm:block px-3 py-2 text-sm font-medium transition-colors rounded-3xl ${
+                    isHomePage
+                      ? "text-white/90 hover:text-white hover:bg-white/10"
+                      : "text-gray-700 hover:text-black hover:bg-gray-100"
+                  }`}
                 >
                   Communities
                 </Link>
-                <div className="h-6 w-px bg-gray-200 hidden sm:block mx-2"></div>
+                <div
+                  className={`h-5 w-px hidden sm:block mx-1 ${
+                    isHomePage ? "bg-white/25" : "bg-gray-200"
+                  }`}
+                ></div>
                 <Link
                   href="/login"
-                  className="text-gray-700 hover:text-primary-600 px-4 py-2 rounded-xl text-sm font-medium transition-colors"
+                  className={`px-3 py-2 rounded-xl text-sm font-medium transition-colors ${
+                    isHomePage
+                      ? "text-white/90 hover:text-white hover:bg-white/10"
+                      : "text-gray-700 hover:text-primary-600 hover:bg-gray-50"
+                  }`}
                 >
                   Sign In
                 </Link>
                 <Link
                   href="/register"
-                  className="btn-primary rounded-xl px-5 py-2.5 text-sm font-semibold transition-all duration-200"
+                  className="bg-primary-600 hover:bg-primary-700 text-white rounded-xl px-5 py-2.5 text-sm font-semibold transition-all duration-200 shadow-sm hover:shadow-md active:scale-95 inline-flex items-center justify-center"
                 >
                   Get Started
                 </Link>
@@ -191,7 +238,7 @@ const Header = ({ toggleSidebar }) => {
                       setShowNotifications(!showNotifications);
                       setShowUserMenu(false); // Close user menu if open
                     }}
-                    className="p-2.5 text-gray-500 hover:text-primary-600 hover:bg-primary-50 rounded-xl transition-all duration-200 relative group"
+                    className={`p-2.5 rounded-xl transition-all duration-200 relative group ${isHomePage ? "text-white hover:bg-white/10" : "text-gray-500 hover:text-primary-600 hover:bg-primary-50"}`}
                   >
                     <Bell className="h-5 w-5" />
                     {unreadCount > 0 && (
@@ -216,7 +263,7 @@ const Header = ({ toggleSidebar }) => {
                       setShowUserMenu(!showUserMenu);
                       setShowNotifications(false); // Close notifications if open
                     }}
-                    className="flex items-center space-x-3 p-1.5 pr-3 rounded-xl hover:bg-gray-50 border border-transparent hover:border-gray-100 transition-all duration-200"
+                    className={`flex items-center space-x-3 p-1.5 pr-3 rounded-xl transition-all duration-200 ${isHomePage ? "text-white hover:bg-white/10" : "hover:bg-gray-50 border border-transparent hover:border-gray-100"}`}
                   >
                     {user.avatar ? (
                       <Image
@@ -231,7 +278,7 @@ const Header = ({ toggleSidebar }) => {
                         {user.firstName[0]}
                       </div>
                     )}
-                    <span className="hidden md:block text-sm font-medium text-gray-700">
+                    <span className={`hidden md:block text-sm font-medium ${isHomePage ? "text-white drop-shadow" : "text-gray-700"}`}>
                       {user.firstName}
                     </span>
                   </button>

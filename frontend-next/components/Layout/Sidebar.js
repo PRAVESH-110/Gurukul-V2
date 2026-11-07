@@ -2,7 +2,9 @@
 
 import React, { useRef, useEffect } from 'react';
 import Image from 'next/image';
+import logo from '@/assets/logo.png';
 import {
+  X,
   BarChart3,
   BookOpen,
   Calendar,
@@ -81,7 +83,7 @@ const Sidebar = ({ isOpen, onClose, width = 256, setWidth }) => {
     { path: '/analytics', icon: BarChart3, label: 'Analytics' },
   ];
 
-  const navItems = user?.role === 'creator' ? creatorNavItems : studentNavItems;
+  const navItems = user?.role === 'creator' || user?.role === 'admin' ? creatorNavItems : studentNavItems;
 
   useEffect(() => {
     if (isOpen) {
@@ -99,16 +101,54 @@ const Sidebar = ({ isOpen, onClose, width = 256, setWidth }) => {
       {/* Mobile Backdrop */}
       {isOpen && (
         <div
-          className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[60] top-16  pointer-events-auto"
+          className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[80] top-0 pointer-events-auto"
           onClick={onClose}
         />
       )}
       <div
         ref={sidebarRef}
-        className={`${isHomePage ? 'absolute' : 'sticky'} pointer-events-auto fixed left-0 top-16 h-[calc(100vh-4rem)] bg-white border-r border-gray-100 overflow-y-auto custom-scrollbar transition-transform duration-300 ease-in-out z-[70] ${isOpen ? 'translate-x-0' : '-translate-x-full'} `}
-        style={{ width: isOpen ? `${width}px ` : '0px' }}
+        className={`pointer-events-auto fixed left-0 top-0 h-screen z-[90] overflow-y-auto custom-scrollbar transition-transform duration-300 ease-in-out  ${
+          isOpen ? 'translate-x-0' : '-translate-x-full'
+        } ${
+          isHomePage
+            ? 'bg-neutral-900/85 backdrop-blur-xl border-r border-white/10 text-white shadow-2xl'
+            : 'bg-white/95 backdrop-blur-md border-r border-gray-100 text-gray-900 shadow-xl'
+        }`}
+        style={{ width: isOpen ? `${width}px` : '0px' }}
       >
-        <div className="px-4 py-6 relative h-full">
+        <div className="px-4 py-5 relative h-full flex flex-col justify-between">
+<div>
+          {/* Sidebar Top Header with Brand & Close Button */}
+          <div className={`flex items-center justify-between pb-5 mb-5 border-b ${
+            isHomePage ? 'border-white/10' : 'border-gray-100'
+          }`}>
+            <Link href="/" onClick={onClose} className="flex items-center space-x-3 group">
+              <Image
+                src={logo}
+                alt="Gurukul Logo"
+                width={36}
+                height={36}
+                className="w-9 h-9 rounded-full shadow-md"
+              />
+              <span className={`text-xl font-bold tracking-tight ${
+                isHomePage ? 'text-white' : 'text-gray-900'
+              }`}>
+                Gurukul
+              </span>
+            </Link>
+            <button
+              onClick={onClose}
+              className={`p-1.5 rounded-lg transition-colors ${
+                isHomePage
+                  ? 'text-gray-400 hover:text-white hover:bg-white/10'
+                  : 'text-gray-400 hover:text-gray-700 hover:bg-gray-100'
+              }`}
+              aria-label="Close Sidebar"
+            >
+              <X className="h-5 w-5" />
+            </button>
+          </div>
+
           <nav className="space-y-1">
             {navItems.map((item) => {
               const Icon = item.icon;
@@ -125,12 +165,25 @@ const Sidebar = ({ isOpen, onClose, width = 256, setWidth }) => {
                   }}
                   key={item.path}
                   href={item.path}
-                  className={`flex items-center space-x-3 px-3.5 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 group ${active
-                    ? 'bg-primary-50 text-primary-700 shadow-sm ring-1 ring-primary-100'
-                    : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
-                    }`}
+                  className={`flex items-center space-x-3 px-3.5 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 group ${
+                    active
+                      ? isHomePage
+                        ? 'bg-white text-gray-950 font-semibold shadow-md'
+                        : 'bg-primary-50 text-primary-700 shadow-sm ring-1 ring-primary-100'
+                      : isHomePage
+                      ? 'text-white hover:bg-white hover:text-black font-medium'
+                      : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+                  }`}
                 >
-                  <Icon className={`h-5 w-5 transition-colors ${active ? 'text-primary-600' : 'text-gray-400 group-hover:text-gray-600'}`} />
+                  <Icon className={`h-5 w-5 transition-colors ${
+                    active
+                      ? isHomePage
+                        ? 'text-gray-950'
+                        : 'text-primary-600'
+                      : isHomePage
+                      ? 'text-white group-hover:text-black'
+                      : 'text-gray-400 group-hover:text-gray-600'
+                  }`} />
                   <span>{item.label}</span>
                 </Link>
               );
@@ -139,37 +192,69 @@ const Sidebar = ({ isOpen, onClose, width = 256, setWidth }) => {
 
           {/* Quick Actions */}
           <div className="mt-8">
-            <h3 className="px-4 text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">
+            <h3 className={`px-4 text-xs font-semibold ${isHomePage ? "text-gray-200" : "text-gray-400"} uppercase tracking-wider mb-2`}>
               Quick Actions
             </h3>
             <div className="space-y-1">
               <Link
                 href="/search"
-                className="flex items-center space-x-3 px-3.5 py-2.5 rounded-xl text-sm font-medium text-gray-600 hover:bg-gray-50 hover:text-gray-900 transition-colors group"
+                className={`flex items-center space-x-3 px-3.5 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 group ${
+                  isHomePage
+                    ? 'text-white hover:bg-white hover:text-black'
+                    : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+                }`}
               >
-                <Search className="h-4.5 w-4.5 text-gray-400 group-hover:text-gray-600" />
+                <Search className={`h-4.5 w-4.5 transition-colors ${
+                  isHomePage
+                    ? 'text-white group-hover:text-black'
+                    : 'text-gray-400 group-hover:text-gray-600'
+                }`} />
                 <span>Search</span>
               </Link>
               <Link
                 href="/profile"
-                className="flex items-center space-x-3 px-3.5 py-2.5 rounded-xl text-sm font-medium text-gray-600 hover:bg-gray-50 hover:text-gray-900 transition-colors group"
+                className={`flex items-center space-x-3 px-3.5 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 group ${
+                  isHomePage
+                    ? 'text-white hover:bg-white hover:text-black'
+                    : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+                }`}
               >
-                <User className="h-4.5 w-4.5 text-gray-400 group-hover:text-gray-600" />
+                <User className={`h-4.5 w-4.5 transition-colors ${
+                  isHomePage
+                    ? 'text-white group-hover:text-black'
+                    : 'text-gray-400 group-hover:text-gray-600'
+                }`} />
                 <span>Profile</span>
               </Link>
               <Link
                 href="/settings"
-                className="flex items-center space-x-3 px-3.5 py-2.5 rounded-xl text-sm font-medium text-gray-600 hover:bg-gray-50 hover:text-gray-900 transition-colors group"
+                className={`flex items-center space-x-3 px-3.5 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 group ${
+                  isHomePage
+                    ? 'text-white hover:bg-white hover:text-black'
+                    : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+                }`}
               >
-                <Settings className="h-4.5 w-4.5 text-gray-400 group-hover:text-gray-600" />
+                <Settings className={`h-4.5 w-4.5 transition-colors ${
+                  isHomePage
+                    ? 'text-white group-hover:text-black'
+                    : 'text-gray-400 group-hover:text-gray-600'
+                }`} />
                 <span>Settings</span>
               </Link>
             </div>
           </div>
 
+          </div>
+
           {/* User Info Card */}
           <div className="mt-auto pt-8">
-            <div className="p-3 bg-gray-50/80 rounded-2xl border border-gray-100">
+            <div
+              className={`p-3 rounded-2xl border ${
+                isHomePage
+                  ? 'bg-white/10 border-white/15 backdrop-blur-md'
+                  : 'bg-gray-50/80 border-gray-100'
+              }`}
+            >
               <div className="flex items-center space-x-3">
                 {user?.avatar ? (
                   <div className="relative h-10 w-10">
@@ -186,10 +271,10 @@ const Sidebar = ({ isOpen, onClose, width = 256, setWidth }) => {
                   </div>
                 )}
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-semibold text-gray-900 truncate">
+                  <p className={`text-sm font-semibold truncate ${isHomePage ? 'text-white' : 'text-gray-900'}`}>
                     {user?.firstName} {user?.lastName}
                   </p>
-                  <p className="text-xs text-gray-500 capitalize truncate">{user?.role}</p>
+                  <p className={`text-xs capitalize truncate ${isHomePage ? 'text-gray-300' : 'text-gray-500'}`}>{user?.role}</p>
                 </div>
               </div>
             </div>

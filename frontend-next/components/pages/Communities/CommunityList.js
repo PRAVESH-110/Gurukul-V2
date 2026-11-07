@@ -6,6 +6,7 @@ import { useQuery } from '@tanstack/react-query';
 import { communityAPI } from '@/services/api';
 import { Search, Users, Lock, Globe, Plus, Filter, ArrowRight, MessageSquare } from 'lucide-react';
 import LoadingSpinner from '@/components/UI/LoadingSpinner';
+import { getImageUrl } from '@/utils/imageUtils';
 import { useAuth } from '@/context/AuthContext';
 
 const CommunityList = () => {
@@ -74,7 +75,7 @@ const CommunityList = () => {
     <div className="min-h-screen bg-gray-50/50 font-sans">
       {/* Header Section */}
       <div className="bg-white border-b border-gray-200">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 lg:py-16">
+        <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-12 py-12 lg:py-16">
           <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
             <div className="max-w-3xl">
               <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-6 tracking-tight">
@@ -98,7 +99,7 @@ const CommunityList = () => {
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-12 py-8">
         {/* Search and Filters */}
         <div className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 mb-10 sticky top-4 z-30 backdrop-blur-xl bg-white/90 supports-[backdrop-filter]:bg-white/60">
           <div className="flex flex-col md:flex-row gap-4">
@@ -164,9 +165,19 @@ const CommunityList = () => {
                 href={`/communities/${community._id}`}
                 className="group bg-white rounded-2xl border border-gray-100 overflow-hidden hover:shadow-xl hover:border-primary-100 transition-all duration-300 hover:-translate-y-1 flex flex-col h-full"
               >
-                <div className="h-32 bg-gradient-to-r from-primary-500 to-blue-600 relative">
+                <div className="h-32 bg-gradient-to-r from-primary-500 to-blue-600 relative overflow-hidden">
+                  {community.coverImage ? (
+                    <img
+                      src={getImageUrl(community.coverImage)}
+                      alt={community.name}
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                      onError={(e) => {
+                        e.target.style.display = 'none';
+                      }}
+                    />
+                  ) : null}
                   <div className="absolute inset-0 bg-black/10"></div>
-                  <div className="absolute top-4 right-4">
+                  <div className="absolute top-4 right-4 z-10">
                     {community.type === 'private' ? (
                       <span className="inline-flex items-center px-3 py-1 rounded-full bg-black/20 backdrop-blur text-xs font-medium text-white border border-white/20">
                         <Lock className="h-3 w-3 mr-1" />
@@ -181,18 +192,18 @@ const CommunityList = () => {
                   </div>
                 </div>
 
-                <div className="p-6 pt-0 flex-grow flex flex-col">
+                <div className="p-6 pt-0 flex-grow flex flex-col relative z-20">
                   <div className="flex justify-between items-start mb-4">
-                    <div className="-mt-10">
+                    <div className="-mt-12 relative z-20">
                       {community.creator?.avatar ? (
                         <img
-                          src={community.creator.avatar}
+                          src={getImageUrl(community.creator.avatar)}
                           alt={`${community.creator.firstName} ${community.creator.lastName}`}
-                          className="w-20 h-20 rounded-2xl border-4 border-white shadow-md object-cover bg-white"
+                          className="w-20 h-20 rounded-2xl border-4 border-white shadow-lg object-cover bg-white ring-1 ring-black/5"
                         />
                       ) : (
-                        <div className="w-20 h-20 rounded-2xl border-4 border-white shadow-md bg-white flex items-center justify-center">
-                          <div className="w-full h-full bg-primary-100 rounded-xl flex items-center justify-center text-primary-600 font-bold text-2xl">
+                        <div className="w-20 h-20 rounded-2xl border-4 border-white shadow-lg bg-white flex items-center justify-center ring-1 ring-black/5">
+                          <div className="w-full h-full bg-primary-100 rounded-xl flex items-center justify-center text-primary-600 font-bold text-2xl shadow-inner">
                             {community.name?.[0] || 'C'}
                           </div>
                         </div>

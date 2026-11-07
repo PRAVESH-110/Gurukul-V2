@@ -9,7 +9,7 @@ import toast from 'react-hot-toast';
 
 const EditCommunity = () => {
   const params = useParams();
-  const communityId = params?.communityId;
+  const communityId = params?.id;
   const router = useRouter();
   const queryClient = useQueryClient();
 

@@ -14,13 +14,13 @@ const router = express.Router();
 // @access  Private (Student or Admin only)
 const getStudentDashboard = async (req, res, next) => {
   try {
-    // Allow admin to view any student's dashboard or their own
-    const userId = req.query.userId ? req.query.userId : req.user._id;
+    // Only admins may inspect another user's dashboard.
+    const userId = req.user.role === 'admin' && req.query.userId ? req.query.userId : req.user._id;
 
     // Get user's enrolled courses with progress
     const enrolledCourses = await Course.find({
       'enrolledStudents.user': userId,
-      isPublished: true
+      isPublished: true,
     })
       .populate('creator', 'firstName lastName avatar')
       .select('title description thumbnail creator enrollmentCount rating videoCount duration');
@@ -30,14 +30,14 @@ const getStudentDashboard = async (req, res, next) => {
       enrolledCourses.map(async (course) => {
         const totalVideos = await Video.countDocuments({
           course: course._id,
-          isActive: true
+          isActive: true,
         });
 
         const watchedVideos = await Video.countDocuments({
           course: course._id,
           isActive: true,
           'watchedBy.student': userId,
-          'watchedBy.completed': true
+          'watchedBy.completed': true,
         });
 
         const progress = totalVideos > 0 ? Math.round((watchedVideos / totalVideos) * 100) : 0;
@@ -46,25 +46,25 @@ const getStudentDashboard = async (req, res, next) => {
           ...course.toObject(),
           progress,
           totalVideos,
-          watchedVideos
+          watchedVideos,
         };
-      })
+      }),
     );
 
     // Get user's joined communities
     const joinedCommunities = await Community.find({
       'members.user': userId,
-      isActive: true
+      isActive: true,
     })
       .populate('creator', 'firstName lastName avatar')
       .select('name description type coverImage creator memberCount');
 
     // Get upcoming events from joined communities
-    const communityIds = joinedCommunities.map(c => c._id);
+    const communityIds = joinedCommunities.map((c) => c._id);
     const upcomingEvents = await Event.find({
       community: { $in: communityIds },
       startDate: { $gte: new Date() },
-      isActive: true
+      isActive: true,
     })
       .populate('community', 'name')
       .populate('creator', 'firstName lastName avatar')
@@ -74,7 +74,7 @@ const getStudentDashboard = async (req, res, next) => {
     // Get recent posts from joined communities
     const recentPosts = await Post.find({
       community: { $in: communityIds },
-      isActive: true
+      isActive: true,
     })
       .populate('author', 'firstName lastName avatar')
       .populate('community', 'name')
@@ -83,11 +83,11 @@ const getStudentDashboard = async (req, res, next) => {
 
     // Get learning statistics
     const totalCoursesEnrolled = enrolledCourses.length;
-    const completedCourses = coursesWithProgress.filter(c => c.progress === 100).length;
+    const completedCourses = coursesWithProgress.filter((c) => c.progress === 100).length;
     const totalCommunitiesJoined = joinedCommunities.length;
     const totalVideosWatched = await Video.countDocuments({
       'watchedBy.student': userId,
-      'watchedBy.completed': true
+      'watchedBy.completed': true,
     });
 
     res.status(200).json({
@@ -99,19 +99,19 @@ const getStudentDashboard = async (req, res, next) => {
           lastName: req.user.lastName,
           email: req.user.email,
           avatar: req.user.avatar,
-          role: req.user.role
+          role: req.user.role,
         },
         stats: {
           totalCoursesEnrolled,
           completedCourses,
           totalCommunitiesJoined,
-          totalVideosWatched
+          totalVideosWatched,
         },
         enrolledCourses: coursesWithProgress,
         joinedCommunities,
         upcomingEvents,
-        recentPosts
-      }
+        recentPosts,
+      },
     });
   } catch (error) {
     next(error);
@@ -132,20 +132,27 @@ const getCreatorDashboard = async (req, res, next) => {
       .sort({ createdAt: -1 });
 
     // Get creator's communities with member counts
-    const createdCommunities = await Community.find({ creator: userId, isActive: true })
-      .sort({ createdAt: -1 });
+    const createdCommunities = await Community.find({ creator: userId, isActive: true }).sort({
+      createdAt: -1,
+    });
 
     // Calculate member counts
-    const communitiesWithCounts = createdCommunities.map(community => ({
+    const communitiesWithCounts = createdCommunities.map((community) => ({
       ...community.toObject(),
-      memberCount: community.members ? community.members.length : 0
+      memberCount: community.members ? community.members.length : 0,
     }));
 
     // Get total enrollments across all courses
-    const totalEnrollments = createdCourses.reduce((sum, course) => sum + course.enrollmentCount, 0);
+    const totalEnrollments = createdCourses.reduce(
+      (sum, course) => sum + course.enrollmentCount,
+      0,
+    );
 
     // Get total community members
-    const totalCommunityMembers = communitiesWithCounts.reduce((sum, community) => sum + (community.memberCount || 0), 0);
+    const totalCommunityMembers = communitiesWithCounts.reduce(
+      (sum, community) => sum + (community.memberCount || 0),
+      0,
+    );
 
     // Get recent enrollments (last 30 days)
     const thirtyDaysAgo = new Date();
@@ -157,10 +164,10 @@ const getCreatorDashboard = async (req, res, next) => {
       {
         $lookup: {
           from: 'users',
-          localField: 'enrolledStudents',
+          localField: 'enrolledStudents.user',
           foreignField: '_id',
-          as: 'student'
-        }
+          as: 'student',
+        },
       },
       { $unwind: '$student' },
       {
@@ -168,19 +175,19 @@ const getCreatorDashboard = async (req, res, next) => {
           courseTitle: '$title',
           studentName: { $concat: ['$student.firstName', ' ', '$student.lastName'] },
           studentAvatar: '$student.avatar',
-          enrolledAt: '$updatedAt'
-        }
+          enrolledAt: '$updatedAt',
+        },
       },
       { $sort: { enrolledAt: -1 } },
-      { $limit: 10 }
+      { $limit: 10 },
     ]);
 
     // Get upcoming events from creator's communities
-    const communityIds = communitiesWithCounts.map(c => c._id);
+    const communityIds = communitiesWithCounts.map((c) => c._id);
     const upcomingEvents = await Event.find({
       creator: userId,
       startDate: { $gte: new Date() },
-      isActive: true
+      isActive: true,
     })
       .populate('community', 'name')
       .sort({ startDate: 1 })
@@ -189,7 +196,7 @@ const getCreatorDashboard = async (req, res, next) => {
     // Get recent posts from creator's communities
     const recentPosts = await Post.find({
       community: { $in: communityIds },
-      isActive: true
+      isActive: true,
     })
       .populate('author', 'firstName lastName avatar')
       .populate('community', 'name')
@@ -198,27 +205,31 @@ const getCreatorDashboard = async (req, res, next) => {
 
     // Calculate revenue (if courses have prices)
     const totalRevenue = createdCourses.reduce((sum, course) => {
-      return sum + (course.price * course.enrollmentCount);
+      return sum + course.price * course.enrollmentCount;
     }, 0);
 
     // Calculate average rating across all courses
-    const coursesWithRatings = createdCourses.filter(course => course.rating && course.rating.average > 0);
-    const averageRating = coursesWithRatings.length > 0
-      ? coursesWithRatings.reduce((sum, course) => sum + (course.rating.average || 0), 0) / coursesWithRatings.length
-      : 0;
+    const coursesWithRatings = createdCourses.filter(
+      (course) => course.rating && course.rating.average > 0,
+    );
+    const averageRating =
+      coursesWithRatings.length > 0
+        ? coursesWithRatings.reduce((sum, course) => sum + (course.rating.average || 0), 0) /
+          coursesWithRatings.length
+        : 0;
 
     // Get course analytics
     const courseAnalytics = await Promise.all(
       createdCourses.map(async (course) => {
         const totalVideos = await Video.countDocuments({
           course: course._id,
-          isActive: true
+          isActive: true,
         });
 
         const totalWatches = await Video.aggregate([
           { $match: { course: course._id, isActive: true } },
           { $unwind: '$watchedBy' },
-          { $group: { _id: null, count: { $sum: 1 } } }
+          { $group: { _id: null, count: { $sum: 1 } } },
         ]);
 
         return {
@@ -228,9 +239,9 @@ const getCreatorDashboard = async (req, res, next) => {
           totalVideos,
           totalWatches: totalWatches[0]?.count || 0,
           revenue: course.price * course.enrollmentCount,
-          rating: course.rating.average || 0
+          rating: course.rating.average || 0,
         };
-      })
+      }),
     );
 
     res.status(200).json({
@@ -242,7 +253,7 @@ const getCreatorDashboard = async (req, res, next) => {
           lastName: req.user.lastName,
           email: req.user.email,
           avatar: req.user.avatar,
-          role: req.user.role
+          role: req.user.role,
         },
         stats: {
           totalCourses: createdCourses.length,
@@ -250,18 +261,18 @@ const getCreatorDashboard = async (req, res, next) => {
           totalEnrollments,
           totalCommunityMembers,
           totalRevenue,
-          averageRating
+          averageRating,
         },
-        createdCourses: createdCourses.map(course => ({
+        createdCourses: createdCourses.map((course) => ({
           ...course.toObject(),
-          rating: course.rating.average || 0
+          rating: course.rating.average || 0,
         })),
         createdCommunities: communitiesWithCounts,
         recentEnrollments,
         upcomingEvents,
         recentPosts,
-        courseAnalytics
-      }
+        courseAnalytics,
+      },
     });
   } catch (error) {
     next(error);
@@ -287,11 +298,12 @@ const getAnalytics = async (req, res, next) => {
     if (timeRange === '1y') days = 365;
 
     startDate.setDate(now.getDate() - days);
-    prevStartDate.setDate(now.getDate() - (days * 2));
+    prevStartDate.setDate(now.getDate() - days * 2);
 
     // Get all courses by creator
-    const courses = await Course.find({ creator: userId })
-      .select('title category thumbnail price enrollmentCount rating stats enrolledStudents reviews isPublished');
+    const courses = await Course.find({ creator: userId }).select(
+      'title category thumbnail price enrollmentCount rating stats enrolledStudents reviews isPublished',
+    );
 
     // 1. Revenue Metrics
     let totalRevenue = 0;
@@ -305,14 +317,14 @@ const getAnalytics = async (req, res, next) => {
     // 3. Course Performance List
     const coursePerformance = [];
 
-    courses.forEach(course => {
+    courses.forEach((course) => {
       // Revenue
       const courseRevenue = (course.price || 0) * (course.enrollmentCount || 0);
       totalRevenue += courseRevenue;
 
       // Process enrollments for growth and student counts
       if (course.enrolledStudents) {
-        course.enrolledStudents.forEach(enrollment => {
+        course.enrolledStudents.forEach((enrollment) => {
           const enrollDate = new Date(enrollment.enrolledAt);
           const studentId = enrollment.user ? enrollment.user.toString() : null;
 
@@ -320,13 +332,13 @@ const getAnalytics = async (req, res, next) => {
 
           // Current Period
           if (enrollDate >= startDate && enrollDate <= now) {
-            currentPeriodRevenue += (course.price || 0);
+            currentPeriodRevenue += course.price || 0;
             if (studentId) newStudentIds.add(studentId);
           }
 
           // Previous Period
           if (enrollDate >= prevStartDate && enrollDate < startDate) {
-            prevPeriodRevenue += (course.price || 0);
+            prevPeriodRevenue += course.price || 0;
           }
         });
       }
@@ -339,18 +351,19 @@ const getAnalytics = async (req, res, next) => {
         enrollmentCount: course.enrollmentCount || 0,
         revenue: courseRevenue,
         rating: course.rating?.average || 0,
-        completionRate: course.stats?.completionRate || 0
+        completionRate: course.stats?.completionRate || 0,
       });
     });
 
     // Revenue Growth
-    const revenueGrowth = prevPeriodRevenue > 0
-      ? Math.round(((currentPeriodRevenue - prevPeriodRevenue) / prevPeriodRevenue) * 100)
-      : 100;
+    const revenueGrowth =
+      prevPeriodRevenue > 0
+        ? Math.round(((currentPeriodRevenue - prevPeriodRevenue) / prevPeriodRevenue) * 100)
+        : 100;
 
     // 4. Views Metrics
     // Get all videos for these courses
-    const courseIds = courses.map(c => c._id);
+    const courseIds = courses.map((c) => c._id);
     const videos = await Video.find({ course: { $in: courseIds } }).select('views watchedBy title');
 
     const totalViews = videos.reduce((sum, video) => sum + (video.views || 0), 0);
@@ -358,16 +371,16 @@ const getAnalytics = async (req, res, next) => {
 
     // 5. Rating Metrics
     const totalRatingSum = courses.reduce((sum, c) => sum + (c.rating?.average || 0), 0);
-    const avgRating = courses.length > 0 ? (totalRatingSum / courses.length) : 0;
+    const avgRating = courses.length > 0 ? totalRatingSum / courses.length : 0;
     const totalReviews = courses.reduce((sum, c) => sum + (c.rating?.count || 0), 0);
 
     // 6. Top Content (Videos by views)
     const topContent = videos
       .sort((a, b) => b.views - a.views)
       .slice(0, 5)
-      .map(v => ({
+      .map((v) => ({
         title: v.title,
-        views: v.views
+        views: v.views,
       }));
 
     // 7. Engagement (Mocked or calculated)
@@ -375,16 +388,17 @@ const getAnalytics = async (req, res, next) => {
     let totalWatchTimeSeconds = 0;
     let totalWatches = 0;
 
-    videos.forEach(video => {
+    videos.forEach((video) => {
       if (video.watchedBy) {
-        video.watchedBy.forEach(watch => {
-          totalWatchTimeSeconds += (watch.watchTime || 0);
+        video.watchedBy.forEach((watch) => {
+          totalWatchTimeSeconds += watch.watchTime || 0;
           totalWatches++;
         });
       }
     });
 
-    const avgWatchTimeMinutes = totalWatches > 0 ? Math.round((totalWatchTimeSeconds / totalWatches) / 60) : 0;
+    const avgWatchTimeMinutes =
+      totalWatches > 0 ? Math.round(totalWatchTimeSeconds / totalWatches / 60) : 0;
 
     // Get posts count
     const discussionPosts = await Post.countDocuments({
@@ -396,42 +410,41 @@ const getAnalytics = async (req, res, next) => {
 
     // We need communities to get posts
     const communities = await Community.find({ creator: userId }).select('_id');
-    const communityIds = communities.map(c => c._id);
+    const communityIds = communities.map((c) => c._id);
     const totalPosts = await Post.countDocuments({ community: { $in: communityIds } });
-
 
     res.status(200).json({
       success: true,
       analytics: {
         revenue: {
           total: totalRevenue,
-          growth: revenueGrowth
+          growth: revenueGrowth,
         },
         students: {
           total: allStudentIds.size,
-          new: newStudentIds.size
+          new: newStudentIds.size,
         },
         views: {
           total: totalViews,
-          avgPerCourse: avgViewsPerCourse
+          avgPerCourse: avgViewsPerCourse,
         },
         rating: {
           average: avgRating,
-          totalReviews: totalReviews
+          totalReviews: totalReviews,
         },
         courses: coursePerformance,
         topContent: topContent,
         engagement: {
           avgWatchTime: `${avgWatchTimeMinutes}m`,
           discussionPosts: totalPosts,
-          questions: 0 // Placeholder
+          questions: 0, // Placeholder
         },
         revenueBreakdown: {
           courses: totalRevenue,
           subscriptions: 0,
-          other: 0
-        }
-      }
+          other: 0,
+        },
+      },
     });
   } catch (error) {
     next(error);
