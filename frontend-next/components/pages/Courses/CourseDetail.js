@@ -51,8 +51,9 @@ const CourseDetail = () => {
     onSuccess: (response) => {
       const message = response?.data?.message || 'Successfully enrolled in course!';
       toast.success(message);
-      queryClient.invalidateQueries(['course', id]);
-      queryClient.invalidateQueries(['myCourses', user?._id]);
+      queryClient.invalidateQueries({ queryKey: ['course', id] });
+      queryClient.invalidateQueries({ queryKey: ['myCourses', user?._id] });
+      queryClient.invalidateQueries({ queryKey: ['courses'] });
       setIsEnrolling(false);
     },
     onError: (error) => {
@@ -66,8 +67,9 @@ const CourseDetail = () => {
     onSuccess: (response) => {
       const message = response?.data?.message || 'Successfully unenrolled from course!';
       toast.success(message);
-      queryClient.invalidateQueries(['course', id]);
-      queryClient.invalidateQueries(['myCourses', user?._id]);
+      queryClient.invalidateQueries({ queryKey: ['course', id] });
+      queryClient.invalidateQueries({ queryKey: ['myCourses', user?._id] });
+      queryClient.invalidateQueries({ queryKey: ['courses'] });
       setIsEnrolling(false);
     },
     onError: (error) => {

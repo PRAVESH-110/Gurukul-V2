@@ -1,7 +1,8 @@
 const express = require('express');
-const User = require('../models/User');
+const mongoose = require('mongoose');
 const Community = require('../models/Community');
 const Course = require('../models/Course');
+const Enrollment = require('../models/Enrollment');
 const Video = require('../models/Video');
 const Event = require('../models/Event');
 const Post = require('../models/Post');
@@ -17,39 +18,65 @@ const getStudentDashboard = async (req, res, next) => {
     // Only admins may inspect another user's dashboard.
     const userId = req.user.role === 'admin' && req.query.userId ? req.query.userId : req.user._id;
 
-    // Get user's enrolled courses with progress
-    const enrolledCourses = await Course.find({
-      'enrolledStudents.user': userId,
-      isPublished: true,
-    })
+    // Get user's enrolled course IDs from Enrollment collection with legacy fallback
+    const userEnrollments = await Enrollment.find({ user: userId }).select('course').lean();
+    let enrolledCourseIds = userEnrollments.map((e) => e.course);
+
+    let enrolledCoursesQuery = { _id: { $in: enrolledCourseIds }, isPublished: true };
+    if (enrolledCourseIds.length === 0) {
+      enrolledCoursesQuery = { 'enrolledStudents.user': userId, isPublished: true };
+    }
+
+    const enrolledCourses = await Course.find(enrolledCoursesQuery)
       .populate('creator', 'firstName lastName avatar')
-      .select('title description thumbnail creator enrollmentCount rating videoCount duration');
+      .select('title description thumbnail creator enrollmentCount rating videoCount duration')
+      .lean();
 
-    // Calculate progress for each course
-    const coursesWithProgress = await Promise.all(
-      enrolledCourses.map(async (course) => {
-        const totalVideos = await Video.countDocuments({
-          course: course._id,
-          isActive: true,
-        });
+    enrolledCourseIds = enrolledCourses.map((c) => c._id);
+    const userObjectId = new mongoose.Types.ObjectId(userId.toString());
 
-        const watchedVideos = await Video.countDocuments({
-          course: course._id,
-          isActive: true,
-          'watchedBy.student': userId,
-          'watchedBy.completed': true,
-        });
+    // Batch aggregate total videos and watched videos across all enrolled courses (O(1) instead of N queries)
+    const [totalVideosAgg, watchedVideosAgg] = await Promise.all([
+      Video.aggregate([
+        { $match: { course: { $in: enrolledCourseIds }, isActive: true } },
+        { $group: { _id: '$course', total: { $sum: 1 } } },
+      ]),
+      Video.aggregate([
+        {
+          $match: {
+            course: { $in: enrolledCourseIds },
+            isActive: true,
+            watchedBy: {
+              $elemMatch: {
+                student: userObjectId,
+                completed: true,
+              },
+            },
+          },
+        },
+        { $group: { _id: '$course', watched: { $sum: 1 } } },
+      ]),
+    ]);
 
-        const progress = totalVideos > 0 ? Math.round((watchedVideos / totalVideos) * 100) : 0;
-
-        return {
-          ...course.toObject(),
-          progress,
-          totalVideos,
-          watchedVideos,
-        };
-      }),
+    const totalVideoMap = new Map(totalVideosAgg.map((item) => [item._id.toString(), item.total]));
+    const watchedVideoMap = new Map(
+      watchedVideosAgg.map((item) => [item._id.toString(), item.watched]),
     );
+
+    // Calculate progress for each course using in-memory maps
+    const coursesWithProgress = enrolledCourses.map((course) => {
+      const courseIdStr = course._id.toString();
+      const totalVideos = totalVideoMap.get(courseIdStr) || 0;
+      const watchedVideos = watchedVideoMap.get(courseIdStr) || 0;
+      const progress = totalVideos > 0 ? Math.round((watchedVideos / totalVideos) * 100) : 0;
+
+      return {
+        ...course,
+        progress,
+        totalVideos,
+        watchedVideos,
+      };
+    });
 
     // Get user's joined communities
     const joinedCommunities = await Community.find({
@@ -218,31 +245,42 @@ const getCreatorDashboard = async (req, res, next) => {
           coursesWithRatings.length
         : 0;
 
-    // Get course analytics
-    const courseAnalytics = await Promise.all(
-      createdCourses.map(async (course) => {
-        const totalVideos = await Video.countDocuments({
-          course: course._id,
-          isActive: true,
-        });
+    // Get course analytics using batched aggregations (O(1) instead of 2N queries)
+    const createdCourseIds = createdCourses.map((c) => c._id);
+    const [creatorVideoCounts, creatorVideoWatches] = await Promise.all([
+      Video.aggregate([
+        { $match: { course: { $in: createdCourseIds }, isActive: true } },
+        { $group: { _id: '$course', totalVideos: { $sum: 1 } } },
+      ]),
+      Video.aggregate([
+        { $match: { course: { $in: createdCourseIds }, isActive: true } },
+        { $unwind: '$watchedBy' },
+        { $group: { _id: '$course', totalWatches: { $sum: 1 } } },
+      ]),
+    ]);
 
-        const totalWatches = await Video.aggregate([
-          { $match: { course: course._id, isActive: true } },
-          { $unwind: '$watchedBy' },
-          { $group: { _id: null, count: { $sum: 1 } } },
-        ]);
-
-        return {
-          courseId: course._id,
-          title: course.title,
-          enrollments: course.enrollmentCount,
-          totalVideos,
-          totalWatches: totalWatches[0]?.count || 0,
-          revenue: course.price * course.enrollmentCount,
-          rating: course.rating.average || 0,
-        };
-      }),
+    const videoCountLookup = new Map(
+      creatorVideoCounts.map((v) => [v._id.toString(), v.totalVideos]),
     );
+    const videoWatchesLookup = new Map(
+      creatorVideoWatches.map((w) => [w._id.toString(), w.totalWatches]),
+    );
+
+    const courseAnalytics = createdCourses.map((course) => {
+      const courseIdStr = course._id.toString();
+      const totalVideos = videoCountLookup.get(courseIdStr) || 0;
+      const totalWatches = videoWatchesLookup.get(courseIdStr) || 0;
+
+      return {
+        courseId: course._id,
+        title: course.title,
+        enrollments: course.enrollmentCount,
+        totalVideos,
+        totalWatches,
+        revenue: course.price * course.enrollmentCount,
+        rating: course.rating?.average || 0,
+      };
+    });
 
     res.status(200).json({
       success: true,
@@ -399,14 +437,6 @@ const getAnalytics = async (req, res, next) => {
 
     const avgWatchTimeMinutes =
       totalWatches > 0 ? Math.round(totalWatchTimeSeconds / totalWatches / 60) : 0;
-
-    // Get posts count
-    const discussionPosts = await Post.countDocuments({
-      // Assuming posts are linked to communities which are linked to creator
-      // For now, simple query if posts have creator field or we need to find communities first
-      // Let's try finding posts by author (creator) or in their communities
-      // Simplified: just return 0 or implement properly if Community model is linked
-    });
 
     // We need communities to get posts
     const communities = await Community.find({ creator: userId }).select('_id');

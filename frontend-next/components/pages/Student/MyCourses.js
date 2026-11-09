@@ -28,8 +28,7 @@ const MyCourses = () => {
       return result;
     },
     enabled: !!user,
-    staleTime: 0, // Always fetch fresh data
-    cacheTime: 0, // Don't cache
+    staleTime: 2 * 60 * 1000, // Reuse cached data for 2 minutes before background refetch
   });
 
   if (isLoading) {

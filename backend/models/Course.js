@@ -266,18 +266,19 @@ const courseSchema = new mongoose.Schema(
 
 // Indexes for performance
 courseSchema.index({ creator: 1 });
+courseSchema.index({ isPublished: 1, createdAt: -1 });
+courseSchema.index({ isPublished: 1, category: 1 });
+courseSchema.index({ isPublished: 1, enrollmentCount: -1 });
+courseSchema.index({ isPublished: 1, 'rating.average': -1 });
 courseSchema.index({ category: 1, level: 1 });
-courseSchema.index({ isPublished: 1 });
 courseSchema.index({ status: 1 });
 courseSchema.index({ 'enrolledStudents.user': 1 });
-courseSchema.index({ title: 'text', description: 'text', tags: 'text' });
 
-// Text index for search
+// Text index for search (consolidated single text index)
 courseSchema.index({
   title: 'text',
   subtitle: 'text',
   description: 'text',
-  'instructors.name': 'text',
   tags: 'text',
 });
 

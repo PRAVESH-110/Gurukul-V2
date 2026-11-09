@@ -1,5 +1,3 @@
-'use client';
-
 import { Globe, Lock, Users } from 'lucide-react';
 import { serverGet } from '@/lib/serverFetch';
 import CommunityActions from '@/components/pages/Communities/CommunityActions';

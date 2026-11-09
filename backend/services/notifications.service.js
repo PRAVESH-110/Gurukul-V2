@@ -1,7 +1,7 @@
 const Notification = require('../models/Notification');
 
 const listForRecipient = (recipient) =>
-  Notification.find({ recipient }).sort({ createdAt: -1 }).limit(50);
+  Notification.find({ recipient }).sort({ createdAt: -1 }).limit(50).lean();
 const countUnreadForRecipient = (recipient) =>
   Notification.countDocuments({ recipient, isRead: false });
 const markRead = (id, recipient) =>
@@ -9,7 +9,7 @@ const markRead = (id, recipient) =>
     { _id: id, recipient },
     { isRead: true },
     { new: true, runValidators: true },
-  );
+  ).lean();
 const markAllRead = (recipient) =>
   Notification.updateMany({ recipient, isRead: false }, { isRead: true });
 const deleteForRecipient = (id, recipient) => Notification.findOneAndDelete({ _id: id, recipient });

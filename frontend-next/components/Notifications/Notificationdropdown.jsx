@@ -1,49 +1,27 @@
 'use client';
 
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useRef, useCallback, useEffect } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Bell, BookOpen, Users, Trash2, Check, CheckCheck, Loader2 } from 'lucide-react';
 import { notificationAPI } from '@/services/api';
 import toast from 'react-hot-toast';
 
 const NotificationDropdown = ({ isOpen, unreadCount, setUnreadCount }) => {
-  const [notifications, setNotifications] = useState([]);
-  const [loading, setLoading] = useState(false);
+  const queryClient = useQueryClient();
   const readRequests = useRef(new Set());
-  const unreadCountRequestId = useRef(0);
 
-  const refreshUnreadCount = useCallback(async () => {
-    const requestId = ++unreadCountRequestId.current;
-    try {
-      const res = await notificationAPI.getUnreadCount();
-      if (requestId === unreadCountRequestId.current && res.data?.success) {
-        setUnreadCount(res.data.count);
-      }
-    } catch (err) {
-      console.error('Failed to refresh unread notification count:', err);
-    }
-  }, [setUnreadCount]);
-
-  const fetchNotifications = useCallback(async () => {
-    setLoading(true);
-    try {
+  // Cached notifications list with 1 minute staleTime
+  const { data: notificationsData, isLoading: loading } = useQuery({
+    queryKey: ['notifications'],
+    queryFn: async () => {
       const res = await notificationAPI.getNotifications();
-      if (res.data && res.data.success) {
-        setNotifications(res.data.data);
-        await refreshUnreadCount();
-      }
-    } catch (err) {
-      console.error('Failed to load notifications:', err);
-    } finally {
-      setLoading(false);
-    }
-  }, [refreshUnreadCount]);
+      return res.data?.data || [];
+    },
+    enabled: isOpen,
+    staleTime: 60 * 1000,
+  });
 
-  // Fetch notifications when dropdown opens
-  useEffect(() => {
-    // This starts an async network request; its state updates happen after the response.
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    if (isOpen) fetchNotifications();
-  }, [isOpen, fetchNotifications]);
+  const notifications = notificationsData || [];
 
   const autoMarkAsRead = useCallback(
     async (id) => {
@@ -52,10 +30,14 @@ const NotificationDropdown = ({ isOpen, unreadCount, setUnreadCount }) => {
       try {
         const res = await notificationAPI.markAsRead(id);
         if (res.data && res.data.success) {
-          setNotifications((prev) =>
+          // Optimistically update notifications in React Query cache
+          queryClient.setQueryData(['notifications'], (prev = []) =>
             prev.map((notif) => (notif._id === id ? { ...notif, isRead: true } : notif)),
           );
-          await refreshUnreadCount();
+          queryClient.invalidateQueries({ queryKey: ['unreadNotificationsCount'] });
+          if (typeof setUnreadCount === 'function') {
+            setUnreadCount((prev) => Math.max(0, prev - 1));
+          }
         }
       } catch (err) {
         console.error('Failed to auto-mark notification as read:', err);
@@ -63,7 +45,7 @@ const NotificationDropdown = ({ isOpen, unreadCount, setUnreadCount }) => {
         readRequests.current.delete(id);
       }
     },
-    [refreshUnreadCount],
+    [queryClient, setUnreadCount],
   );
 
   // Automatically mark notifications as read when scrolled into view
@@ -104,16 +86,19 @@ const NotificationDropdown = ({ isOpen, unreadCount, setUnreadCount }) => {
   }, [notifications, isOpen, autoMarkAsRead]);
 
   const handleMarkAsRead = async (id, e) => {
-    e.stopPropagation(); // Avoid triggering any parent click
+    e.stopPropagation();
     if (readRequests.current.has(id)) return;
     readRequests.current.add(id);
     try {
       const res = await notificationAPI.markAsRead(id);
       if (res.data && res.data.success) {
-        setNotifications((prev) =>
+        queryClient.setQueryData(['notifications'], (prev = []) =>
           prev.map((notif) => (notif._id === id ? { ...notif, isRead: true } : notif)),
         );
-        await refreshUnreadCount();
+        queryClient.invalidateQueries({ queryKey: ['unreadNotificationsCount'] });
+        if (typeof setUnreadCount === 'function') {
+          setUnreadCount((prev) => Math.max(0, prev - 1));
+        }
       }
     } catch (err) {
       console.error('Failed to mark notification as read:', err);
@@ -126,8 +111,13 @@ const NotificationDropdown = ({ isOpen, unreadCount, setUnreadCount }) => {
     try {
       const res = await notificationAPI.markAllAsRead();
       if (res.data && res.data.success) {
-        setNotifications((prev) => prev.map((notif) => ({ ...notif, isRead: true })));
-        await refreshUnreadCount();
+        queryClient.setQueryData(['notifications'], (prev = []) =>
+          prev.map((notif) => ({ ...notif, isRead: true })),
+        );
+        queryClient.setQueryData(['unreadNotificationsCount'], 0);
+        if (typeof setUnreadCount === 'function') {
+          setUnreadCount(0);
+        }
         toast.success('All notifications marked as read');
       }
     } catch (err) {
@@ -140,8 +130,10 @@ const NotificationDropdown = ({ isOpen, unreadCount, setUnreadCount }) => {
     try {
       const res = await notificationAPI.deleteNotification(id);
       if (res.data && res.data.success) {
-        setNotifications((prev) => prev.filter((notif) => notif._id !== id));
-        await refreshUnreadCount();
+        queryClient.setQueryData(['notifications'], (prev = []) =>
+          prev.filter((notif) => notif._id !== id),
+        );
+        queryClient.invalidateQueries({ queryKey: ['unreadNotificationsCount'] });
         toast.success('Notification deleted');
       }
     } catch (err) {

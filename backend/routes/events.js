@@ -1,8 +1,12 @@
 const express = require('express');
 const Event = require('../models/Event');
 const Community = require('../models/Community');
-const { protect, checkCommunityMembership, authorize } = require('../middleware/auth');
-const { validateEvent, validateObjectId } = require('../middleware/validation');
+const {
+  protect,
+  checkCommunityMembership,
+  validateEvent,
+  validateObjectId,
+} = require('../middleware');
 
 const router = express.Router({ mergeParams: true });
 

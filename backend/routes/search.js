@@ -14,33 +14,31 @@ const searchCommunities = async (req, res, next) => {
   try {
     const { q, page = 1, limit = 10 } = req.query;
 
-    if (!q) {
+    if (!q || !q.trim()) {
       return res.status(400).json({
         success: false,
         message: 'Search query is required',
       });
     }
 
+    const trimmedQuery = q.trim();
+    const safePage = Math.max(1, parseInt(page, 10) || 1);
+    const safeLimit = Math.min(50, Math.max(1, parseInt(limit, 10) || 10));
+
+    // Use MongoDB Text Search index on (name, description)
     const query = {
-      $and: [
-        { isActive: true },
-        { type: 'public' }, // Only search public communities
-        {
-          $or: [
-            { name: { $regex: q, $options: 'i' } },
-            { description: { $regex: q, $options: 'i' } },
-            { tags: { $in: [new RegExp(q, 'i')] } },
-          ],
-        },
-      ],
+      isActive: true,
+      type: 'public',
+      $text: { $search: trimmedQuery },
     };
 
     const communities = await Community.find(query)
       .select('-members')
       .populate('creator', 'firstName lastName avatar')
       .sort({ memberCount: -1, createdAt: -1 })
-      .limit(limit * 1)
-      .skip((page - 1) * limit);
+      .limit(safeLimit)
+      .skip((safePage - 1) * safeLimit)
+      .lean();
 
     const total = await Community.countDocuments(query);
 
@@ -49,9 +47,9 @@ const searchCommunities = async (req, res, next) => {
       count: communities.length,
       total,
       pagination: {
-        page: parseInt(page),
-        limit: parseInt(limit),
-        pages: Math.ceil(total / limit),
+        page: safePage,
+        limit: safeLimit,
+        pages: Math.ceil(total / safeLimit),
       },
       communities,
     });
@@ -67,44 +65,41 @@ const searchCourses = async (req, res, next) => {
   try {
     const { q, category, level, page = 1, limit = 10 } = req.query;
 
-    if (!q) {
+    if (!q || !q.trim()) {
       return res.status(400).json({
         success: false,
         message: 'Search query is required',
       });
     }
 
+    const trimmedQuery = q.trim();
+    const safePage = Math.max(1, parseInt(page, 10) || 1);
+    const safeLimit = Math.min(50, Math.max(1, parseInt(limit, 10) || 10));
+
+    // Use MongoDB Text Search index on (title, subtitle, description, tags)
     const query = {
-      $and: [
-        { isPublished: true },
-        {
-          $or: [
-            { title: { $regex: q, $options: 'i' } },
-            { description: { $regex: q, $options: 'i' } },
-            { category: { $regex: q, $options: 'i' } },
-            { tags: { $in: [new RegExp(q, 'i')] } },
-          ],
-        },
-      ],
+      isPublished: true,
+      $text: { $search: trimmedQuery },
     };
 
     // Add category filter
-    if (category) {
-      query.$and.push({ category: { $regex: category, $options: 'i' } });
+    if (category && category.trim()) {
+      query.category = new RegExp(category.trim(), 'i');
     }
 
     // Add level filter
     if (level && ['beginner', 'intermediate', 'advanced'].includes(level)) {
-      query.$and.push({ level });
+      query.level = level;
     }
 
     const courses = await Course.find(query)
-      .select('-enrolledStudents -reviews')
+      .select('-enrolledStudents -reviews -sections -resources -requirements -learningOutcomes')
       .populate('creator', 'firstName lastName avatar')
       .populate('community', 'name')
-      .sort({ rating: -1, enrollmentCount: -1 })
-      .limit(limit * 1)
-      .skip((page - 1) * limit);
+      .sort({ enrollmentCount: -1, 'rating.average': -1 })
+      .limit(safeLimit)
+      .skip((safePage - 1) * safeLimit)
+      .lean();
 
     const total = await Course.countDocuments(query);
 
@@ -113,9 +108,9 @@ const searchCourses = async (req, res, next) => {
       count: courses.length,
       total,
       pagination: {
-        page: parseInt(page),
-        limit: parseInt(limit),
-        pages: Math.ceil(total / limit),
+        page: safePage,
+        limit: safeLimit,
+        pages: Math.ceil(total / safeLimit),
       },
       courses,
     });
@@ -253,7 +248,7 @@ const searchPosts = async (req, res, next) => {
 // @access  Private
 const globalSearch = async (req, res, next) => {
   try {
-    const { q, page = 1, limit = 20 } = req.query;
+    const { q, limit = 20 } = req.query;
 
     if (!q) {
       return res.status(400).json({

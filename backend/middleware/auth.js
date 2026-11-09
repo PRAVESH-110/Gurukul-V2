@@ -1,12 +1,5 @@
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
-const { RateLimiterMemory } = require('rate-limiter-flexible');
-
-// Rate limiting for authentication endpoints
-const rateLimiter = new RateLimiterMemory({
-  points: 5, // 5 requests
-  duration: 60, // per 60 seconds per IP
-});
 
 // Protect routes - verify JWT token
 const protect = async (req, res, next) => {
@@ -152,6 +145,7 @@ const checkOwnership = (Model, resourceParam = 'id') => {
 const checkCommunityMembership = async (req, res, next) => {
   try {
     const Community = require('../models/Community');
+    const Membership = require('../models/Membership');
     const communityId = req.params.communityId || req.params.id;
 
     const community = await Community.findById(communityId);
@@ -163,13 +157,21 @@ const checkCommunityMembership = async (req, res, next) => {
       });
     }
 
-    // Check if user is a member or creator
-    const isMember = community.members.some((member) => {
-      const memberId = member.user?._id || member.user;
-      return memberId && memberId.toString() === req.user._id.toString();
-    });
     const isCreator = community.creator.toString() === req.user._id.toString();
     const isAdmin = req.user.role === 'admin';
+
+    // Fast indexed check via Membership collection with fallback to legacy array
+    let isMember = false;
+    if (!isCreator && !isAdmin) {
+      const membership = await Membership.findOne({ community: communityId, user: req.user._id });
+      isMember = Boolean(membership);
+      if (!isMember && Array.isArray(community.members)) {
+        isMember = community.members.some((member) => {
+          const memberId = member.user?._id || member.user;
+          return memberId && memberId.toString() === req.user._id.toString();
+        });
+      }
+    }
 
     if (!isMember && !isCreator && !isAdmin) {
       return res.status(403).json({
@@ -189,6 +191,7 @@ const checkCommunityMembership = async (req, res, next) => {
 const checkCourseEnrollment = async (req, res, next) => {
   try {
     const Course = require('../models/Course');
+    const Enrollment = require('../models/Enrollment');
     const courseId = req.params.courseId || req.params.id;
 
     const course = await Course.findById(courseId);
@@ -200,10 +203,17 @@ const checkCourseEnrollment = async (req, res, next) => {
       });
     }
 
-    // Check if user is enrolled or is the creator
-    const isEnrolled = course.isEnrolled(req.user._id);
     const isCreator = course.creator.toString() === req.user._id.toString();
     const isAdmin = req.user.role === 'admin';
+
+    let isEnrolled = false;
+    if (!isCreator && !isAdmin) {
+      const enrollment = await Enrollment.findOne({ course: courseId, user: req.user._id });
+      isEnrolled =
+        Boolean(enrollment) ||
+        (typeof course.isEnrolled === 'function' ? course.isEnrolled(req.user._id) : false);
+    }
+
     if (!isEnrolled && !isCreator && !isAdmin) {
       return res.status(403).json({
         success: false,
@@ -245,7 +255,7 @@ const optionalProtect = async (req, res, next) => {
       }
 
       next();
-    } catch (error) {
+    } catch (_error) {
       // If token is invalid, just proceed as guest
       next();
     }

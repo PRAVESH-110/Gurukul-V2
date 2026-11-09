@@ -2,14 +2,21 @@ const express = require('express');
 const fs = require('fs');
 const path = require('path');
 const Community = require('../models/Community');
+const Membership = require('../models/Membership');
 const User = require('../models/User');
 const Post = require('../models/Post');
 const Event = require('../models/Event');
 const Notification = require('../models/Notification');
-const { protect, authorize, optionalProtect } = require('../middleware/auth');
-const { validateCommunity, validateObjectId } = require('../middleware/validation');
-const { upload, handleUploadErrors } = require('../middleware/upload');
-const { uploadToImageKit } = require('../utils/imagekit');
+const {
+  protect,
+  authorize,
+  optionalProtect,
+  validateCommunity,
+  validateObjectId,
+  upload,
+  handleUploadErrors,
+} = require('../middleware');
+const { uploadToImageKit } = require('../utils');
 
 // Configure banner upload
 const uploadBanner = upload.single('banner');
@@ -146,6 +153,14 @@ const createCommunity = async (req, res, next) => {
     // Save the community to the database
     await community.save();
 
+    // Create creator membership in Membership collection
+    await Membership.create({
+      community: community._id,
+      user: req.user._id,
+      role: 'admin',
+      joinedAt: new Date(),
+    });
+
     // Add community to user's joined communities
     await User.findByIdAndUpdate(req.user._id, {
       $addToSet: { joinedCommunities: community._id },
@@ -182,6 +197,16 @@ const getCommunity = async (req, res, next) => {
       });
     }
 
+    // Fast indexed membership check via Membership collection with fallback
+    let isMember = false;
+    if (req.user) {
+      const membershipExists = await Membership.exists({
+        community: community._id,
+        user: req.user._id,
+      });
+      isMember = Boolean(membershipExists) || community.isMember(req.user._id);
+    }
+
     // Private community details require an authenticated member, creator, or admin.
     if (community.type === 'private') {
       if (!req.user) {
@@ -189,7 +214,6 @@ const getCommunity = async (req, res, next) => {
           .status(401)
           .json({ success: false, message: 'Authentication required to view this community' });
       }
-      const isMember = community.isMember(req.user._id);
       const isCreator =
         community.creator._id.toString() === req.user._id.toString() || req.user.role === 'admin';
 
@@ -208,7 +232,7 @@ const getCommunity = async (req, res, next) => {
       success: true,
       community: {
         ...communityData,
-        isMember: req.user ? community.isMember(req.user._id) : false,
+        isMember,
       },
     });
   } catch (error) {
@@ -354,12 +378,12 @@ const joinCommunity = async (req, res, next) => {
       });
     }
 
-    // Check if already a member
-    const isMember = community.members.some((member) => {
-      const memberId = member.user?._id || member.user;
-      return memberId && memberId.toString() === req.user._id.toString();
+    // Check if already a member via Membership collection
+    const existingMembership = await Membership.findOne({
+      community: community._id,
+      user: req.user._id,
     });
-    if (isMember) {
+    if (existingMembership || community.isMember(req.user._id)) {
       return res.status(400).json({
         success: false,
         message: 'You are already a member of this community',
@@ -374,8 +398,19 @@ const joinCommunity = async (req, res, next) => {
       });
     }
 
-    // Add user to community
-    community.addMember(req.user._id);
+    // Add user to Membership collection
+    await Membership.create({
+      community: community._id,
+      user: req.user._id,
+      role: 'member',
+      joinedAt: new Date(),
+    });
+
+    // Sync legacy array & increment memberCount
+    if (!community.isMember(req.user._id)) {
+      community.addMember(req.user._id);
+    }
+    community.memberCount = (community.memberCount || 0) + 1;
     await community.save();
 
     // Add community to user's joined communities
@@ -428,11 +463,11 @@ const leaveCommunity = async (req, res, next) => {
     }
 
     // Check if user is a member
-    const isMember = community.members.some((member) => {
-      const memberId = member.user?._id || member.user;
-      return memberId && memberId.toString() === req.user._id.toString();
+    const existingMembership = await Membership.findOne({
+      community: community._id,
+      user: req.user._id,
     });
-    if (!isMember) {
+    if (!existingMembership && !community.isMember(req.user._id)) {
       return res.status(400).json({
         success: false,
         message: 'You are not a member of this community',
@@ -447,8 +482,12 @@ const leaveCommunity = async (req, res, next) => {
       });
     }
 
-    // Remove user from community
+    // Remove user from Membership collection
+    await Membership.deleteOne({ community: community._id, user: req.user._id });
+
+    // Sync legacy array & decrement memberCount
     community.removeMember(req.user._id);
+    community.memberCount = Math.max(0, (community.memberCount || 1) - 1);
     await community.save();
 
     // Remove community from user's joined communities
@@ -470,10 +509,7 @@ const leaveCommunity = async (req, res, next) => {
 // @access  Private (Members only)
 const getCommunityMembers = async (req, res, next) => {
   try {
-    const community = await Community.findById(req.params.id).populate(
-      'members.user',
-      'firstName lastName avatar',
-    );
+    const community = await Community.findById(req.params.id);
 
     if (!community) {
       return res.status(404).json({
@@ -483,10 +519,11 @@ const getCommunityMembers = async (req, res, next) => {
     }
 
     // Check if user is a member or creator
-    const isMember = community.members.some((member) => {
-      const memberId = member.user?._id || member.user;
-      return memberId && memberId.toString() === req.user._id.toString();
+    const existingMembership = await Membership.exists({
+      community: community._id,
+      user: req.user._id,
     });
+    const isMember = Boolean(existingMembership) || community.isMember(req.user._id);
     const isCreator = community.creator.toString() === req.user._id.toString();
     const isAdmin = req.user.role === 'admin';
 
@@ -497,9 +534,14 @@ const getCommunityMembers = async (req, res, next) => {
       });
     }
 
+    const members = await Membership.find({ community: req.params.id })
+      .populate('user', 'firstName lastName avatar')
+      .sort({ joinedAt: -1 })
+      .lean();
+
     res.status(200).json({
       success: true,
-      members: community.members,
+      members,
     });
   } catch (error) {
     next(error);
@@ -530,21 +572,28 @@ const getStudentCommunities = async (req, res, next) => {
   try {
     console.log('getStudentCommunities called by user:', req.user._id);
 
-    const communities = await Community.find({
-      'members.user': req.user._id,
-      isActive: true,
-    })
+    // Get community IDs from Membership collection (fast indexed lookup)
+    const memberships = await Membership.find({ user: req.user._id }).select('community').lean();
+    let communityIds = memberships.map((m) => m.community);
+
+    // Backward compatibility fallback to legacy array if no memberships found
+    let query = { _id: { $in: communityIds }, isActive: true };
+    if (communityIds.length === 0) {
+      query = { 'members.user': req.user._id, isActive: true };
+    }
+
+    const communities = await Community.find(query)
       .populate('creator', 'firstName lastName avatar')
-      .sort({ 'members.joinedAt': -1 });
+      .sort({ createdAt: -1 })
+      .lean();
 
     console.log('Found joined communities:', communities.length);
 
-    // Add stats for each community
     const communitiesWithStats = communities.map((community) => ({
-      ...community.toObject(),
-      memberCount: community.members?.length || 0,
-      postCount: 0, // Can add actual count if needed
-      eventCount: 0, // Can add actual count if needed
+      ...community,
+      memberCount: community.memberCount || community.members?.length || 0,
+      postCount: 0,
+      eventCount: 0,
     }));
 
     res.status(200).json({

@@ -1,4 +1,3 @@
-const User = require('../models/User');
 const Community = require('../models/Community');
 
 // @desc    Get current user's communities

@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import {
   MessageSquare,
   Calendar,
@@ -138,6 +139,8 @@ const CommunityActions = ({
       setIsMember(true);
       setJoining(false);
       queryClient.invalidateQueries({ queryKey: ['community', communityId] });
+      queryClient.invalidateQueries({ queryKey: ['community-auth-state', communityId] });
+      queryClient.invalidateQueries({ queryKey: ['communities'] });
       toast.success('Successfully joined community!');
     },
     onError: (error: Error) => {
@@ -166,6 +169,14 @@ const CommunityActions = ({
           >
             {joining ? 'Joining...' : 'Join Community'}
           </button>
+        )}
+        {!user && communityType === 'public' && (
+          <Link
+            href={`/login?redirect=/communities/${communityId}`}
+            className="btn-primary shadow-lg shadow-primary/20 inline-block px-5 py-2.5"
+          >
+            Sign in to Join
+          </Link>
         )}
         {isCreator && (
           <button
@@ -220,6 +231,28 @@ const CommunityActions = ({
       {/* Tab Content */}
       {activeTab === 'posts' && (
         <div className="space-y-6">
+          {!user && (
+            <div className="bg-gradient-to-r from-primary-50 to-blue-50 border border-primary-100 rounded-2xl p-6 text-center">
+              <h4 className="font-semibold text-gray-900 mb-1">Sign in to participate</h4>
+              <p className="text-sm text-gray-600 mb-4">
+                You must be logged in to join this community and participate in discussions.
+              </p>
+              <div className="flex justify-center gap-3">
+                <Link
+                  href={`/login?redirect=/communities/${communityId}`}
+                  className="btn-primary text-sm px-5 py-2"
+                >
+                  Sign In
+                </Link>
+                <Link
+                  href={`/register?redirect=/communities/${communityId}`}
+                  className="btn-outline text-sm px-5 py-2"
+                >
+                  Create Account
+                </Link>
+              </div>
+            </div>
+          )}
           {user && (
             <div
               className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 flex gap-4 items-center cursor-pointer hover:border-primary-200 transition-colors"

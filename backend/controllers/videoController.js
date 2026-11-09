@@ -14,7 +14,7 @@ const imagekit = new ImageKit({
 // @desc    Upload a video
 // @route   POST /api/videos/upload
 // @access  Private/Creator
-exports.uploadVideo = async (req, res, next) => {
+exports.uploadVideo = async (req, res, _next) => {
   try {
     if (!req.files || !req.files.video) {
       return res.status(400).json({
@@ -162,7 +162,7 @@ exports.uploadVideo = async (req, res, next) => {
 // @desc    Get video details
 // @route   GET /api/videos/:id
 // @access  Private
-exports.getVideo = async (req, res, next) => {
+exports.getVideo = async (req, res, _next) => {
   try {
     const video = await Video.findById(req.params.id)
       .populate('creator', 'name email avatar')
@@ -256,7 +256,7 @@ exports.getCourseVideos = async (req, res) => {
 // @desc    Update video details
 // @route   PUT /api/videos/:id
 // @access  Private/Creator
-exports.updateVideo = async (req, res, next) => {
+exports.updateVideo = async (req, res, _next) => {
   try {
     const { title, description, sectionId, isPublished } = req.body;
 
@@ -350,7 +350,7 @@ exports.updateVideo = async (req, res, next) => {
 // @desc    Delete a video
 // @route   DELETE /api/videos/:id
 // @access  Private/Creator
-exports.deleteVideo = async (req, res, next) => {
+exports.deleteVideo = async (req, res, _next) => {
   try {
     const video = await Video.findById(req.params.id);
 
@@ -429,7 +429,7 @@ exports.deleteVideo = async (req, res, next) => {
 // @desc    Create a video record (after file upload)
 // @route   POST /api/videos
 // @access  Private/Creator
-exports.createVideo = async (req, res, next) => {
+exports.createVideo = async (req, res, _next) => {
   try {
     const {
       title,
@@ -515,9 +515,9 @@ exports.createVideo = async (req, res, next) => {
       });
     }
 
-    // Create video record with qualities support
+    // Create video record
     console.log('Creating video record...');
-    const videoQualities = qualities || {
+    const _videoQualities = qualities || {
       auto: videoUrlValue,
       '1080p': videoUrlValue,
       '720p': videoUrlValue,

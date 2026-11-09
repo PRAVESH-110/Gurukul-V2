@@ -39,8 +39,8 @@ const createTransporter = async () => {
   });
 };
 
-// Render email template
-const renderTemplate = async (templateName, data) => {
+// Render email template (helper for templated emails)
+const _renderTemplate = async (templateName, data) => {
   try {
     const templatePath = path.join(__dirname, '..', 'views', 'emails', `${templateName}.ejs`);
     const template = fs.readFileSync(templatePath, 'utf-8');

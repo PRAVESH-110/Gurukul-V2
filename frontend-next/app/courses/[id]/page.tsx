@@ -1,5 +1,3 @@
-'use client';
-
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import { BookOpen, Play, Users, Clock, Star, Calendar, CheckCircle } from 'lucide-react';

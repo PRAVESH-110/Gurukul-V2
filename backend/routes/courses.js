@@ -1,20 +1,20 @@
 const express = require('express');
 const fs = require('fs');
-const ImageKit = require('imagekit');
-
-const imagekit = new ImageKit({
-  publicKey: process.env.IMAGEKIT_PUBLIC_KEY,
-  privateKey: process.env.IMAGEKIT_PRIVATE_KEY,
-  urlEndpoint: process.env.IMAGEKIT_URL_ENDPOINT,
-});
 const Course = require('../models/Course');
+const Enrollment = require('../models/Enrollment');
 const Video = require('../models/Video');
 const User = require('../models/User');
 const Notification = require('../models/Notification');
 const notificationService = require('../services/notifications.service');
-const { protect, authorize, optionalProtect } = require('../middleware/auth');
-const { validateObjectId } = require('../middleware/validation');
-const { upload, handleUploadErrors } = require('../middleware/upload');
+const {
+  protect,
+  authorize,
+  optionalProtect,
+  validateObjectId,
+  upload,
+  handleUploadErrors,
+} = require('../middleware');
+const { uploadToImageKit } = require('../utils');
 
 const router = express.Router();
 
@@ -161,33 +161,22 @@ const createCourse = async (req, res, next) => {
       console.error('Error parsing arrays:', parseError);
     }
 
-    // Handle thumbnail from file upload
+    // Handle thumbnail from file upload using centralized utility (DIP & DRY)
     let thumbnailUrl = thumbnail;
     if (req.file) {
       console.log('📁 Uploading image to ImageKit...');
-
       try {
-        const fileBuffer = fs.readFileSync(req.file.path);
-        const result = await new Promise((resolve, reject) => {
-          imagekit.upload(
-            {
-              file: fileBuffer.toString('base64'),
-              fileName: req.file.filename,
-              folder: 'gurukul/images',
-              useUniqueFileName: true,
-            },
-            (error, result) => {
-              if (error) return reject(error);
-              resolve(result);
-            },
-          );
+        const uploadResult = await uploadToImageKit({
+          file: req.file.path,
+          fileName: req.file.filename,
+          folder: 'gurukul/courses',
         });
-
-        thumbnailUrl = result.url;
+        thumbnailUrl = uploadResult.url;
         console.log('🖼️ Thumbnail URL from ImageKit:', thumbnailUrl);
 
-        // Clean up the local file so it doesn't waste server space
-        fs.unlinkSync(req.file.path);
+        if (fs.existsSync(req.file.path)) {
+          fs.unlinkSync(req.file.path);
+        }
       } catch (uploadError) {
         console.error('ImageKit upload failed:', uploadError);
         return res.status(500).json({ success: false, message: 'Failed to upload image to CDN' });
@@ -270,7 +259,11 @@ const getCourse = async (req, res, next) => {
       ? course.creator._id.toString() === req.user?._id?.toString()
       : course.creator.toString() === req.user?._id?.toString();
     const isAdmin = req.user?.role === 'admin';
-    const isEnrolled = req.user ? course.isEnrolled(req.user._id) : false;
+    let isEnrolled = false;
+    if (req.user) {
+      const enrollmentExists = await Enrollment.exists({ course: course._id, user: req.user._id });
+      isEnrolled = Boolean(enrollmentExists) || course.isEnrolled(req.user._id);
+    }
     if (!course.isPublished && !isEnrolled && !isCreator && !isAdmin) {
       return res.status(404).json({ success: false, message: 'Course not found' });
     }
@@ -329,26 +322,15 @@ const updateCourse = async (req, res, next) => {
       });
     }
 
-    // Handle thumbnail file upload if present
+    // Handle thumbnail file upload if present using centralized utility (DIP & DRY)
     if (req.file) {
       try {
-        const fileBuffer = fs.readFileSync(req.file.path);
-        const result = await new Promise((resolve, reject) => {
-          imagekit.upload(
-            {
-              file: fileBuffer.toString('base64'),
-              fileName: req.file.filename,
-              folder: 'gurukul/courses',
-              useUniqueFileName: true,
-            },
-            (error, result) => {
-              if (error) return reject(error);
-              resolve(result);
-            },
-          );
+        const uploadResult = await uploadToImageKit({
+          file: req.file.path,
+          fileName: req.file.filename,
+          folder: 'gurukul/courses',
         });
-
-        course.thumbnail = result.url;
+        course.thumbnail = uploadResult.url;
         if (fs.existsSync(req.file.path)) {
           fs.unlinkSync(req.file.path);
         }
@@ -463,21 +445,34 @@ const enrollInCourse = async (req, res, next) => {
       });
     }
 
-    // Check if already enrolled
-    if (course.isEnrolled(req.user._id)) {
+    // Check if already enrolled in Enrollment collection or legacy array
+    const existingEnrollment = await Enrollment.findOne({ course: course._id, user: req.user._id });
+    if (existingEnrollment || course.isEnrolled(req.user._id)) {
       return res.status(400).json({
         success: false,
         message: 'You are already enrolled in this course',
       });
     }
 
-    // Enroll student
-    course.enrolledStudents.push({
+    // Create standalone enrollment record
+    await Enrollment.create({
+      course: course._id,
       user: req.user._id,
       enrolledAt: new Date(),
       completedVideos: [],
       progress: 0,
     });
+
+    // Keep legacy array synced and increment enrollmentCount atomically
+    if (!course.isEnrolled(req.user._id)) {
+      course.enrolledStudents.push({
+        user: req.user._id,
+        enrolledAt: new Date(),
+        completedVideos: [],
+        progress: 0,
+      });
+    }
+    course.enrollmentCount = (course.enrollmentCount || 0) + 1;
     await course.save();
 
     // Add course to user's enrolled courses
@@ -531,17 +526,22 @@ const unenrollFromCourse = async (req, res, next) => {
     }
 
     // Check if user is enrolled
-    if (!course.isEnrolled(req.user._id)) {
+    const existingEnrollment = await Enrollment.findOne({ course: course._id, user: req.user._id });
+    if (!existingEnrollment && !course.isEnrolled(req.user._id)) {
       return res.status(400).json({
         success: false,
         message: 'You are not enrolled in this course',
       });
     }
 
-    // Remove student from course
-    course.enrolledStudents = course.enrolledStudents.filter(
+    // Delete enrollment record
+    await Enrollment.deleteOne({ course: course._id, user: req.user._id });
+
+    // Remove student from legacy array & update count
+    course.enrolledStudents = (course.enrolledStudents || []).filter(
       (student) => student.user.toString() !== req.user._id.toString(),
     );
+    course.enrollmentCount = Math.max(0, (course.enrollmentCount || 1) - 1);
     await course.save();
 
     // Remove course from user's enrolled courses
@@ -658,10 +658,7 @@ const getCourseVideos = async (req, res, next) => {
 // @access  Private (Creator or Admin only)
 const getEnrolledStudents = async (req, res, next) => {
   try {
-    const course = await Course.findById(req.params.id).populate(
-      'enrolledStudents.user',
-      'firstName lastName email avatar',
-    );
+    const course = await Course.findById(req.params.id);
 
     if (!course) {
       return res.status(404).json({
@@ -680,9 +677,15 @@ const getEnrolledStudents = async (req, res, next) => {
       });
     }
 
+    // Read students from Enrollment collection (fast & supports scale)
+    const enrollments = await Enrollment.find({ course: req.params.id })
+      .populate('user', 'firstName lastName email avatar')
+      .sort({ enrolledAt: -1 })
+      .lean();
+
     res.status(200).json({
       success: true,
-      students: course.enrolledStudents,
+      students: enrollments,
     });
   } catch (error) {
     next(error);
@@ -704,8 +707,12 @@ const addCourseReview = async (req, res, next) => {
       });
     }
 
-    // Check if user is enrolled
-    if (!course.isEnrolled(req.user._id)) {
+    // Check if user is enrolled via Enrollment collection or legacy method
+    const isEnrolledInCollection = await Enrollment.exists({
+      course: course._id,
+      user: req.user._id,
+    });
+    if (!isEnrolledInCollection && !course.isEnrolled(req.user._id)) {
       return res.status(403).json({
         success: false,
         message: 'You must be enrolled to review this course',
@@ -759,29 +766,30 @@ const getCreatorCourses = async (req, res, next) => {
 
     console.log('Found courses:', courses.length);
 
-    // Add video count for each course
-    const coursesWithStats = await Promise.all(
-      courses.map(async (course) => {
-        const videoCount = await Video.countDocuments({
-          course: course._id,
-          isActive: true,
-        });
+    // Batch fetch video count for each course (O(1) instead of N countDocuments queries)
+    const courseIds = courses.map((c) => c._id);
+    const videoCountsAgg = await Video.aggregate([
+      { $match: { course: { $in: courseIds }, isActive: true } },
+      { $group: { _id: '$course', count: { $sum: 1 } } },
+    ]);
+    const videoCountMap = new Map(videoCountsAgg.map((v) => [v._id.toString(), v.count]));
 
-        const enrollmentCount = course.enrolledStudents?.length || 0;
-        const courseRevenue = (course.price || 0) * enrollmentCount;
+    const coursesWithStats = courses.map((course) => {
+      const videoCount = videoCountMap.get(course._id.toString()) || 0;
+      const enrollmentCount = course.enrolledStudents?.length || 0;
+      const courseRevenue = (course.price || 0) * enrollmentCount;
 
-        return {
-          ...course.toObject(),
-          videoCount,
-          status: course.status, // Keep original status
-          visibility: course.visibility || (course.isPublished ? 'public' : 'private'),
-          enrollmentCount,
-          rating: course.rating?.average || 0,
-          ratingCount: course.rating?.count || 0,
-          revenue: courseRevenue,
-        };
-      }),
-    );
+      return {
+        ...course.toObject(),
+        videoCount,
+        status: course.status, // Keep original status
+        visibility: course.visibility || (course.isPublished ? 'public' : 'private'),
+        enrollmentCount,
+        rating: course.rating?.average || 0,
+        ratingCount: course.rating?.count || 0,
+        revenue: courseRevenue,
+      };
+    });
 
     // Calculate overall stats
     const totalCourses = courses.length;

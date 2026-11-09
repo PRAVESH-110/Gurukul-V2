@@ -156,6 +156,7 @@ const videoSchema = new mongoose.Schema(
 
 // Indexes for better query performance
 videoSchema.index({ course: 1, order: 1 });
+videoSchema.index({ course: 1, isActive: 1, isPublished: 1, order: 1 });
 videoSchema.index({ creator: 1 });
 videoSchema.index({ isPublished: 1 });
 videoSchema.index({ status: 1 });

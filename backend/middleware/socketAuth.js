@@ -17,7 +17,7 @@ const authenticateSocket = async (socket, next) => {
 
     socket.data.userId = user._id.toString();
     return next();
-  } catch (error) {
+  } catch (_error) {
     return next(new Error('Unauthorized'));
   }
 };

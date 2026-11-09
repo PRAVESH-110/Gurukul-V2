@@ -1,7 +1,8 @@
 'use client';
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { useRouter, usePathname } from 'next/navigation';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/context/AuthContext';
 import { Search, Bell, User, LogOut, Settings, BookOpen, Menu } from 'lucide-react';
 import logo from '@/assets/logo.png';
@@ -13,18 +14,39 @@ import NotificationModal from '../Notifications/Notificationdropdown';
 
 const Header = ({ toggleSidebar, isSidebarOpen }) => {
   const { user, token, logout } = useAuth();
+  const queryClient = useQueryClient();
   const router = useRouter();
   const pathname = usePathname();
   const isHomePage = pathname === '/';
   const [searchQuery, setSearchQuery] = useState('');
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
-  const [unreadCount, setUnreadCount] = useState(0);
   const [isVisible, setIsVisible] = useState(true);
   const [isAtTop, setIsAtTop] = useState(true);
   const lastScrollY = useRef(0);
   const userMenuRef = useRef(null);
   const notificationRef = useRef(null);
+
+  // Cached unread notification count
+  const { data: cachedUnreadCount } = useQuery({
+    queryKey: ['unreadNotificationsCount', user?._id],
+    queryFn: async () => {
+      const res = await api.get('/notifications/unread-count');
+      return res.data?.count ?? 0;
+    },
+    enabled: !!user,
+    staleTime: 60 * 1000,
+  });
+
+  const unreadCount = cachedUnreadCount ?? 0;
+  const setUnreadCount = useCallback(
+    (updater) => {
+      queryClient.setQueryData(['unreadNotificationsCount', user?._id], (prev = 0) =>
+        typeof updater === 'function' ? updater(prev) : updater,
+      );
+    },
+    [queryClient, user?._id],
+  );
 
   // Scroll listener: hides on scroll downward, reappears on scroll up / top
   useEffect(() => {
@@ -56,18 +78,6 @@ const Header = ({ toggleSidebar, isSidebarOpen }) => {
   useEffect(() => {
     if (!user) return;
 
-    let unreadCountRequestId = 0;
-    const refreshUnreadCount = async () => {
-      const requestId = ++unreadCountRequestId;
-      try {
-        const res = await api.get('/notifications/unread-count');
-        if (requestId === unreadCountRequestId && res.data?.success) {
-          setUnreadCount(res.data.count);
-        }
-      } catch (err) {
-        console.error('Failed to fetch unread notifications', err);
-      }
-    };
     const socketUrl =
       process.env.NEXT_PUBLIC_API_URL?.replace('/api', '') || 'http://localhost:5001';
     const socket = io(socketUrl, {
@@ -75,12 +85,19 @@ const Header = ({ toggleSidebar, isSidebarOpen }) => {
       auth: token ? { token } : {},
     });
 
-    socket.on('connect', refreshUnreadCount);
+    socket.on('connect', () => {
+      queryClient.invalidateQueries({ queryKey: ['unreadNotificationsCount', user?._id] });
+    });
     socket.on('new_notification', (notification) => {
       console.log('🔴 Real-time Notification received:', notification);
-      refreshUnreadCount();
 
-      // Trigger a beautiful visual popup toast
+      // Increment unread count in cache instantly
+      queryClient.setQueryData(['unreadNotificationsCount', user?._id], (prev = 0) => prev + 1);
+
+      // Prepend the new notification directly into the cached notifications array
+      queryClient.setQueryData(['notifications'], (prev = []) => [notification, ...prev]);
+
+      // Trigger visual popup toast
       toast(notification.content, {
         icon: '🔔',
         duration: 4000,

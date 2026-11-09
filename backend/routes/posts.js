@@ -1,10 +1,15 @@
 const express = require('express');
 const Post = require('../models/Post');
 const Community = require('../models/Community');
-const { protect, checkCommunityMembership, authorize } = require('../middleware/auth');
-const { validatePost, validateComment, validateObjectId } = require('../middleware/validation');
-const { upload } = require('../middleware/upload');
-const path = require('path');
+const {
+  protect,
+  checkCommunityMembership,
+  validatePost,
+  validateComment,
+  validateObjectId,
+  upload,
+} = require('../middleware');
+const { uploadToImageKit } = require('../utils');
 const fs = require('fs');
 
 const router = express.Router();
@@ -51,7 +56,7 @@ const getCommunityPosts = async (req, res, next) => {
 // @desc    Create new post
 // @route   POST /api/communities/:communityId/posts
 // @access  Private (Community members, or admin only for private communities or System Admin)
-const createPost = async (req, res, next) => {
+const createPost = async (req, res, _next) => {
   try {
     console.log('Request body:', req.body);
     console.log('Request file:', req.file);
@@ -80,31 +85,29 @@ const createPost = async (req, res, next) => {
       });
     }
 
-    // Handle file upload if exists
+    // Handle file upload if exists (Upload to ImageKit CDN)
     let imageUrl = '';
     if (req.file) {
-      console.log('Processing uploaded file:', req.file);
+      console.log('Processing uploaded file to ImageKit:', req.file);
       try {
-        // Ensure uploads directory exists
-        const uploadDir = path.join(__dirname, '../uploads/images');
-        if (!fs.existsSync(uploadDir)) {
-          fs.mkdirSync(uploadDir, { recursive: true });
+        const uploadResult = await uploadToImageKit({
+          file: req.file.path,
+          fileName: req.file.filename,
+          folder: 'gurukul/posts',
+        });
+        imageUrl = uploadResult.url;
+        console.log('Post image uploaded to ImageKit:', imageUrl);
+
+        // Clean up temporary local file
+        if (fs.existsSync(req.file.path)) {
+          fs.unlinkSync(req.file.path);
         }
-
-        // Move the file to the uploads directory
-        const fileExt = path.extname(req.file.originalname);
-        const fileName = `post-${Date.now()}${fileExt}`;
-        const filePath = path.join(uploadDir, fileName);
-
-        await fs.promises.rename(req.file.path, filePath);
-        imageUrl = `/uploads/images/${fileName}`;
-        console.log('File saved successfully:', imageUrl);
-      } catch (fileError) {
-        console.error('Error processing file upload:', fileError);
+      } catch (uploadError) {
+        console.error('Error uploading post image to ImageKit:', uploadError);
         return res.status(500).json({
           success: false,
-          message: 'Error processing file upload',
-          error: process.env.NODE_ENV === 'development' ? fileError.message : undefined,
+          message: 'Error uploading image to CDN',
+          error: process.env.NODE_ENV === 'development' ? uploadError.message : undefined,
         });
       }
     }
