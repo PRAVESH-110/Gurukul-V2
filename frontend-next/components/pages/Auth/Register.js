@@ -24,15 +24,20 @@ const Register = () => {
     }
   }, []);
 
+  const [selectedRole, setSelectedRole] = useState('student');
+
   const {
     register,
     handleSubmit,
     formState: { errors },
     setError,
-    watch,
-  } = useForm();
+    setValue,
+  } = useForm({
+    defaultValues: {
+      role: 'student',
+    },
+  });
 
-  const watchRole = watch('role');
   const from = searchParams.get('from') || searchParams.get('redirect') || '/dashboard';
 
   const onSubmit = async (data) => {
@@ -100,24 +105,29 @@ const Register = () => {
                     {...register('role', { required: 'Please select a role' })}
                     type="radio"
                     value="student"
+                    checked={selectedRole === 'student'}
+                    onChange={() => {
+                      setSelectedRole('student');
+                      setValue('role', 'student');
+                    }}
                     className="sr-only"
                   />
                   <div
                     className={`p-4 border-2 rounded-xl transition-all duration-200 ${
-                      watchRole === 'student'
+                      selectedRole === 'student'
                         ? 'border-primary-600 bg-primary-50/50 ring-1 ring-primary-600 shadow-sm'
                         : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
                     }`}
                   >
                     <div className="flex flex-col items-center text-center space-y-2">
                       <div
-                        className={`p-2 rounded-lg ${watchRole === 'student' ? 'bg-primary-100 text-primary-600' : 'bg-gray-100 text-gray-500 group-hover:text-gray-700'}`}
+                        className={`p-2 rounded-lg ${selectedRole === 'student' ? 'bg-primary-100 text-primary-600' : 'bg-gray-100 text-gray-500 group-hover:text-gray-700'}`}
                       >
                         <User className="h-6 w-6" />
                       </div>
                       <div>
                         <p
-                          className={`font-semibold ${watchRole === 'student' ? 'text-primary-900' : 'text-gray-900'}`}
+                          className={`font-semibold ${selectedRole === 'student' ? 'text-primary-900' : 'text-gray-900'}`}
                         >
                           Student
                         </p>
@@ -132,24 +142,29 @@ const Register = () => {
                     {...register('role', { required: 'Please select a role' })}
                     type="radio"
                     value="creator"
+                    checked={selectedRole === 'creator'}
+                    onChange={() => {
+                      setSelectedRole('creator');
+                      setValue('role', 'creator');
+                    }}
                     className="sr-only"
                   />
                   <div
                     className={`p-4 border-2 rounded-xl transition-all duration-200 ${
-                      watchRole === 'creator'
+                      selectedRole === 'creator'
                         ? 'border-primary-600 bg-primary-50/50 ring-1 ring-primary-600 shadow-sm'
                         : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
                     }`}
                   >
                     <div className="flex flex-col items-center text-center space-y-2">
                       <div
-                        className={`p-2 rounded-lg ${watchRole === 'creator' ? 'bg-primary-100 text-primary-600' : 'bg-gray-100 text-gray-500 group-hover:text-gray-700'}`}
+                        className={`p-2 rounded-lg ${selectedRole === 'creator' ? 'bg-primary-100 text-primary-600' : 'bg-gray-100 text-gray-500 group-hover:text-gray-700'}`}
                       >
                         <UserCheck className="h-6 w-6" />
                       </div>
                       <div>
                         <p
-                          className={`font-semibold ${watchRole === 'creator' ? 'text-primary-900' : 'text-gray-900'}`}
+                          className={`font-semibold ${selectedRole === 'creator' ? 'text-primary-900' : 'text-gray-900'}`}
                         >
                           Creator
                         </p>

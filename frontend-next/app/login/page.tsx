@@ -1,7 +1,12 @@
 'use client';
 
+import { Suspense } from 'react';
 import Login from '@/components/pages/Auth/Login';
 
 export default function LoginPage() {
-  return <Login />;
+  return (
+    <Suspense fallback={<div className="min-h-screen" />}>
+      <Login />
+    </Suspense>
+  );
 }

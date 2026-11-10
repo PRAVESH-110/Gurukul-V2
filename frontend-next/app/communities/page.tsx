@@ -77,7 +77,9 @@ export default async function CommunitiesPage() {
                     <div className="-mt-10 relative z-20">
                       {community.avatar || community.creator?.avatar ? (
                         <img
-                          src={getImageUrl(community.avatar || community.creator?.avatar) || ''}
+                          src={
+                            getImageUrl(community.avatar || community.creator?.avatar || '') || ''
+                          }
                           alt={community.name}
                           className="w-20 h-20 rounded-2xl border-4 border-white shadow-md object-cover bg-white"
                         />
