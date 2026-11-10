@@ -23,6 +23,10 @@ const communitySchema = new mongoose.Schema(
       type: String,
       default: null,
     },
+    avatar: {
+      type: String,
+      default: null,
+    },
     creator: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'User',

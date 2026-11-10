@@ -19,12 +19,15 @@ import {
   Settings,
 } from 'lucide-react';
 import LoadingSpinner from '@/components/UI/LoadingSpinner';
+import Pagination from '@/components/UI/Pagination';
 import toast from 'react-hot-toast';
 
 const ManageCommunities = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [sortBy, setSortBy] = useState('newest');
+  const [page, setPage] = useState(1);
+  const pageSize = 10;
 
   const {
     data: communitiesData,
@@ -88,6 +91,20 @@ const ManageCommunities = () => {
 
   const communities = communitiesData?.data?.data?.data || [];
 
+  const filteredCommunities = communities.filter((community) => {
+    const matchesSearch =
+      community.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      community.description?.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesStatus =
+      statusFilter === 'all' ||
+      (statusFilter === 'active' && community.isActive) ||
+      (statusFilter === 'inactive' && !community.isActive);
+    return matchesSearch && matchesStatus;
+  });
+
+  const totalPages = Math.ceil(filteredCommunities.length / pageSize) || 1;
+  const paginatedCommunities = filteredCommunities.slice((page - 1) * pageSize, page * pageSize);
+
   // Debug logging
   console.log('communitiesData:', communitiesData);
   console.log('communities:', communities);
@@ -117,7 +134,10 @@ const ManageCommunities = () => {
                 type="text"
                 placeholder="Search communities..."
                 value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
+                onChange={(e) => {
+                  setSearchTerm(e.target.value);
+                  setPage(1);
+                }}
                 className="input w-full pl-10"
               />
             </div>
@@ -126,7 +146,10 @@ const ManageCommunities = () => {
           <div>
             <select
               value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
+              onChange={(e) => {
+                setStatusFilter(e.target.value);
+                setPage(1);
+              }}
               className="input w-full"
             >
               <option value="all">All Communities</option>
@@ -139,7 +162,10 @@ const ManageCommunities = () => {
           <div>
             <select
               value={sortBy}
-              onChange={(e) => setSortBy(e.target.value)}
+              onChange={(e) => {
+                setSortBy(e.target.value);
+                setPage(1);
+              }}
               className="input w-full"
             >
               <option value="newest">Newest First</option>
@@ -257,7 +283,7 @@ const ManageCommunities = () => {
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
-                {communities.map((community) => (
+                {paginatedCommunities.map((community) => (
                   <tr key={community._id} className="hover:bg-gray-50">
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center">
@@ -369,6 +395,22 @@ const ManageCommunities = () => {
                 ))}
               </tbody>
             </table>
+
+            {/* Pagination Controls */}
+            {totalPages > 1 && (
+              <div className="px-6 py-4 border-t border-gray-200">
+                <Pagination
+                  currentPage={page}
+                  totalPages={totalPages}
+                  totalItems={filteredCommunities.length}
+                  pageSize={pageSize}
+                  onPageChange={(newPage) => {
+                    setPage(newPage);
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                  }}
+                />
+              </div>
+            )}
           </div>
         )}
       </div>

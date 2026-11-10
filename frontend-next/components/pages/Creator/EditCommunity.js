@@ -23,6 +23,8 @@ const EditCommunity = () => {
 
   const [banner, setBanner] = useState(null);
   const [bannerPreview, setBannerPreview] = useState(null);
+  const [avatar, setAvatar] = useState(null);
+  const [avatarPreview, setAvatarPreview] = useState(null);
   const [tagInput, setTagInput] = useState('');
   const [ruleInput, setRuleInput] = useState('');
 
@@ -40,7 +42,8 @@ const EditCommunity = () => {
         tags: community.tags || [],
         rules: community.rules || [],
       });
-      setBannerPreview(community.coverImage?.url || community.banner);
+      setBannerPreview(community.coverImage?.url || community.coverImage || community.banner);
+      setAvatarPreview(community.avatar?.url || community.avatar);
     },
   });
 
@@ -76,6 +79,18 @@ const EditCommunity = () => {
       }
       setBanner(file);
       setBannerPreview(URL.createObjectURL(file));
+    }
+  };
+
+  const handleAvatarChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      if (file.size > 5 * 1024 * 1024) {
+        toast.error('Image must be less than 5MB');
+        return;
+      }
+      setAvatar(file);
+      setAvatarPreview(URL.createObjectURL(file));
     }
   };
 
@@ -130,6 +145,11 @@ const EditCommunity = () => {
     // Add banner if selected
     if (banner) {
       submitData.append('banner', banner);
+    }
+
+    // Add avatar if selected
+    if (avatar) {
+      submitData.append('avatar', avatar);
     }
 
     updateMutation.mutate(submitData);
@@ -209,48 +229,97 @@ const EditCommunity = () => {
           </div>
         </div>
 
-        {/* Banner */}
+        {/* Community Images: Avatar and Banner */}
         <div className="bg-white rounded-lg shadow-sm border p-6">
-          <h2 className="text-xl font-semibold text-gray-900 mb-4">Community Banner</h2>
+          <h2 className="text-xl font-semibold text-gray-900 mb-6">Community Images</h2>
 
-          <div className="flex items-start space-x-6">
-            {bannerPreview && (
-              <div className="relative">
-                <img
-                  src={bannerPreview}
-                  alt="Banner preview"
-                  className="w-48 h-24 object-cover rounded-lg"
-                />
-                <button
-                  type="button"
-                  onClick={() => {
-                    setBanner(null);
-                    setBannerPreview(null);
-                  }}
-                  className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600"
-                >
-                  <X className="h-4 w-4" />
-                </button>
-              </div>
-            )}
-
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            {/* Community Profile / Avatar */}
             <div>
-              <label className="block">
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={handleBannerChange}
-                  className="hidden"
-                />
-                <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 cursor-pointer hover:border-primary-400">
-                  <Upload className="h-8 w-8 text-gray-400 mx-auto mb-2" />
-                  <p className="text-sm text-gray-600 text-center">
-                    Click to upload banner
-                    <br />
-                    <span className="text-xs text-gray-500">Max 5MB, JPG/PNG</span>
-                  </p>
-                </div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Community Picture / Icon
               </label>
+              <div className="flex items-start space-x-6">
+                {avatarPreview ? (
+                  <div className="relative">
+                    <img
+                      src={avatarPreview}
+                      alt="Avatar preview"
+                      className="w-24 h-24 object-cover rounded-2xl border shadow-sm"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setAvatar(null);
+                        setAvatarPreview(null);
+                      }}
+                      className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600"
+                    >
+                      <X className="h-4 w-4" />
+                    </button>
+                  </div>
+                ) : null}
+
+                <div>
+                  <label className="block">
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleAvatarChange}
+                      className="hidden"
+                    />
+                    <div className="border-2 border-dashed border-gray-300 rounded-lg p-5 cursor-pointer hover:border-primary-400 text-center">
+                      <Upload className="h-6 w-6 text-gray-400 mx-auto mb-1" />
+                      <p className="text-xs text-gray-600">Upload Icon/Picture</p>
+                      <span className="text-[10px] text-gray-400">Max 5MB</span>
+                    </div>
+                  </label>
+                </div>
+              </div>
+            </div>
+
+            {/* Banner */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Community Banner
+              </label>
+              <div className="flex items-start space-x-6">
+                {bannerPreview ? (
+                  <div className="relative">
+                    <img
+                      src={bannerPreview}
+                      alt="Banner preview"
+                      className="w-40 h-24 object-cover rounded-lg border shadow-sm"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setBanner(null);
+                        setBannerPreview(null);
+                      }}
+                      className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600"
+                    >
+                      <X className="h-4 w-4" />
+                    </button>
+                  </div>
+                ) : null}
+
+                <div>
+                  <label className="block">
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleBannerChange}
+                      className="hidden"
+                    />
+                    <div className="border-2 border-dashed border-gray-300 rounded-lg p-5 cursor-pointer hover:border-primary-400 text-center">
+                      <Upload className="h-6 w-6 text-gray-400 mx-auto mb-1" />
+                      <p className="text-xs text-gray-600">Upload Banner</p>
+                      <span className="text-[10px] text-gray-400">Max 5MB</span>
+                    </div>
+                  </label>
+                </div>
+              </div>
             </div>
           </div>
         </div>

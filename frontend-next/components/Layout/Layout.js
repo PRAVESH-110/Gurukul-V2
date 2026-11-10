@@ -47,7 +47,7 @@ const Layout = ({ children }) => {
           />
         )}
         <main
-          className={`flex-1 min-w-0 transition-all duration-300`}
+          className={`flex-1 min-w-0 transition-all duration-300 ${!isHomePage ? 'pt-16' : ''}`}
           style={{
             marginLeft: user && isSidebarOpen && !isMobile ? `${sidebarWidth}px` : '0',
           }}

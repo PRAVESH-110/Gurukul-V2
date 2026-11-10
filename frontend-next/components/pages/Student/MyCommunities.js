@@ -7,10 +7,13 @@ import { communityAPI } from '@/services/api';
 import { useAuth } from '@/context/AuthContext';
 import { Users, Globe, Lock, MessageSquare, Calendar, Search, Plus } from 'lucide-react';
 import LoadingSpinner from '@/components/UI/LoadingSpinner';
+import Pagination from '@/components/UI/Pagination';
 
 const MyCommunities = () => {
   const { user } = useAuth();
   const [searchTerm, setSearchTerm] = useState('');
+  const [page, setPage] = useState(1);
+  const pageSize = 10;
 
   const {
     data: communitiesData,
@@ -46,6 +49,9 @@ const MyCommunities = () => {
       community.description.toLowerCase().includes(searchTerm.toLowerCase()),
   );
 
+  const totalPages = Math.ceil(filteredCommunities.length / pageSize) || 1;
+  const paginatedCommunities = filteredCommunities.slice((page - 1) * pageSize, page * pageSize);
+
   return (
     <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-12 py-8">
       {/* Header */}
@@ -68,7 +74,10 @@ const MyCommunities = () => {
             type="text"
             placeholder="Search your communities..."
             value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
+            onChange={(e) => {
+              setSearchTerm(e.target.value);
+              setPage(1);
+            }}
             className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
           />
         </div>
@@ -76,60 +85,79 @@ const MyCommunities = () => {
 
       {/* Communities Grid */}
       {filteredCommunities.length > 0 ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredCommunities.map((community) => (
-            <Link
-              key={community._id}
-              href={`/communities/${community._id}`}
-              className="bg-white rounded-lg shadow-sm border hover:shadow-md transition-shadow duration-200"
-            >
-              <div className="p-6">
-                <div className="flex items-start justify-between mb-4">
-                  <div className="flex-1">
-                    <div className="flex items-center mb-2">
-                      <h3 className="font-semibold text-gray-900 mr-2">{community.name}</h3>
-                      {community.type === 'private' ? (
-                        <Lock className="h-4 w-4 text-gray-500" />
-                      ) : (
-                        <Globe className="h-4 w-4 text-green-500" />
-                      )}
-                    </div>
-                    <p className="text-sm text-gray-600 line-clamp-3">{community.description}</p>
-                  </div>
-                </div>
-
-                <div className="flex items-center justify-between text-sm text-gray-500 mb-4">
-                  <span className="flex items-center">
-                    <Users className="h-4 w-4 mr-1" />
-                    {community.memberCount || 0} members
-                  </span>
-                  <span className="capitalize px-2 py-1 bg-gray-100 rounded-full text-xs">
-                    {community.category || 'General'}
-                  </span>
-                </div>
-
-                {/* Recent Activity */}
-                <div className="border-t pt-4">
-                  <div className="flex items-center justify-between text-sm">
-                    <div className="flex items-center text-gray-600">
-                      <MessageSquare className="h-4 w-4 mr-1" />
-                      <span>{community.recentPostsCount || 0} recent posts</span>
-                    </div>
-                    <div className="flex items-center text-gray-600">
-                      <Calendar className="h-4 w-4 mr-1" />
-                      <span>{community.upcomingEventsCount || 0} events</span>
+        <>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {paginatedCommunities.map((community) => (
+              <Link
+                key={community._id}
+                href={`/communities/${community._id}`}
+                className="bg-white rounded-lg shadow-sm border hover:shadow-md transition-shadow duration-200"
+              >
+                <div className="p-6">
+                  <div className="flex items-start justify-between mb-4">
+                    <div className="flex-1">
+                      <div className="flex items-center mb-2">
+                        <h3 className="font-semibold text-gray-900 mr-2">{community.name}</h3>
+                        {community.type === 'private' ? (
+                          <Lock className="h-4 w-4 text-gray-500" />
+                        ) : (
+                          <Globe className="h-4 w-4 text-green-500" />
+                        )}
+                      </div>
+                      <p className="text-sm text-gray-600 line-clamp-3">{community.description}</p>
                     </div>
                   </div>
-                </div>
 
-                {/* Join Date */}
-                <div className="mt-3 text-xs text-gray-500">
-                  Joined {new Date(community.joinedAt || community.createdAt).toLocaleDateString()}
+                  <div className="flex items-center justify-between text-sm text-gray-500 mb-4">
+                    <span className="flex items-center">
+                      <Users className="h-4 w-4 mr-1" />
+                      {community.memberCount || 0} members
+                    </span>
+                    <span className="capitalize px-2 py-1 bg-gray-100 rounded-full text-xs">
+                      {community.category || 'General'}
+                    </span>
+                  </div>
+
+                  {/* Recent Activity */}
+                  <div className="border-t pt-4">
+                    <div className="flex items-center justify-between text-sm">
+                      <div className="flex items-center text-gray-600">
+                        <MessageSquare className="h-4 w-4 mr-1" />
+                        <span>{community.recentPostsCount || 0} recent posts</span>
+                      </div>
+                      <div className="flex items-center text-gray-600">
+                        <Calendar className="h-4 w-4 mr-1" />
+                        <span>{community.upcomingEventsCount || 0} events</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Join Date */}
+                  <div className="mt-3 text-xs text-gray-500">
+                    Joined{' '}
+                    {new Date(community.joinedAt || community.createdAt).toLocaleDateString()}
+                  </div>
                 </div>
-              </div>
-            </Link>
-          ))}
-        </div>
+              </Link>
+            ))}
+          </div>
+
+          {/* Pagination Controls */}
+          {totalPages > 1 && (
+            <div className="mt-8 pt-6 border-t border-gray-200">
+              <Pagination
+                currentPage={page}
+                totalPages={totalPages}
+                totalItems={filteredCommunities.length}
+                pageSize={pageSize}
+                onPageChange={(newPage) => {
+                  setPage(newPage);
+                  window.scrollTo({ top: 0, behavior: 'smooth' });
+                }}
+              />
+            </div>
+          )}
+        </>
       ) : (
         <div className="text-center py-12">
           <Users className="h-16 w-16 text-gray-400 mx-auto mb-4" />

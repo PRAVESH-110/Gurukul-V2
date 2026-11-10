@@ -61,73 +61,75 @@ const StudentDashboard = () => {
         </div>
       </div>
 
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 hover:shadow-md transition-all duration-200 group">
-          <div className="flex items-center justify-between mb-4">
-            <div className="p-3 bg-blue-50 rounded-xl group-hover:bg-blue-100 transition-colors">
-              <BookOpen className="h-6 w-6 text-blue-600" />
+      {/* Stats Cards Section */}
+      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 divide-y sm:divide-y-0 sm:divide-x divide-gray-100 gap-6 sm:gap-0">
+          <div className="sm:px-6 first:sm:pl-0 last:sm:pr-0">
+            <div className="flex items-center justify-between mb-3">
+              <div className="p-2.5 bg-blue-50 text-blue-600 rounded-xl">
+                <BookOpen className="h-5 w-5" />
+              </div>
+              <span className="text-xs font-medium text-blue-700 bg-blue-50/80 px-2.5 py-0.5 rounded-full">
+                Courses
+              </span>
             </div>
-            <span className="text-xs font-medium text-blue-600 bg-blue-50 px-2 py-1 rounded-full">
-              Courses
-            </span>
+            <div>
+              <p className="text-3xl font-extrabold text-gray-900 tracking-tight">
+                {dashboard.stats.totalCoursesEnrolled}
+              </p>
+              <p className="text-xs font-medium text-gray-500 mt-1">Enrolled Courses</p>
+            </div>
           </div>
-          <div>
-            <p className="text-3xl font-bold text-gray-900 mb-1">
-              {dashboard.stats.totalCoursesEnrolled}
-            </p>
-            <p className="text-sm font-medium text-gray-500">Enrolled Courses</p>
-          </div>
-        </div>
 
-        <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 hover:shadow-md transition-all duration-200 group">
-          <div className="flex items-center justify-between mb-4">
-            <div className="p-3 bg-green-50 rounded-xl group-hover:bg-green-100 transition-colors">
-              <Award className="h-6 w-6 text-green-600" />
+          <div className="pt-6 sm:pt-0 sm:px-6 first:sm:pl-0 last:sm:pr-0">
+            <div className="flex items-center justify-between mb-3">
+              <div className="p-2.5 bg-emerald-50 text-emerald-600 rounded-xl">
+                <Award className="h-5 w-5" />
+              </div>
+              <span className="text-xs font-medium text-emerald-700 bg-emerald-50/80 px-2.5 py-0.5 rounded-full">
+                Completed
+              </span>
             </div>
-            <span className="text-xs font-medium text-green-600 bg-green-50 px-2 py-1 rounded-full">
-              Completed
-            </span>
+            <div>
+              <p className="text-3xl font-extrabold text-gray-900 tracking-tight">
+                {dashboard.stats.completedCourses}
+              </p>
+              <p className="text-xs font-medium text-gray-500 mt-1">Courses Completed</p>
+            </div>
           </div>
-          <div>
-            <p className="text-3xl font-bold text-gray-900 mb-1">
-              {dashboard.stats.completedCourses}
-            </p>
-            <p className="text-sm font-medium text-gray-500">Courses Completed</p>
-          </div>
-        </div>
 
-        <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 hover:shadow-md transition-all duration-200 group">
-          <div className="flex items-center justify-between mb-4">
-            <div className="p-3 bg-purple-50 rounded-xl group-hover:bg-purple-100 transition-colors">
-              <Users className="h-6 w-6 text-purple-600" />
+          <div className="pt-6 sm:pt-0 sm:px-6 first:sm:pl-0 last:sm:pr-0">
+            <div className="flex items-center justify-between mb-3">
+              <div className="p-2.5 bg-purple-50 text-purple-600 rounded-xl">
+                <Users className="h-5 w-5" />
+              </div>
+              <span className="text-xs font-medium text-purple-700 bg-purple-50/80 px-2.5 py-0.5 rounded-full">
+                Social
+              </span>
             </div>
-            <span className="text-xs font-medium text-purple-600 bg-purple-50 px-2 py-1 rounded-full">
-              Social
-            </span>
+            <div>
+              <p className="text-3xl font-extrabold text-gray-900 tracking-tight">
+                {dashboard.stats.totalCommunitiesJoined}
+              </p>
+              <p className="text-xs font-medium text-gray-500 mt-1">Communities Joined</p>
+            </div>
           </div>
-          <div>
-            <p className="text-3xl font-bold text-gray-900 mb-1">
-              {dashboard.stats.totalCommunitiesJoined}
-            </p>
-            <p className="text-sm font-medium text-gray-500">Communities Joined</p>
-          </div>
-        </div>
 
-        <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 hover:shadow-md transition-all duration-200 group">
-          <div className="flex items-center justify-between mb-4">
-            <div className="p-3 bg-orange-50 rounded-xl group-hover:bg-orange-100 transition-colors">
-              <Play className="h-6 w-6 text-orange-600" />
+          <div className="pt-6 sm:pt-0 sm:px-6 first:sm:pl-0 last:sm:pr-0">
+            <div className="flex items-center justify-between mb-3">
+              <div className="p-2.5 bg-amber-50 text-amber-600 rounded-xl">
+                <Play className="h-5 w-5" />
+              </div>
+              <span className="text-xs font-medium text-amber-700 bg-amber-50/80 px-2.5 py-0.5 rounded-full">
+                Learning
+              </span>
             </div>
-            <span className="text-xs font-medium text-orange-600 bg-orange-50 px-2 py-1 rounded-full">
-              Learning
-            </span>
-          </div>
-          <div>
-            <p className="text-3xl font-bold text-gray-900 mb-1">
-              {dashboard.stats.totalVideosWatched}
-            </p>
-            <p className="text-sm font-medium text-gray-500">Videos Watched</p>
+            <div>
+              <p className="text-3xl font-extrabold text-gray-900 tracking-tight">
+                {dashboard.stats.totalVideosWatched}
+              </p>
+              <p className="text-xs font-medium text-gray-500 mt-1">Videos Watched</p>
+            </div>
           </div>
         </div>
       </div>

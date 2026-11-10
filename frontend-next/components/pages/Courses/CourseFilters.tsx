@@ -40,8 +40,8 @@ const CourseFilters = () => {
   );
 
   return (
-    <div className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 mb-10 sticky top-4 z-30 backdrop-blur-xl bg-white/90 supports-[backdrop-filter]:bg-white/60">
-      <div className="flex flex-col md:flex-row gap-4">
+    <div className="bg-white p-2 md:p-3 rounded-2xl shadow-sm border border-gray-200/80 mb-10 sticky top-4 z-30 backdrop-blur-xl bg-white/95">
+      <div className="flex flex-col md:flex-row gap-3">
         {/* Search */}
         <div className="flex-1 relative group">
           <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5 group-focus-within:text-primary-500 transition-colors" />
@@ -53,7 +53,7 @@ const CourseFilters = () => {
               setSearchTerm(e.target.value);
               push(e.target.value, selectedCategory, sortBy);
             }}
-            className="w-full pl-12 pr-4 py-3 bg-gray-50 border-transparent rounded-xl focus:bg-white focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-all duration-200"
+            className="w-full pl-12 pr-4 py-3 bg-transparent border-none rounded-xl text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500/20 transition-all duration-200"
           />
         </div>
 
@@ -65,7 +65,7 @@ const CourseFilters = () => {
               setSelectedCategory(e.target.value);
               push(searchTerm, e.target.value, sortBy);
             }}
-            className="w-full appearance-none px-4 py-3 bg-gray-50 border-transparent rounded-xl focus:bg-white focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-all duration-200 cursor-pointer"
+            className="w-full appearance-none px-4 py-3 bg-transparent border border-gray-200/70 rounded-xl text-gray-700 focus:bg-white focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-all duration-200 cursor-pointer"
           >
             <option value="">All Categories</option>
             {categories.map((category) => (
@@ -85,7 +85,7 @@ const CourseFilters = () => {
               setSortBy(e.target.value);
               push(searchTerm, selectedCategory, e.target.value);
             }}
-            className="w-full appearance-none px-4 py-3 bg-gray-50 border-transparent rounded-xl focus:bg-white focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-all duration-200 cursor-pointer"
+            className="w-full appearance-none px-4 py-3 bg-transparent border border-gray-200/70 rounded-xl text-gray-700 focus:bg-white focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-all duration-200 cursor-pointer"
           >
             <option value="popular">Most Popular</option>
             <option value="newest">Newest</option>

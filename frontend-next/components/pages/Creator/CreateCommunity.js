@@ -12,6 +12,8 @@ const CreateCommunity = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [banner, setBanner] = useState(null);
   const [bannerPreview, setBannerPreview] = useState(null);
+  const [avatar, setAvatar] = useState(null);
+  const [avatarPreview, setAvatarPreview] = useState(null);
 
   const {
     register,
@@ -27,6 +29,18 @@ const CreateCommunity = () => {
       const reader = new FileReader();
       reader.onloadend = () => {
         setBannerPreview(reader.result);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleAvatarChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setAvatar(file);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setAvatarPreview(reader.result);
       };
       reader.readAsDataURL(file);
     }
@@ -58,6 +72,11 @@ const CreateCommunity = () => {
       // Add banner file if exists
       if (banner) {
         formData.append('banner', banner);
+      }
+
+      // Add community avatar/picture file if exists
+      if (avatar) {
+        formData.append('avatar', avatar);
       }
 
       // Log the form data for debugging
@@ -208,9 +227,48 @@ const CreateCommunity = () => {
         </div>
 
         <div className="bg-white rounded-lg shadow-sm border p-6">
-          <h2 className="text-xl font-semibold text-gray-900 mb-6">Community Banner</h2>
+          <h2 className="text-xl font-semibold text-gray-900 mb-6">Community Images</h2>
 
-          <div className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Community Profile / Avatar Picture */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Community Picture / Icon (Optional)
+              </label>
+              <div className="space-y-4">
+                <div className="flex items-center space-x-4">
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={handleAvatarChange}
+                    className="hidden"
+                    id="avatar-upload"
+                  />
+                  <label htmlFor="avatar-upload" className="btn-outline cursor-pointer">
+                    <Upload className="h-4 w-4 mr-2" />
+                    Choose Picture
+                  </label>
+                </div>
+                {avatarPreview ? (
+                  <div className="w-24 h-24 rounded-2xl overflow-hidden border shadow-sm">
+                    <img
+                      src={avatarPreview}
+                      alt="Avatar preview"
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                ) : (
+                  <div className="w-24 h-24 rounded-2xl border border-dashed border-gray-300 flex items-center justify-center text-gray-400">
+                    <Users className="h-8 w-8" />
+                  </div>
+                )}
+              </div>
+              <p className="text-sm text-gray-500 mt-1">
+                Square picture or logo (e.g., 200x200px) shown on the community badge.
+              </p>
+            </div>
+
+            {/* Banner */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Upload Banner Image (Optional)
@@ -229,19 +287,22 @@ const CreateCommunity = () => {
                     Choose Banner
                   </label>
                 </div>
-                {bannerPreview && (
-                  <div className="w-full max-w-md h-32 rounded-lg overflow-hidden border">
+                {bannerPreview ? (
+                  <div className="w-full h-24 rounded-lg overflow-hidden border shadow-sm">
                     <img
                       src={bannerPreview}
                       alt="Banner preview"
                       className="w-full h-full object-cover"
                     />
                   </div>
+                ) : (
+                  <div className="w-full h-24 rounded-lg border border-dashed border-gray-300 flex items-center justify-center text-gray-400 text-sm">
+                    No banner chosen
+                  </div>
                 )}
               </div>
               <p className="text-sm text-gray-500 mt-1">
-                Recommended size: 1200x300px. This will be displayed at the top of your community
-                page.
+                Recommended: 1200x300px. Displayed at the top of the community card and page.
               </p>
             </div>
           </div>

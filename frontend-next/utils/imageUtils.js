@@ -25,7 +25,7 @@ export const getImageUrl = (imagePath) => {
     if (process.env.NODE_ENV === 'development') {
       return (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001').replace('/api', '');
     }
-    // In production, use the production URL
+    // In production, use the production URLthe
     return (
       process.env.NEXT_PUBLIC_API_URL_PROD || 'https://gurukul-04ad.onrender.com/api'
     ).replace('/api', '');

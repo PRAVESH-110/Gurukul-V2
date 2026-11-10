@@ -5,14 +5,17 @@ import Link from 'next/link';
 import { useQuery } from '@tanstack/react-query';
 import { userAPI } from '@/services/api';
 import { useAuth } from '@/context/AuthContext';
-import { BookOpen, Play, Clock, Award, Search, Filter } from 'lucide-react';
+import { BookOpen, Clock, Award, Search } from 'lucide-react';
 import LoadingSpinner from '@/components/UI/LoadingSpinner';
+import Pagination from '@/components/UI/Pagination';
 import { getImageUrl } from '@/utils/imageUtils';
 
 const MyCourses = () => {
   const { user } = useAuth();
   const [filter, setFilter] = useState('all');
   const [searchTerm, setSearchTerm] = useState('');
+  const [page, setPage] = useState(1);
+  const pageSize = 10;
 
   const {
     data: coursesData,
@@ -59,6 +62,9 @@ const MyCourses = () => {
     return matchesSearch && matchesFilter;
   });
 
+  const totalPages = Math.ceil(filteredCourses.length / pageSize) || 1;
+  const paginatedCourses = filteredCourses.slice((page - 1) * pageSize, page * pageSize);
+
   return (
     <div className="min-h-screen w-full bg-gray-50 overflow-x-hidden">
       <div className=" mx-auto w-full p-4 sm:p-6 overflow-x-hidden">
@@ -76,14 +82,20 @@ const MyCourses = () => {
               type="text"
               placeholder="Search your courses..."
               value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
+              onChange={(e) => {
+                setSearchTerm(e.target.value);
+                setPage(1);
+              }}
               className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
             />
           </div>
 
           <select
             value={filter}
-            onChange={(e) => setFilter(e.target.value)}
+            onChange={(e) => {
+              setFilter(e.target.value);
+              setPage(1);
+            }}
             className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
           >
             <option value="all">All Courses</option>
@@ -137,72 +149,92 @@ const MyCourses = () => {
 
         {/* Courses Grid */}
         {filteredCourses.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredCourses.map((course) => (
-              <div
-                key={course._id}
-                className="bg-white rounded-lg shadow-sm border overflow-hidden"
-              >
-                <div className="aspect-video bg-gray-200 relative">
-                  {course.thumbnail ? (
-                    <img
-                      src={getImageUrl(course.thumbnail)}
-                      alt={course.title}
-                      className="w-full h-full object-cover"
-                      onError={(e) => {
-                        e.target.onerror = null;
-                        e.target.style.display = 'none';
-                        e.target.parentElement.innerHTML =
-                          '<div class="w-full h-full flex items-center justify-center"><svg class="h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" /></svg></div>';
-                      }}
-                    />
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center">
-                      <BookOpen className="h-12 w-12 text-gray-400" />
-                    </div>
-                  )}
+          <>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {paginatedCourses.map((course) => (
+                <div
+                  key={course._id}
+                  className="bg-white rounded-lg shadow-sm border overflow-hidden"
+                >
+                  <div className="aspect-video bg-gray-200 relative">
+                    {course.thumbnail ? (
+                      <img
+                        src={getImageUrl(course.thumbnail)}
+                        alt={course.title}
+                        className="w-full h-full object-cover"
+                        onError={(e) => {
+                          e.target.onerror = null;
+                          e.target.style.display = 'none';
+                          e.target.parentElement.innerHTML =
+                            '<div class="w-full h-full flex items-center justify-center"><svg class="h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" /></svg></div>';
+                        }}
+                      />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center">
+                        <BookOpen className="h-12 w-12 text-gray-400" />
+                      </div>
+                    )}
 
-                  {course.progress >= 100 && (
-                    <div className="absolute top-2 right-2 bg-green-500 text-white px-2 py-1 rounded-full text-xs font-medium">
-                      Completed
-                    </div>
-                  )}
-                </div>
-
-                <div className="p-4">
-                  <h3 className="font-semibold text-gray-900 mb-2 line-clamp-2">{course.title}</h3>
-
-                  <p className="text-sm text-gray-600 mb-3">
-                    by {course.creator?.firstName} {course.creator?.lastName}
-                  </p>
-
-                  {/* Progress Bar */}
-                  <div className="mb-4">
-                    <div className="flex justify-between text-sm text-gray-600 mb-1">
-                      <span>Progress</span>
-                      <span>{Math.round(course.progress || 0)}%</span>
-                    </div>
-                    <div className="bg-gray-200 rounded-full h-2">
-                      <div
-                        className="bg-primary-600 h-2 rounded-full transition-all duration-300"
-                        style={{ width: `${course.progress || 0}%` }}
-                      ></div>
-                    </div>
+                    {course.progress >= 100 && (
+                      <div className="absolute top-2 right-2 bg-green-500 text-white px-2 py-1 rounded-full text-xs font-medium">
+                        Completed
+                      </div>
+                    )}
                   </div>
 
-                  <div className="flex items-center justify-between">
-                    <div className="text-sm text-gray-500">
-                      {course.completedVideos || 0} of {course.totalVideos || 0} lessons
+                  <div className="p-4">
+                    <h3 className="font-semibold text-gray-900 mb-2 line-clamp-2">
+                      {course.title}
+                    </h3>
+
+                    <p className="text-sm text-gray-600 mb-3">
+                      by {course.creator?.firstName} {course.creator?.lastName}
+                    </p>
+
+                    {/* Progress Bar */}
+                    <div className="mb-4">
+                      <div className="flex justify-between text-sm text-gray-600 mb-1">
+                        <span>Progress</span>
+                        <span>{Math.round(course.progress || 0)}%</span>
+                      </div>
+                      <div className="bg-gray-200 rounded-full h-2">
+                        <div
+                          className="bg-primary-600 h-2 rounded-full transition-all duration-300"
+                          style={{ width: `${course.progress || 0}%` }}
+                        ></div>
+                      </div>
                     </div>
 
-                    <Link href={`/courses/${course._id}`} className="btn-primary text-sm">
-                      {course.progress >= 100 ? 'Review' : 'Continue'}
-                    </Link>
+                    <div className="flex items-center justify-between">
+                      <div className="text-sm text-gray-500">
+                        {course.completedVideos || 0} of {course.totalVideos || 0} lessons
+                      </div>
+
+                      <Link href={`/courses/${course._id}`} className="btn-primary text-sm">
+                        {course.progress >= 100 ? 'Review' : 'Continue'}
+                      </Link>
+                    </div>
                   </div>
                 </div>
+              ))}
+            </div>
+
+            {/* Pagination Controls */}
+            {totalPages > 1 && (
+              <div className="mt-8 pt-6 border-t border-gray-200">
+                <Pagination
+                  currentPage={page}
+                  totalPages={totalPages}
+                  totalItems={filteredCourses.length}
+                  pageSize={pageSize}
+                  onPageChange={(newPage) => {
+                    setPage(newPage);
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                  }}
+                />
               </div>
-            ))}
-          </div>
+            )}
+          </>
         ) : (
           <div className="text-center py-12">
             <BookOpen className="h-16 w-16 text-gray-400 mx-auto mb-4" />

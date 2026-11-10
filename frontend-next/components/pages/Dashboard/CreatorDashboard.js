@@ -61,140 +61,144 @@ const CreatorDashboard = () => {
         </div>
       </div>
 
-      {/* Quick Actions */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
-        <Link
-          href="/create-course"
-          className="group flex flex-col items-center justify-center p-6 bg-white rounded-xl shadow-sm border border-gray-100 hover:shadow-md hover:border-primary-200 transition-all duration-200"
-        >
-          <div className="w-12 h-12 bg-primary-50 rounded-full flex items-center justify-center mb-3 group-hover:bg-primary-100 transition-colors">
-            <Plus className="h-6 w-6 text-primary-600" />
-          </div>
-          <span className="font-semibold text-gray-900 group-hover:text-primary-600 transition-colors">
-            Create Course
-          </span>
-        </Link>
-
-        <Link
-          href="/create-community"
-          className="group flex flex-col items-center justify-center p-6 bg-white rounded-xl shadow-sm border border-gray-100 hover:shadow-md hover:border-primary-200 transition-all duration-200"
-        >
-          <div className="w-12 h-12 bg-purple-50 rounded-full flex items-center justify-center mb-3 group-hover:bg-purple-100 transition-colors">
-            <Users className="h-6 w-6 text-purple-600" />
-          </div>
-          <span className="font-semibold text-gray-900 group-hover:text-purple-600 transition-colors">
-            Create Community
-          </span>
-        </Link>
-
-        {dashboard?.user?.role !== 'admin' && (
+      {/* Quick Actions Bar */}
+      <div className="bg-white/80 backdrop-blur-md rounded-2xl p-4 shadow-sm border border-gray-100">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
           <Link
-            href="/upload-video"
-            className="group flex flex-col items-center justify-center p-6 bg-white rounded-xl shadow-sm border border-gray-100 hover:shadow-md hover:border-green-200 transition-all duration-200"
+            href="/create-course"
+            className="group flex flex-col items-center justify-center p-4 rounded-xl hover:bg-primary-50/60 transition-all duration-200"
           >
-            <div className="w-12 h-12 bg-green-50 rounded-full flex items-center justify-center mb-3 group-hover:bg-green-100 transition-colors">
-              <Video className="h-6 w-6 text-green-600" />
+            <div className="w-11 h-11 bg-primary-50 rounded-xl flex items-center justify-center mb-2 group-hover:bg-primary-500 group-hover:text-white text-primary-600 transition-all duration-200 shadow-sm">
+              <Plus className="h-5 w-5" />
             </div>
-            <span className="font-semibold text-gray-900 group-hover:text-green-600 transition-colors">
-              Upload Video
+            <span className="text-xs font-semibold text-gray-700 group-hover:text-primary-700 transition-colors">
+              Create Course
             </span>
           </Link>
-        )}
 
-        <Link
-          href="/manage-courses"
-          className="group flex flex-col items-center justify-center p-6 bg-white rounded-xl shadow-sm border border-gray-100 hover:shadow-md hover:border-orange-200 transition-all duration-200"
-        >
-          <div className="w-12 h-12 bg-orange-50 rounded-full flex items-center justify-center mb-3 group-hover:bg-orange-100 transition-colors">
-            <BookOpen className="h-6 w-6 text-orange-600" />
-          </div>
-          <span className="font-semibold text-gray-900 group-hover:text-orange-600 transition-colors">
-            Manage Courses
-          </span>
-        </Link>
+          <Link
+            href="/create-community"
+            className="group flex flex-col items-center justify-center p-4 rounded-xl hover:bg-purple-50/60 transition-all duration-200"
+          >
+            <div className="w-11 h-11 bg-purple-50 rounded-xl flex items-center justify-center mb-2 group-hover:bg-purple-500 group-hover:text-white text-purple-600 transition-all duration-200 shadow-sm">
+              <Users className="h-5 w-5" />
+            </div>
+            <span className="text-xs font-semibold text-gray-700 group-hover:text-purple-700 transition-colors">
+              Create Community
+            </span>
+          </Link>
 
-        <Link
-          href="/analytics"
-          className="group flex flex-col items-center justify-center p-6 bg-white rounded-xl shadow-sm border border-gray-100 hover:shadow-md hover:border-blue-200 transition-all duration-200"
-        >
-          <div className="w-12 h-12 bg-blue-50 rounded-full flex items-center justify-center mb-3 group-hover:bg-blue-100 transition-colors">
-            <TrendingUp className="h-6 w-6 text-blue-600" />
-          </div>
-          <span className="font-semibold text-gray-900 group-hover:text-blue-600 transition-colors">
-            Analytics
-          </span>
-        </Link>
+          {dashboard?.user?.role !== 'admin' && (
+            <Link
+              href="/upload-video"
+              className="group flex flex-col items-center justify-center p-4 rounded-xl hover:bg-emerald-50/60 transition-all duration-200"
+            >
+              <div className="w-11 h-11 bg-emerald-50 rounded-xl flex items-center justify-center mb-2 group-hover:bg-emerald-500 group-hover:text-white text-emerald-600 transition-all duration-200 shadow-sm">
+                <Video className="h-5 w-5" />
+              </div>
+              <span className="text-xs font-semibold text-gray-700 group-hover:text-emerald-700 transition-colors">
+                Upload Video
+              </span>
+            </Link>
+          )}
+
+          <Link
+            href="/manage-courses"
+            className="group flex flex-col items-center justify-center p-4 rounded-xl hover:bg-amber-50/60 transition-all duration-200"
+          >
+            <div className="w-11 h-11 bg-amber-50 rounded-xl flex items-center justify-center mb-2 group-hover:bg-amber-500 group-hover:text-white text-amber-600 transition-all duration-200 shadow-sm">
+              <BookOpen className="h-5 w-5" />
+            </div>
+            <span className="text-xs font-semibold text-gray-700 group-hover:text-amber-700 transition-colors">
+              Manage Courses
+            </span>
+          </Link>
+
+          <Link
+            href="/analytics"
+            className="group flex flex-col items-center justify-center p-4 rounded-xl hover:bg-blue-50/60 transition-all duration-200"
+          >
+            <div className="w-11 h-11 bg-blue-50 rounded-xl flex items-center justify-center mb-2 group-hover:bg-blue-500 group-hover:text-white text-blue-600 transition-all duration-200 shadow-sm">
+              <TrendingUp className="h-5 w-5" />
+            </div>
+            <span className="text-xs font-semibold text-gray-700 group-hover:text-blue-700 transition-colors">
+              Analytics
+            </span>
+          </Link>
+        </div>
       </div>
 
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 hover:shadow-md transition-all duration-200 group">
-          <div className="flex items-center justify-between mb-4">
-            <div className="p-3 bg-blue-50 rounded-xl group-hover:bg-blue-100 transition-colors">
-              <BookOpen className="h-6 w-6 text-blue-600" />
+      {/* Stats Cards Section */}
+      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 divide-y sm:divide-y-0 sm:divide-x divide-gray-100 gap-6 sm:gap-0">
+          <div className="sm:px-6 first:sm:pl-0 last:sm:pr-0">
+            <div className="flex items-center justify-between mb-3">
+              <div className="p-2.5 bg-blue-50 text-blue-600 rounded-xl">
+                <BookOpen className="h-5 w-5" />
+              </div>
+              <span className="text-xs font-medium text-blue-700 bg-blue-50/80 px-2.5 py-0.5 rounded-full">
+                Total
+              </span>
             </div>
-            <span className="text-xs font-medium text-blue-600 bg-blue-50 px-2 py-1 rounded-full">
-              Total
-            </span>
+            <div>
+              <p className="text-3xl font-extrabold text-gray-900 tracking-tight">
+                {dashboard?.stats?.totalCourses || 0}
+              </p>
+              <p className="text-xs font-medium text-gray-500 mt-1">Active Courses</p>
+            </div>
           </div>
-          <div>
-            <p className="text-3xl font-bold text-gray-900 mb-1">
-              {dashboard?.stats?.totalCourses || 0}
-            </p>
-            <p className="text-sm font-medium text-gray-500">Active Courses</p>
-          </div>
-        </div>
 
-        <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 hover:shadow-md transition-all duration-200 group">
-          <div className="flex items-center justify-between mb-4">
-            <div className="p-3 bg-green-50 rounded-xl group-hover:bg-green-100 transition-colors">
-              <Users className="h-6 w-6 text-green-600" />
+          <div className="pt-6 sm:pt-0 sm:px-6 first:sm:pl-0 last:sm:pr-0">
+            <div className="flex items-center justify-between mb-3">
+              <div className="p-2.5 bg-emerald-50 text-emerald-600 rounded-xl">
+                <Users className="h-5 w-5" />
+              </div>
+              <span className="text-xs font-medium text-emerald-700 bg-emerald-50/80 px-2.5 py-0.5 rounded-full">
+                Students
+              </span>
             </div>
-            <span className="text-xs font-medium text-green-600 bg-green-50 px-2 py-1 rounded-full">
-              Students
-            </span>
+            <div>
+              <p className="text-3xl font-extrabold text-gray-900 tracking-tight">
+                {dashboard?.stats?.totalEnrollments || 0}
+              </p>
+              <p className="text-xs font-medium text-gray-500 mt-1">Total Enrollments</p>
+            </div>
           </div>
-          <div>
-            <p className="text-3xl font-bold text-gray-900 mb-1">
-              {dashboard?.stats?.totalEnrollments || 0}
-            </p>
-            <p className="text-sm font-medium text-gray-500">Total Enrollments</p>
-          </div>
-        </div>
 
-        <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 hover:shadow-md transition-all duration-200 group">
-          <div className="flex items-center justify-between mb-4">
-            <div className="p-3 bg-purple-50 rounded-xl group-hover:bg-purple-100 transition-colors">
-              <DollarSign className="h-6 w-6 text-purple-600" />
+          <div className="pt-6 sm:pt-0 sm:px-6 first:sm:pl-0 last:sm:pr-0">
+            <div className="flex items-center justify-between mb-3">
+              <div className="p-2.5 bg-purple-50 text-purple-600 rounded-xl">
+                <DollarSign className="h-5 w-5" />
+              </div>
+              <span className="text-xs font-medium text-purple-700 bg-purple-50/80 px-2.5 py-0.5 rounded-full">
+                Earnings
+              </span>
             </div>
-            <span className="text-xs font-medium text-purple-600 bg-purple-50 px-2 py-1 rounded-full">
-              Earnings
-            </span>
+            <div>
+              <p className="text-3xl font-extrabold text-gray-900 tracking-tight">
+                ${dashboard?.stats?.totalRevenue || 0}
+              </p>
+              <p className="text-xs font-medium text-gray-500 mt-1">Total Revenue</p>
+            </div>
           </div>
-          <div>
-            <p className="text-3xl font-bold text-gray-900 mb-1">
-              ${dashboard?.stats?.totalRevenue || 0}
-            </p>
-            <p className="text-sm font-medium text-gray-500">Total Revenue</p>
-          </div>
-        </div>
 
-        <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 hover:shadow-md transition-all duration-200 group">
-          <div className="flex items-center justify-between mb-4">
-            <div className="p-3 bg-orange-50 rounded-xl group-hover:bg-orange-100 transition-colors">
-              <Star className="h-6 w-6 text-orange-600" />
+          <div className="pt-6 sm:pt-0 sm:px-6 first:sm:pl-0 last:sm:pr-0">
+            <div className="flex items-center justify-between mb-3">
+              <div className="p-2.5 bg-amber-50 text-amber-600 rounded-xl">
+                <Star className="h-5 w-5" />
+              </div>
+              <span className="text-xs font-medium text-amber-700 bg-amber-50/80 px-2.5 py-0.5 rounded-full">
+                Rating
+              </span>
             </div>
-            <span className="text-xs font-medium text-orange-600 bg-orange-50 px-2 py-1 rounded-full">
-              Rating
-            </span>
-          </div>
-          <div>
-            <p className="text-3xl font-bold text-gray-900 mb-1">
-              {typeof dashboard?.stats?.averageRating === 'number'
-                ? dashboard.stats.averageRating.toFixed(1)
-                : '0.0'}
-            </p>
-            <p className="text-sm font-medium text-gray-500">Average Rating</p>
+            <div>
+              <p className="text-3xl font-extrabold text-gray-900 tracking-tight">
+                {typeof dashboard?.stats?.averageRating === 'number'
+                  ? dashboard.stats.averageRating.toFixed(1)
+                  : '0.0'}
+              </p>
+              <p className="text-xs font-medium text-gray-500 mt-1">Average Rating</p>
+            </div>
           </div>
         </div>
       </div>

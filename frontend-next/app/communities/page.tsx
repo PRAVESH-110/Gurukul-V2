@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { Users, Lock, Globe, ArrowRight, MessageSquare } from 'lucide-react';
 import { serverGet } from '@/lib/serverFetch';
+import { getImageUrl } from '@/utils/imageUtils';
 
 interface Community {
   _id: string;
@@ -8,6 +9,8 @@ interface Community {
   description?: string;
   type?: string;
   category?: string;
+  coverImage?: string;
+  avatar?: string;
   memberCount?: number;
   creator?: { firstName?: string; lastName?: string; avatar?: string };
 }
@@ -20,26 +23,24 @@ export default async function CommunitiesPage() {
   const communities = data?.communities ?? [];
 
   return (
-    <div className="min-h-screen bg-gray-50/50 font-sans">
+    <div className="font-sans">
       {/* Header */}
-      <div className="bg-white border-b border-gray-200">
-        <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-12 py-12 lg:py-16">
-          <div className="max-w-3xl">
-            <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-6 tracking-tight">
-              Join the{' '}
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary-600 to-primary-500">
-                Community
-              </span>
-            </h1>
-            <p className="text-xl text-gray-600 leading-relaxed">
-              Connect with like-minded learners, share knowledge, and grow together. Find your tribe
-              in our diverse collection of communities.
-            </p>
-          </div>
+      <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-12 pt-4 pb-4">
+        <div className="max-w-3xl">
+          <h1 className="text-3xl md:text-4xl font-bold text-gray-900 mb-2 tracking-tight">
+            Join the{' '}
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary-600 to-primary-500">
+              Community
+            </span>
+          </h1>
+          <p className="text-base text-gray-600 leading-relaxed">
+            Connect with like-minded learners, share knowledge, and grow together. Find your tribe
+            in our diverse collection of communities.
+          </p>
         </div>
       </div>
 
-      <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-12 py-8">
+      <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-12 py-4">
         {/* Communities Grid — fully server-rendered */}
         {communities.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
@@ -49,9 +50,16 @@ export default async function CommunitiesPage() {
                 href={`/communities/${community._id}`}
                 className="group bg-white rounded-2xl border border-gray-100 overflow-hidden hover:shadow-xl hover:border-primary-100 transition-all duration-300 hover:-translate-y-1 flex flex-col h-full"
               >
-                <div className="h-32 bg-gradient-to-r from-primary-500 to-blue-600 relative">
+                <div className="h-32 bg-gradient-to-r from-primary-500 to-blue-600 relative overflow-hidden">
+                  {community.coverImage ? (
+                    <img
+                      src={getImageUrl(community.coverImage) || ''}
+                      alt={community.name}
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                    />
+                  ) : null}
                   <div className="absolute inset-0 bg-black/10" />
-                  <div className="absolute top-4 right-4">
+                  <div className="absolute top-4 right-4 z-10">
                     {community.type === 'private' ? (
                       <span className="inline-flex items-center px-3 py-1 rounded-full bg-black/20 backdrop-blur text-xs font-medium text-white border border-white/20">
                         <Lock className="h-3 w-3 mr-1" /> Private
@@ -66,11 +74,11 @@ export default async function CommunitiesPage() {
 
                 <div className="p-6 pt-0 flex-grow flex flex-col">
                   <div className="flex justify-between items-start mb-4">
-                    <div className="-mt-10">
-                      {community.creator?.avatar ? (
+                    <div className="-mt-10 relative z-20">
+                      {community.avatar || community.creator?.avatar ? (
                         <img
-                          src={community.creator.avatar}
-                          alt={community.creator.firstName}
+                          src={getImageUrl(community.avatar || community.creator?.avatar) || ''}
+                          alt={community.name}
                           className="w-20 h-20 rounded-2xl border-4 border-white shadow-md object-cover bg-white"
                         />
                       ) : (

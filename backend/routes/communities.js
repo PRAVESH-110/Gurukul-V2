@@ -18,8 +18,11 @@ const {
 } = require('../middleware');
 const { uploadToImageKit } = require('../utils');
 
-// Configure banner upload
-const uploadBanner = upload.single('banner');
+// Configure image uploads (banner + avatar / picture)
+const uploadCommunityImages = upload.fields([
+  { name: 'banner', maxCount: 1 },
+  { name: 'avatar', maxCount: 1 },
+]);
 
 const router = express.Router();
 
@@ -102,24 +105,48 @@ const createCommunity = async (req, res, next) => {
 
     // Handle file upload if present (Upload to ImageKit CDN)
     let coverImage;
-    if (req.file) {
+    let avatar;
+
+    const bannerFile =
+      req.files?.banner?.[0] || (req.file?.fieldname === 'banner' ? req.file : null);
+    const avatarFile =
+      req.files?.avatar?.[0] || (req.file?.fieldname === 'avatar' ? req.file : null);
+
+    if (bannerFile) {
       try {
         const result = await uploadToImageKit({
-          file: req.file.path,
-          fileName: req.file.filename,
+          file: bannerFile.path,
+          fileName: bannerFile.filename,
           folder: 'gurukul/communities',
         });
         coverImage = result.url;
-        // Clean up temporary local file
-        if (fs.existsSync(req.file.path)) {
-          fs.unlinkSync(req.file.path);
+        if (fs.existsSync(bannerFile.path)) {
+          fs.unlinkSync(bannerFile.path);
         }
       } catch (uploadErr) {
         console.error('ImageKit upload error for community cover:', uploadErr);
-        // Fallback to local path if ImageKit fails
-        const pathParts = req.file.path.split(path.sep);
+        const pathParts = bannerFile.path.split(path.sep);
         const typeDir = pathParts[pathParts.length - 2];
-        coverImage = `/uploads/${typeDir}/${req.file.filename}`;
+        coverImage = `/uploads/${typeDir}/${bannerFile.filename}`;
+      }
+    }
+
+    if (avatarFile) {
+      try {
+        const result = await uploadToImageKit({
+          file: avatarFile.path,
+          fileName: avatarFile.filename,
+          folder: 'gurukul/communities/avatars',
+        });
+        avatar = result.url;
+        if (fs.existsSync(avatarFile.path)) {
+          fs.unlinkSync(avatarFile.path);
+        }
+      } catch (uploadErr) {
+        console.error('ImageKit upload error for community avatar:', uploadErr);
+        const pathParts = avatarFile.path.split(path.sep);
+        const typeDir = pathParts[pathParts.length - 2];
+        avatar = `/uploads/${typeDir}/${avatarFile.filename}`;
       }
     }
 
@@ -139,6 +166,7 @@ const createCommunity = async (req, res, next) => {
       description,
       type,
       coverImage,
+      avatar,
       tags: parsedTags,
       creator: req.user._id,
       members: [
@@ -267,19 +295,48 @@ const updateCommunity = async (req, res, next) => {
     }
 
     let finalCoverImage = coverImage || community.coverImage;
-    if (req.file) {
+    let finalAvatar = req.body.avatar || community.avatar;
+
+    const bannerFile =
+      req.files?.banner?.[0] || (req.file?.fieldname === 'banner' ? req.file : null);
+    const avatarFile =
+      req.files?.avatar?.[0] || (req.file?.fieldname === 'avatar' ? req.file : null);
+
+    if (bannerFile) {
       try {
         const result = await uploadToImageKit({
-          file: req.file.path,
-          fileName: req.file.filename,
+          file: bannerFile.path,
+          fileName: bannerFile.filename,
           folder: 'gurukul/communities',
         });
         finalCoverImage = result.url;
-        if (fs.existsSync(req.file.path)) {
-          fs.unlinkSync(req.file.path);
+        if (fs.existsSync(bannerFile.path)) {
+          fs.unlinkSync(bannerFile.path);
         }
       } catch (uploadErr) {
         console.error('ImageKit upload error for community cover update:', uploadErr);
+        const pathParts = bannerFile.path.split(path.sep);
+        const typeDir = pathParts[pathParts.length - 2];
+        finalCoverImage = `/uploads/${typeDir}/${bannerFile.filename}`;
+      }
+    }
+
+    if (avatarFile) {
+      try {
+        const result = await uploadToImageKit({
+          file: avatarFile.path,
+          fileName: avatarFile.filename,
+          folder: 'gurukul/communities/avatars',
+        });
+        finalAvatar = result.url;
+        if (fs.existsSync(avatarFile.path)) {
+          fs.unlinkSync(avatarFile.path);
+        }
+      } catch (uploadErr) {
+        console.error('ImageKit upload error for community avatar update:', uploadErr);
+        const pathParts = avatarFile.path.split(path.sep);
+        const typeDir = pathParts[pathParts.length - 2];
+        finalAvatar = `/uploads/${typeDir}/${avatarFile.filename}`;
       }
     }
 
@@ -308,6 +365,7 @@ const updateCommunity = async (req, res, next) => {
         description: description || community.description,
         type: type || community.type,
         coverImage: finalCoverImage,
+        avatar: finalAvatar,
         tags: parsedTags,
         rules: parsedRules,
       },
@@ -778,7 +836,7 @@ router.post(
   '/',
   protect,
   authorize('creator', 'admin'),
-  uploadBanner,
+  uploadCommunityImages,
   handleUploadErrors,
   validateCommunity,
   createCommunity,
@@ -789,7 +847,7 @@ router.put(
   protect,
   authorize('creator', 'admin'),
   validateObjectId('id'),
-  uploadBanner,
+  uploadCommunityImages,
   handleUploadErrors,
   validateCommunity,
   updateCommunity,

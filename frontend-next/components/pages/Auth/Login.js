@@ -31,7 +31,7 @@ function LoginInner() {
     setError,
   } = useForm();
 
-  const from = searchParams.get('from') || '/dashboard';
+  const from = searchParams.get('from') || searchParams.get('redirect') || '/dashboard';
 
   const onSubmit = async (data) => {
     setIsLoading(true);

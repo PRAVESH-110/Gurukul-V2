@@ -35,26 +35,24 @@ export default async function CoursesPage(props: PageProps) {
   const courses = data?.courses ?? [];
 
   return (
-    <div className="min-h-screen bg-gray-50/50 font-sans">
+    <div className="font-sans">
       {/* Header */}
-      <div className="bg-white border-b border-gray-200">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 lg:py-16">
-          <div className="max-w-3xl">
-            <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-6 tracking-tight">
-              Explore Our{' '}
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary-600 to-primary-500">
-                Courses
-              </span>
-            </h1>
-            <p className="text-xl text-gray-600 leading-relaxed">
-              Discover a world of knowledge with our expertly crafted courses. From coding to
-              design, find the perfect path for your learning journey.
-            </p>
-          </div>
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-4 pb-4">
+        <div className="max-w-3xl">
+          <h1 className="text-3xl md:text-4xl font-bold text-gray-900 mb-2 tracking-tight">
+            Explore Our{' '}
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary-600 to-primary-500">
+              Courses
+            </span>
+          </h1>
+          <p className="text-base text-gray-600 leading-relaxed">
+            Discover a world of knowledge with our expertly crafted courses. From coding to design,
+            find the perfect path for your learning journey.
+          </p>
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
         {/* Client island: filter/search bar */}
         <Suspense fallback={<div className="h-16 bg-white rounded-2xl animate-pulse mb-10" />}>
           <CourseFilters />

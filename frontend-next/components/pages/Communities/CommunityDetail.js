@@ -133,10 +133,10 @@ const CommunityDetail = () => {
 
         <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-12 relative z-20">
           <div className="relative -mt-16 md:-mt-20 mb-8 flex flex-col md:flex-row items-start md:items-end gap-6">
-            <div className="w-32 h-32 md:w-40 md:h-40 rounded-2xl border-4 border-white shadow-xl bg-white flex items-center justify-center flex-shrink-0 relative z-30 ring-1 ring-black/5">
-              {community?.creator?.avatar ? (
+            <div className="w-32 h-32 md:w-40 md:h-40 rounded-2xl border-4 border-white shadow-xl bg-white flex items-center justify-center flex-shrink-0 relative z-30 ring-1 ring-black/5 overflow-hidden">
+              {community?.avatar || community?.creator?.avatar ? (
                 <img
-                  src={getImageUrl(community.creator.avatar)}
+                  src={getImageUrl(community.avatar || community.creator.avatar)}
                   alt={community.name}
                   className="w-full h-full rounded-xl object-cover"
                 />

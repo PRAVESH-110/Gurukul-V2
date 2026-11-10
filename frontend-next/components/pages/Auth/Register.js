@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { useForm } from 'react-hook-form';
 import { Eye, EyeOff, BookOpen, User, UserCheck } from 'lucide-react';
@@ -12,6 +12,7 @@ import WarmupLoader from '@/components/UI/WarmupLoader';
 const Register = () => {
   const { register: registerUser } = useAuth();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   // Track if this is the first server request this session (cold start handling)
@@ -32,6 +33,7 @@ const Register = () => {
   } = useForm();
 
   const watchRole = watch('role');
+  const from = searchParams.get('from') || searchParams.get('redirect') || '/dashboard';
 
   const onSubmit = async (data) => {
     setIsLoading(true);
@@ -41,7 +43,7 @@ const Register = () => {
         // Mark server as warm on success
         sessionStorage.setItem('server_warm', 'true');
         setIsFirstAttempt(false);
-        router.push('/dashboard');
+        router.push(from);
       } else {
         setIsFirstAttempt(false); // Validation error — not a cold start
         setError('root', { message: result.message });

@@ -62,14 +62,14 @@ const createFileFilter = (type) => (req, file, cb) => {
 };
 
 // Create multer instances for different file types
-const createUploader = (type) => {
+const createUploader = (type, maxFiles = 1) => {
   const config = fileTypes[type] || fileTypes.image;
 
   return multer({
     storage: getStorage(type),
     limits: {
       fileSize: config.maxSize,
-      files: 1,
+      files: maxFiles,
     },
     fileFilter: createFileFilter(type),
   });
@@ -79,19 +79,22 @@ const createUploader = (type) => {
 const upload = {
   // Single file uploads
   single: (field, type = 'image') => {
-    const uploader = createUploader(type);
+    const uploader = createUploader(type, 1);
     return uploader.single(field);
   },
 
   // Multiple files upload
   array: (field, maxCount = 5, type = 'image') => {
-    const uploader = createUploader(type);
+    const uploader = createUploader(type, maxCount);
     return uploader.array(field, maxCount);
   },
 
   // Fields upload
   fields: (fields, type = 'image') => {
-    const uploader = createUploader(type);
+    const totalFiles = Array.isArray(fields)
+      ? fields.reduce((sum, f) => sum + (f.maxCount || 1), 0)
+      : 5;
+    const uploader = createUploader(type, totalFiles);
     return uploader.fields(fields);
   },
 

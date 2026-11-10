@@ -20,6 +20,7 @@ import {
   Video,
 } from 'lucide-react';
 import LoadingSpinner from '@/components/UI/LoadingSpinner';
+import Pagination from '@/components/UI/Pagination';
 import toast from 'react-hot-toast';
 import { getImageUrl } from '@/utils/imageUtils';
 
@@ -28,6 +29,8 @@ const ManageCourses = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [visibilityFilter, setVisibilityFilter] = useState('all');
   const [sortBy, setSortBy] = useState('newest');
+  const [page, setPage] = useState(1);
+  const pageSize = 10;
 
   const {
     data: coursesData,
@@ -119,6 +122,17 @@ const ManageCourses = () => {
 
   const courses = coursesData?.data?.data?.data || [];
 
+  const filteredCourses = courses.filter((course) => {
+    const matchesSearch =
+      course.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      course.description?.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesVisibility = visibilityFilter === 'all' || course.visibility === visibilityFilter;
+    return matchesSearch && matchesVisibility;
+  });
+
+  const totalPages = Math.ceil(filteredCourses.length / pageSize) || 1;
+  const paginatedCourses = filteredCourses.slice((page - 1) * pageSize, page * pageSize);
+
   // Debug logging
   console.log('coursesData:', coursesData);
   console.log('courses:', courses);
@@ -148,7 +162,10 @@ const ManageCourses = () => {
                 type="text"
                 placeholder="Search courses..."
                 value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
+                onChange={(e) => {
+                  setSearchTerm(e.target.value);
+                  setPage(1);
+                }}
                 className="input w-full pl-10"
               />
             </div>
@@ -157,7 +174,10 @@ const ManageCourses = () => {
           <div>
             <select
               value={visibilityFilter}
-              onChange={(e) => setVisibilityFilter(e.target.value)}
+              onChange={(e) => {
+                setVisibilityFilter(e.target.value);
+                setPage(1);
+              }}
               className="input w-full"
             >
               <option value="all">All Courses</option>
@@ -169,7 +189,10 @@ const ManageCourses = () => {
           <div>
             <select
               value={sortBy}
-              onChange={(e) => setSortBy(e.target.value)}
+              onChange={(e) => {
+                setSortBy(e.target.value);
+                setPage(1);
+              }}
               className="input w-full"
             >
               <option value="newest">Newest First</option>
@@ -291,7 +314,7 @@ const ManageCourses = () => {
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
-                {courses.map((course) => (
+                {paginatedCourses.map((course) => (
                   <tr key={course._id} className="hover:bg-gray-50">
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center">
@@ -416,6 +439,22 @@ const ManageCourses = () => {
                 ))}
               </tbody>
             </table>
+
+            {/* Pagination Controls */}
+            {totalPages > 1 && (
+              <div className="px-6 py-4 border-t border-gray-200">
+                <Pagination
+                  currentPage={page}
+                  totalPages={totalPages}
+                  totalItems={filteredCourses.length}
+                  pageSize={pageSize}
+                  onPageChange={(newPage) => {
+                    setPage(newPage);
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                  }}
+                />
+              </div>
+            )}
           </div>
         )}
       </div>
