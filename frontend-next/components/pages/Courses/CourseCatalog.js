@@ -5,10 +5,19 @@ import Link from 'next/link';
 import { useQuery } from '@tanstack/react-query';
 import Image from 'next/image';
 import { courseAPI } from '@/services/api';
-import { Search, Filter, BookOpen, Star, Users, Clock, ArrowRight } from 'lucide-react';
+import {
+  SearchMd as Search,
+  FilterLines as Filter,
+  BookOpen01 as BookOpen,
+  Star01 as Star,
+  Users01 as Users,
+  Clock,
+  ArrowRight,
+} from '@untitledui/icons';
 import LoadingSpinner from '@/components/UI/LoadingSpinner';
 import Pagination from '@/components/UI/Pagination';
 import { getImageUrl } from '@/utils/imageUtils';
+import { useDebounce } from '@/providers/useDebounceHook';
 
 const CourseCatalog = () => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -17,6 +26,8 @@ const CourseCatalog = () => {
   const [page, setPage] = useState(1);
   const limit = 10;
 
+  const debouncedSearch = useDebounce(searchTerm, 300);
+
   const {
     data: coursesData,
     isLoading,
@@ -24,11 +35,11 @@ const CourseCatalog = () => {
   } = useQuery({
     queryKey: [
       'courses',
-      { search: searchTerm, category: selectedCategory, sort: sortBy, page, limit },
+      { search: debouncedSearch, category: selectedCategory, sort: sortBy, page, limit },
     ],
     queryFn: () =>
       courseAPI.getCourses({
-        search: searchTerm,
+        search: debouncedSearch,
         category: selectedCategory,
         sort: sortBy,
         page,

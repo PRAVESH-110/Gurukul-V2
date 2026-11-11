@@ -120,12 +120,12 @@ function LoginInner() {
                   Password
                 </label>
                 <div className="text-sm">
-                  <a
-                    href="#"
+                  <Link
+                    href="/forgot-password"
                     className="font-medium text-primary-600 hover:text-primary-500 transition-colors"
                   >
                     Forgot password?
-                  </a>
+                  </Link>
                 </div>
               </div>
               <div className="relative group">

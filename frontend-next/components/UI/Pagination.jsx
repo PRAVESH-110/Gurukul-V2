@@ -1,7 +1,12 @@
 'use client';
 
 import React, { useMemo } from 'react';
-import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from 'lucide-react';
+import {
+  ChevronLeft,
+  ChevronRight,
+  ChevronLeftDouble as ChevronsLeft,
+  ChevronRightDouble as ChevronsRight,
+} from '@untitledui/icons';
 
 /**
  * Pure calculation helper (Single Responsibility Principle)

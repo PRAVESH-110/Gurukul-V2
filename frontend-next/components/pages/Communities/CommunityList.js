@@ -4,11 +4,21 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { useQuery } from '@tanstack/react-query';
 import { communityAPI } from '@/services/api';
-import { Search, Users, Lock, Globe, Plus, Filter, ArrowRight, MessageSquare } from 'lucide-react';
+import {
+  SearchMd as Search,
+  Users01 as Users,
+  Lock01 as Lock,
+  Globe01 as Globe,
+  Plus,
+  FilterLines as Filter,
+  ArrowRight,
+  MessageSquare01 as MessageSquare,
+} from '@untitledui/icons';
 import LoadingSpinner from '@/components/UI/LoadingSpinner';
 import Pagination from '@/components/UI/Pagination';
 import { getImageUrl } from '@/utils/imageUtils';
 import { useAuth } from '@/context/AuthContext';
+import { useDebounce } from '@/providers/useDebounceHook';
 
 const CommunityList = () => {
   const { user } = useAuth();
@@ -17,24 +27,26 @@ const CommunityList = () => {
   const [page, setPage] = useState(1);
   const limit = 10;
 
+  const debouncedSearch = useDebounce(searchTerm, 300);
+
   const {
     data: communitiesData,
     isLoading,
     error,
   } = useQuery({
-    queryKey: ['communities', { search: searchTerm, type: filterType, page, limit }],
+    queryKey: ['communities', { search: debouncedSearch, type: filterType, page, limit }],
     queryFn: async () => {
       try {
         if (filterType === 'my' && user) {
           const result = await communityAPI.getCreatorCommunities({
-            search: searchTerm,
+            search: debouncedSearch,
             page,
             limit,
           });
           return result;
         } else {
           const result = await communityAPI.getCommunities({
-            search: searchTerm,
+            search: debouncedSearch,
             type: filterType === 'all' ? '' : filterType,
             page,
             limit,

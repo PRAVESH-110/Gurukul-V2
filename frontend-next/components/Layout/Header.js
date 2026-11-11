@@ -4,7 +4,15 @@ import Link from 'next/link';
 import { useRouter, usePathname } from 'next/navigation';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/context/AuthContext';
-import { Search, Bell, User, LogOut, Settings, BookOpen, Menu } from 'lucide-react';
+import {
+  SearchMd as Search,
+  Bell01 as Bell,
+  User01 as User,
+  LogOut01 as LogOut,
+  Settings01 as Settings,
+  BookOpen01 as BookOpen,
+  Menu01 as Menu,
+} from '@untitledui/icons';
 import logo from '@/assets/logo.png';
 import Image from 'next/image';
 import { io } from 'socket.io-client';

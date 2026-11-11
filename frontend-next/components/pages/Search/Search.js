@@ -1,11 +1,19 @@
 'use client';
 
-import React, { useState, useEffect, Suspense } from 'react';
+import React, { useState, useEffect, useRef, Suspense } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useSearchParams, useRouter, usePathname } from 'next/navigation';
 import { searchAPI } from '@/services/api';
 import LoadingSpinner from '@/components/UI/LoadingSpinner';
-import { Search as SearchIcon, Filter, BookOpen, Users, MessageSquare, X } from 'lucide-react';
+import {
+  SearchMd as SearchIcon,
+  FilterLines as Filter,
+  BookOpen01 as BookOpen,
+  Users01 as Users,
+  MessageSquare01 as MessageSquare,
+  XClose as X,
+} from '@untitledui/icons';
+import { useDebounce } from '@/providers/useDebounceHook';
 
 const Search = () => {
   const searchParams = useSearchParams();
@@ -14,6 +22,9 @@ const Search = () => {
 
   const initialQuery = searchParams.get('q') || '';
   const [query, setQuery] = useState(initialQuery);
+  const debouncedQuery = useDebounce(query, 300);
+  const isFirstRender = useRef(true);
+
   const [activeTab, setActiveTab] = useState('all');
   const [filters, setFilters] = useState({
     category: '',
@@ -21,24 +32,43 @@ const Search = () => {
     price: '',
   });
 
-  // Update query state if URL param changes
+  // Update query state if URL param changes externally
   useEffect(() => {
-    const q = searchParams.get('q');
-    if (q !== null && q !== query) {
+    const q = searchParams.get('q') || '';
+    if (q !== query) {
       setQuery(q);
     }
   }, [searchParams]);
+
+  // Sync debounced search to URL after 300ms without spamming history
+  useEffect(() => {
+    if (isFirstRender.current) {
+      isFirstRender.current = false;
+      return;
+    }
+    const currentQ = searchParams.get('q') || '';
+    if (debouncedQuery.trim() !== currentQ) {
+      const params = new URLSearchParams(searchParams);
+      if (debouncedQuery.trim()) {
+        params.set('q', debouncedQuery.trim());
+      } else {
+        params.delete('q');
+      }
+      router.replace(`${pathname}${params.toString() ? `?${params.toString()}` : ''}`);
+    }
+  }, [debouncedQuery, pathname, router, searchParams]);
 
   const {
     data: searchResults,
     isLoading,
     error,
   } = useQuery({
-    queryKey: ['search', query, activeTab, filters],
+    queryKey: ['search', debouncedQuery, activeTab, filters],
     queryFn: () => {
-      if (!query.trim()) return { data: { courses: [], communities: [], users: [], posts: [] } };
+      if (!debouncedQuery.trim())
+        return { data: { courses: [], communities: [], users: [], posts: [] } };
 
-      const params = { q: query };
+      const params = { q: debouncedQuery };
       if (activeTab !== 'all') params.type = activeTab;
       if (filters.category) params.category = filters.category;
       if (filters.level) params.level = filters.level;
@@ -46,7 +76,7 @@ const Search = () => {
 
       return searchAPI.globalSearch(params);
     },
-    enabled: !!query.trim(),
+    enabled: !!debouncedQuery.trim(),
   });
 
   const handleSearch = (e) => {
@@ -84,33 +114,35 @@ const Search = () => {
   return (
     <div className="max-w-6xl mx-auto space-y-6">
       {/* Search Header */}
-      <div className="bg-white rounded-lg shadow-sm border">
-        <div className="p-6">
-          <form onSubmit={handleSearch} className="flex gap-4">
-            <div className="flex-1 relative">
-              <SearchIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
-              <input
-                type="text"
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                placeholder="Search for courses, communities, users, or posts..."
-                className="input pl-10 pr-10"
-              />
-              {query && (
-                <button
-                  type="button"
-                  onClick={clearSearch}
-                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
-                >
-                  <X className="h-4 w-4" />
-                </button>
-              )}
-            </div>
-            <button type="submit" className="btn-primary">
-              Search
-            </button>
-          </form>
-        </div>
+      <div className="bg-white rounded-2xl shadow-sm border border-gray-200/80 p-2 md:p-3">
+        <form onSubmit={handleSearch} className="flex items-center gap-3">
+          <div className="flex-1 relative flex items-center">
+            <SearchIcon className="absolute left-3.5 text-gray-400 h-5 w-5 pointer-events-none" />
+            <input
+              type="text"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="Search for courses, communities, users, or posts..."
+              className="w-full pl-11 pr-10 py-2.5 bg-transparent border-none text-sm md:text-base text-gray-900 placeholder-gray-400 focus:outline-none transition-all duration-200"
+            />
+            {query && (
+              <button
+                type="button"
+                onClick={clearSearch}
+                aria-label="Clear search"
+                className="absolute right-3 p-1 rounded-md text-gray-400 hover:text-gray-600 transition-colors"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            )}
+          </div>
+          <button
+            type="submit"
+            className="btn-primary py-2.5 px-6 rounded-xl text-sm font-semibold shrink-0"
+          >
+            Search
+          </button>
+        </form>
       </div>
 
       {/* Search Results */}

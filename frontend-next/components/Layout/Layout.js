@@ -14,7 +14,34 @@ const Layout = ({ children }) => {
   const isHomePage = pathname === '/';
   const [isMobile, setIsMobile] = React.useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = React.useState(false);
-  const [sidebarWidth, setSidebarWidth] = React.useState(256);
+  const [sidebarWidth, setSidebarWidth] = React.useState(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('gurukul_sidebar_width');
+      if (saved) {
+        const parsed = parseInt(saved, 10);
+        if (!isNaN(parsed) && parsed >= 200 && parsed <= 480) {
+          return parsed;
+        }
+      }
+    }
+    return 256;
+  });
+
+  const handleSetSidebarWidth = (newWidth) => {
+    setSidebarWidth(newWidth);
+    if (typeof window !== 'undefined') {
+      try {
+        localStorage.setItem('gurukul_sidebar_width', String(newWidth));
+      } catch {
+        // ignore localStorage errors
+      }
+    }
+  };
+
+  // Automatically close sidebar when navigation / pathname changes (onsuccess)
+  React.useEffect(() => {
+    setIsSidebarOpen(false);
+  }, [pathname]);
 
   React.useEffect(() => {
     const handleResize = () => {
@@ -43,7 +70,7 @@ const Layout = ({ children }) => {
             isOpen={isSidebarOpen}
             onClose={() => setIsSidebarOpen(false)}
             width={sidebarWidth}
-            setWidth={setSidebarWidth}
+            setWidth={handleSetSidebarWidth}
           />
         )}
         <main

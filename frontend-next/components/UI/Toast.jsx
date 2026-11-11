@@ -2,7 +2,14 @@
 
 import React from 'react';
 import toast, { Toaster as HotToaster } from 'react-hot-toast';
-import { CheckCircle2, AlertCircle, AlertTriangle, Info, X, Loader2 } from 'lucide-react';
+import {
+  CheckCircle as CheckCircle2,
+  AlertCircle,
+  AlertTriangle,
+  InfoCircle as Info,
+  XClose as X,
+  Loading01 as Loader2,
+} from '@untitledui/icons';
 
 /**
  * Toast variant styles & default icons

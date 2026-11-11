@@ -1,9 +1,9 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Search, Filter } from 'lucide-react';
-import { useCallback } from 'react';
+import { useDebounce } from '@/providers/useDebounceHook';
 
 const categories = [
   'Programming',
@@ -28,6 +28,9 @@ const CourseFilters = () => {
   const [selectedCategory, setSelectedCategory] = useState(searchParams.get('category') ?? '');
   const [sortBy, setSortBy] = useState(searchParams.get('sort') ?? 'popular');
 
+  const debouncedSearch = useDebounce(searchTerm, 300);
+  const isFirstRender = useRef(true);
+
   const push = useCallback(
     (search: string, category: string, sort: string) => {
       const params = new URLSearchParams();
@@ -38,6 +41,15 @@ const CourseFilters = () => {
     },
     [router],
   );
+
+  // Trigger server-side navigation debounced by 300ms when debouncedSearch changes
+  useEffect(() => {
+    if (isFirstRender.current) {
+      isFirstRender.current = false;
+      return;
+    }
+    push(debouncedSearch, selectedCategory, sortBy);
+  }, [debouncedSearch, selectedCategory, sortBy, push]);
 
   return (
     <div className="bg-white p-2 md:p-3 rounded-2xl shadow-sm border border-gray-200/80 mb-10 sticky top-4 z-30 backdrop-blur-xl bg-white/95">
@@ -51,7 +63,6 @@ const CourseFilters = () => {
             value={searchTerm}
             onChange={(e) => {
               setSearchTerm(e.target.value);
-              push(e.target.value, selectedCategory, sortBy);
             }}
             className="w-full pl-12 pr-4 py-3 bg-transparent border-none rounded-xl text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500/20 transition-all duration-200"
           />
@@ -63,7 +74,6 @@ const CourseFilters = () => {
             value={selectedCategory}
             onChange={(e) => {
               setSelectedCategory(e.target.value);
-              push(searchTerm, e.target.value, sortBy);
             }}
             className="w-full appearance-none px-4 py-3 bg-transparent border border-gray-200/70 rounded-xl text-gray-700 focus:bg-white focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-all duration-200 cursor-pointer"
           >
@@ -83,7 +93,6 @@ const CourseFilters = () => {
             value={sortBy}
             onChange={(e) => {
               setSortBy(e.target.value);
-              push(searchTerm, selectedCategory, e.target.value);
             }}
             className="w-full appearance-none px-4 py-3 bg-transparent border border-gray-200/70 rounded-xl text-gray-700 focus:bg-white focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-all duration-200 cursor-pointer"
           >
