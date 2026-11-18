@@ -196,14 +196,21 @@ const Header = ({ toggleSidebar, isSidebarOpen }) => {
               </button>
             )}
             <Link href="/" className="flex items-center space-x-3 group">
-              {/* <img src={logo} alt="Gurukul Logo" className="w-10 h-10 rounded-full shadow-lg shadow-primary/20 group-hover:scale-105 transition-transform duration-200" /> */}
-              <Image
-                src={logo}
-                alt="Gurukul Logo"
-                width={36}
-                height={36}
-                className="w-10 h-10 rounded-full shadow-lg shadow-primary/20 group-hover:scale-105 transition-transform duration-200"
-              />
+              <div
+                className={`w-10 h-10 rounded-full flex items-center justify-center transition-transform duration-200 group-hover:scale-105 ${
+                  isHomePage
+                    ? 'bg-white p-1 shadow-md shadow-black/25 ring-1 ring-white/20'
+                    : 'p-0.5'
+                }`}
+              >
+                <Image
+                  src={logo}
+                  alt="Gurukul Logo"
+                  width={36}
+                  height={36}
+                  className="w-full h-full rounded-full object-contain"
+                />
+              </div>
               <span
                 className={`text-2xl font-bold tracking-tight ${isHomePage ? 'text-white drop-shadow-md' : 'bg-clip-text text-transparent bg-gradient-to-r from-gray-900 to-gray-700'}`}
               >

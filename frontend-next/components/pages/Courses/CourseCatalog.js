@@ -27,6 +27,8 @@ const CourseCatalog = () => {
   const limit = 10;
 
   const debouncedSearch = useDebounce(searchTerm, 300);
+  const debouncedCategory = useDebounce(selectedCategory, 300);
+  const debouncedSort = useDebounce(sortBy, 300);
 
   const {
     data: coursesData,
@@ -35,13 +37,13 @@ const CourseCatalog = () => {
   } = useQuery({
     queryKey: [
       'courses',
-      { search: debouncedSearch, category: selectedCategory, sort: sortBy, page, limit },
+      { search: debouncedSearch, category: debouncedCategory, sort: debouncedSort, page, limit },
     ],
     queryFn: () =>
       courseAPI.getCourses({
         search: debouncedSearch,
-        category: selectedCategory,
-        sort: sortBy,
+        category: debouncedCategory,
+        sort: debouncedSort,
         page,
         limit,
       }),
@@ -271,8 +273,8 @@ const CourseCatalog = () => {
           </>
         ) : (
           <div className="text-center py-20 bg-white rounded-3xl border border-dashed border-gray-200">
-            <div className="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-6">
-              <Search className="h-10 w-10 text-gray-400" />
+            <div className="flex items-center justify-center mx-auto mb-4 text-black">
+              <Search className="h-10 w-10 text-black stroke-[1.75]" />
             </div>
             <h3 className="text-xl font-bold text-gray-900 mb-2">No courses found</h3>
             <p className="text-gray-600 max-w-md mx-auto">

@@ -159,6 +159,26 @@
   .glass-dark {
     @apply bg-slate-900/70 backdrop-blur-lg border border-white/10 shadow-xl;
   }
+
+  /* Running Border Animation Card */
+  .auth-card-wrapper {
+    @apply relative p-[2px] rounded-2xl overflow-hidden border border-slate-200/60 shadow-xl;
+  }
+
+  .auth-border-beam {
+    @apply absolute top-1/2 left-1/2 w-[300%] aspect-square pointer-events-none;
+    background: conic-gradient(
+      from 0deg,
+      transparent 0deg,
+      transparent 280deg,
+      rgba(30, 64, 175, 0) 280deg,
+      #1e40af 315deg,
+      #2563eb 340deg,
+      #1e40af 355deg,
+      transparent 360deg
+    );
+    animation: borderSpin 5s linear infinite;
+  }
 }
 
 /* Hide scrollbar for Chrome, Safari and Opera */
@@ -205,6 +225,26 @@ body {
   to {
     transform: translateY(0);
     opacity: 1;
+  }
+}
+
+@keyframes borderSpin {
+  0% {
+    transform: translate(-50%, -50%) rotate(0deg);
+  }
+  100% {
+    transform: translate(-50%, -50%) rotate(360deg);
+  }
+}
+
+.animate-border-spin {
+  animation: borderSpin 5s linear infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .auth-border-beam,
+  .animate-border-spin {
+    animation: none;
   }
 }
 

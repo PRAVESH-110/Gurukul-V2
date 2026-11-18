@@ -1,5 +1,6 @@
 const express = require('express');
 const rateLimit = require('express-rate-limit');
+const { optionalProtect } = require('../middleware/auth');
 const { sendChatReply } = require('../controllers/chatController');
 
 const router = express.Router();
@@ -9,6 +10,6 @@ const chatLimiter = rateLimit({
   message: { success: false, message: 'Too many assistant requests. Please try again later.' },
 });
 
-router.post('/', chatLimiter, sendChatReply);
+router.post('/', chatLimiter, optionalProtect, sendChatReply);
 
 module.exports = router;

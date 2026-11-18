@@ -34,11 +34,7 @@ export function MetricSegment({
     >
       <div className="flex items-center justify-between mb-2">
         <div className="flex items-center gap-2">
-          {Icon && (
-            <div className="p-1.5 rounded-lg bg-slate-50 text-slate-500 border border-slate-100">
-              <Icon className="h-4 w-4" />
-            </div>
-          )}
+          {Icon && <Icon className="h-4 w-4 text-black stroke-[2] shrink-0" />}
           <span className="text-[12.5px] font-semibold text-slate-500 tracking-tight">{label}</span>
         </div>
         {(badgeText || trend) && (

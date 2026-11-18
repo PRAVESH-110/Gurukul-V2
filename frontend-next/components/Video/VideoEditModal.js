@@ -16,12 +16,13 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { videoAPI } from '@/services/api';
 import toast from 'react-hot-toast';
 
-const VideoEditModal = ({ video, isOpen, onClose, courseId }) => {
+const VideoEditModal = ({ video, isOpen, onClose, courseId, sections = [] }) => {
   const queryClient = useQueryClient();
 
   const [formData, setFormData] = useState({
     title: '',
     description: '',
+    sectionId: '',
     order: 1,
     isPreview: false,
     isPublished: true,
@@ -37,6 +38,7 @@ const VideoEditModal = ({ video, isOpen, onClose, courseId }) => {
       setFormData({
         title: video.title || '',
         description: video.description || '',
+        sectionId: video.section || '',
         order: video.order || 1,
         isPreview: video.isPreview || false,
         isPublished: video.isPublished !== false,
@@ -163,7 +165,25 @@ const VideoEditModal = ({ video, isOpen, onClose, courseId }) => {
               />
             </div>
 
-            <div className="grid grid-cols-2 gap-5">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Section</label>
+                <select
+                  name="sectionId"
+                  value={formData.sectionId}
+                  onChange={handleInputChange}
+                  className="input w-full"
+                >
+                  <option value="">General / Main Section</option>
+                  {sections.map((s) => (
+                    <option key={s._id} value={s._id}>
+                      {s.title}
+                    </option>
+                  ))}
+                </select>
+                <p className="mt-1 text-xs text-gray-500">Group this lecture into a section</p>
+              </div>
+
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Lesson Order</label>
                 <input

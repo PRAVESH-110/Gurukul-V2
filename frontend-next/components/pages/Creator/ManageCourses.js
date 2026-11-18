@@ -23,6 +23,7 @@ import LoadingSpinner from '@/components/UI/LoadingSpinner';
 import Pagination from '@/components/UI/Pagination';
 import toast from 'react-hot-toast';
 import { getImageUrl } from '@/utils/imageUtils';
+import { useDebounce } from '@/providers/useDebounceHook';
 
 const ManageCourses = () => {
   const queryClient = useQueryClient();
@@ -32,14 +33,21 @@ const ManageCourses = () => {
   const [page, setPage] = useState(1);
   const pageSize = 10;
 
+  const debouncedSearch = useDebounce(searchTerm, 300);
+  const debouncedVisibility = useDebounce(visibilityFilter, 300);
+
   const {
     data: coursesData,
     isLoading,
     error,
     refetch,
   } = useQuery({
-    queryKey: ['creatorCourses'],
-    queryFn: () => courseAPI.getCreatorCourses(),
+    queryKey: ['creatorCourses', debouncedSearch, debouncedVisibility],
+    queryFn: () =>
+      courseAPI.getCreatorCourses({
+        search: debouncedSearch,
+        visibility: debouncedVisibility,
+      }),
   });
 
   const handleDeleteCourse = async (courseId, courseName) => {
@@ -122,16 +130,8 @@ const ManageCourses = () => {
 
   const courses = coursesData?.data?.data?.data || [];
 
-  const filteredCourses = courses.filter((course) => {
-    const matchesSearch =
-      course.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      course.description?.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesVisibility = visibilityFilter === 'all' || course.visibility === visibilityFilter;
-    return matchesSearch && matchesVisibility;
-  });
-
-  const totalPages = Math.ceil(filteredCourses.length / pageSize) || 1;
-  const paginatedCourses = filteredCourses.slice((page - 1) * pageSize, page * pageSize);
+  const totalPages = Math.ceil(courses.length / pageSize) || 1;
+  const paginatedCourses = courses.slice((page - 1) * pageSize, page * pageSize);
 
   // Debug logging
   console.log('coursesData:', coursesData);
@@ -209,8 +209,8 @@ const ManageCourses = () => {
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
         <div className="bg-white p-6 rounded-lg shadow-sm border">
           <div className="flex items-center">
-            <div className="p-2 bg-blue-100 rounded-lg">
-              <BookOpen className="h-6 w-6 text-blue-600" />
+            <div className="flex items-center justify-center text-black">
+              <BookOpen className="h-6 w-6 text-black stroke-[2]" />
             </div>
             <div className="ml-4">
               <p className="text-sm font-medium text-gray-600">Total Courses</p>
@@ -223,8 +223,8 @@ const ManageCourses = () => {
 
         <div className="bg-white p-6 rounded-lg shadow-sm border">
           <div className="flex items-center">
-            <div className="p-2 bg-green-100 rounded-lg">
-              <Users className="h-6 w-6 text-green-600" />
+            <div className="flex items-center justify-center text-black">
+              <Users className="h-6 w-6 text-black stroke-[2]" />
             </div>
             <div className="ml-4">
               <p className="text-sm font-medium text-gray-600">Total Students</p>
@@ -237,8 +237,8 @@ const ManageCourses = () => {
 
         <div className="bg-white p-6 rounded-lg shadow-sm border">
           <div className="flex items-center">
-            <div className="p-2 bg-purple-100 rounded-lg">
-              <DollarSign className="h-6 w-6 text-purple-600" />
+            <div className="flex items-center justify-center text-black">
+              <DollarSign className="h-6 w-6 text-black stroke-[2]" />
             </div>
             <div className="ml-4">
               <p className="text-sm font-medium text-gray-600">Total Revenue</p>
@@ -251,8 +251,8 @@ const ManageCourses = () => {
 
         <div className="bg-white p-6 rounded-lg shadow-sm border">
           <div className="flex items-center">
-            <div className="p-2 bg-orange-100 rounded-lg">
-              <Star className="h-6 w-6 text-orange-600" />
+            <div className="flex items-center justify-center text-black">
+              <Star className="h-6 w-6 text-black stroke-[2]" />
             </div>
             <div className="ml-4">
               <p className="text-sm font-medium text-gray-600">Avg Rating</p>
@@ -330,8 +330,8 @@ const ManageCourses = () => {
                                 alt={course.title}
                               />
                             ) : (
-                              <div className="h-12 w-12 bg-primary-100 rounded-lg flex items-center justify-center">
-                                <BookOpen className="h-6 w-6 text-primary-600" />
+                              <div className="h-12 w-12 flex items-center justify-center text-black">
+                                <BookOpen className="h-6 w-6 text-black stroke-[1.5]" />
                               </div>
                             )}
                           </div>
@@ -446,7 +446,7 @@ const ManageCourses = () => {
                 <Pagination
                   currentPage={page}
                   totalPages={totalPages}
-                  totalItems={filteredCourses.length}
+                  totalItems={courses.length}
                   pageSize={pageSize}
                   onPageChange={(newPage) => {
                     setPage(newPage);

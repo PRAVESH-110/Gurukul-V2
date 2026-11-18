@@ -248,7 +248,7 @@ const searchPosts = async (req, res, next) => {
 // @access  Private
 const globalSearch = async (req, res, next) => {
   try {
-    const { q, limit = 20 } = req.query;
+    const { q, limit = 20, category, level, price } = req.query;
 
     if (!q) {
       return res.status(400).json({
@@ -275,18 +275,32 @@ const globalSearch = async (req, res, next) => {
       .populate('creator', 'firstName lastName avatar')
       .limit(searchLimit);
 
-    // Search courses
+    // Search courses with server-side filters
+    const courseConditions = [
+      { isPublished: true },
+      {
+        $or: [
+          { title: { $regex: q, $options: 'i' } },
+          { description: { $regex: q, $options: 'i' } },
+          { category: { $regex: q, $options: 'i' } },
+        ],
+      },
+    ];
+
+    if (category && category.trim()) {
+      courseConditions.push({ category: new RegExp(category.trim(), 'i') });
+    }
+    if (level && ['beginner', 'intermediate', 'advanced'].includes(level)) {
+      courseConditions.push({ level });
+    }
+    if (price === 'free') {
+      courseConditions.push({ price: 0 });
+    } else if (price === 'paid') {
+      courseConditions.push({ price: { $gt: 0 } });
+    }
+
     const courses = await Course.find({
-      $and: [
-        { isPublished: true },
-        {
-          $or: [
-            { title: { $regex: q, $options: 'i' } },
-            { description: { $regex: q, $options: 'i' } },
-            { category: { $regex: q, $options: 'i' } },
-          ],
-        },
-      ],
+      $and: courseConditions,
     })
       .populate('creator', 'firstName lastName avatar')
       .limit(searchLimit);

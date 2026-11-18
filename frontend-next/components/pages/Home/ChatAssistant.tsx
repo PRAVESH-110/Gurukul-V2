@@ -1,6 +1,8 @@
 'use client';
 import React, { useEffect, useRef, useState } from 'react';
 import { Send, Sparkles } from 'lucide-react';
+import ReactMarkdown from 'react-markdown';
+import Link from 'next/link';
 import { chatAPI } from '@/services/api';
 
 const ChatAssistant = () => {
@@ -104,11 +106,44 @@ const ChatAssistant = () => {
             <div
               className={`p-3.5 rounded-2xl text-sm sm:text-base leading-relaxed max-w-[85%] ${
                 msg.role === 'user'
-                  ? 'bg-primary-600 text-white rounded-tr-none shadow-sm'
+                  ? 'bg-primary-600 text-white rounded-tr-none shadow-sm whitespace-pre-wrap'
                   : 'bg-gray-100 text-gray-800 rounded-tl-none'
               }`}
             >
-              {msg.content}
+              {msg.role === 'user' ? (
+                msg.content
+              ) : (
+                <div className="prose prose-sm max-w-none text-gray-800 break-words leading-relaxed [&>p]:mb-2 [&>p:last-child]:mb-0 [&>ul]:mb-2 [&>ul:last-child]:mb-0 [&>ul]:list-disc [&>ul]:pl-4 [&>ol]:list-decimal [&>ol]:pl-4 [&_a]:text-primary-600 [&_a]:font-semibold [&_a]:underline hover:[&_a]:text-primary-700">
+                  <ReactMarkdown
+                    components={{
+                      a: ({ href, children }) => {
+                        if (href && (href.startsWith('/') || href.startsWith('#'))) {
+                          return (
+                            <Link
+                              href={href}
+                              className="text-primary-600 font-semibold underline hover:text-primary-700"
+                            >
+                              {children}
+                            </Link>
+                          );
+                        }
+                        return (
+                          <a
+                            href={href}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-primary-600 font-semibold underline hover:text-primary-700"
+                          >
+                            {children}
+                          </a>
+                        );
+                      },
+                    }}
+                  >
+                    {msg.content}
+                  </ReactMarkdown>
+                </div>
+              )}
             </div>
           </div>
         ))}

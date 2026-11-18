@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { useQuery } from '@tanstack/react-query';
 import { communityAPI } from '@/services/api';
 import { useAuth } from '@/context/AuthContext';
-import { Users, Globe, Lock, MessageSquare, Calendar, Search, Plus, Sparkles } from 'lucide-react';
+import { Users, MessageSquare, Calendar, Search, Plus, Sparkles } from 'lucide-react';
 import LoadingSpinner from '@/components/UI/LoadingSpinner';
 import Pagination from '@/components/UI/Pagination';
 import EmptyStateCard from '@/components/UI/EmptyStateCard';
@@ -24,8 +24,8 @@ const MyCommunities = () => {
     isLoading,
     error,
   } = useQuery({
-    queryKey: ['myCommunities', user?._id],
-    queryFn: () => communityAPI.getCreatorCommunities(),
+    queryKey: ['myCommunities', user?._id, debouncedSearch],
+    queryFn: () => communityAPI.getCreatorCommunities({ search: debouncedSearch }),
     enabled: !!user,
   });
 
@@ -47,14 +47,8 @@ const MyCommunities = () => {
 
   const communities = communitiesData?.data?.data?.data || communitiesData?.data?.communities || [];
 
-  const filteredCommunities = communities.filter(
-    (community) =>
-      community.name.toLowerCase().includes(debouncedSearch.toLowerCase()) ||
-      community.description?.toLowerCase().includes(debouncedSearch.toLowerCase()),
-  );
-
-  const totalPages = Math.ceil(filteredCommunities.length / pageSize) || 1;
-  const paginatedCommunities = filteredCommunities.slice((page - 1) * pageSize, page * pageSize);
+  const totalPages = Math.ceil(communities.length / pageSize) || 1;
+  const paginatedCommunities = communities.slice((page - 1) * pageSize, page * pageSize);
 
   return (
     <div className="w-full space-y-6">
@@ -99,7 +93,7 @@ const MyCommunities = () => {
       </div>
 
       {/* Communities Grid */}
-      {filteredCommunities.length > 0 ? (
+      {communities.length > 0 ? (
         <>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
             {paginatedCommunities.map((community) => (
@@ -111,8 +105,8 @@ const MyCommunities = () => {
                 <div>
                   <div className="flex items-start justify-between gap-3 mb-3">
                     <div className="flex items-center gap-2.5 min-w-0">
-                      <div className="w-10 h-10 rounded-xl bg-purple-50 text-purple-600 border border-purple-100 flex items-center justify-center shrink-0">
-                        <Users className="h-5 w-5" />
+                      <div className="flex items-center justify-center shrink-0 text-black">
+                        <Users className="h-5 w-5 text-black stroke-[2]" />
                       </div>
                       <div className="min-w-0">
                         <h3 className="font-bold text-slate-900 group-hover:text-primary-600 transition-colors truncate text-sm">
@@ -137,18 +131,18 @@ const MyCommunities = () => {
                 <div className="mt-5 pt-4 border-t border-slate-100">
                   <div className="flex items-center justify-between text-xs text-slate-500">
                     <span className="flex items-center text-[11.5px] font-semibold text-slate-700">
-                      <Users className="h-3.5 w-3.5 mr-1 text-slate-400" />
+                      <Users className="h-3.5 w-3.5 mr-1 text-black stroke-[2]" />
                       {community.memberCount || 0} members
                     </span>
 
                     <div className="flex items-center gap-3 text-slate-400 text-[11px]">
                       <span className="flex items-center gap-1">
-                        <MessageSquare className="h-3.5 w-3.5 text-slate-400" />
+                        <MessageSquare className="h-3.5 w-3.5 text-black stroke-[2]" />
                         {community.recentPostsCount || 0}
                       </span>
                       <span>•</span>
                       <span className="flex items-center gap-1">
-                        <Calendar className="h-3.5 w-3.5 text-slate-400" />
+                        <Calendar className="h-3.5 w-3.5 text-black stroke-[2]" />
                         {community.upcomingEventsCount || 0}
                       </span>
                     </div>
@@ -164,7 +158,7 @@ const MyCommunities = () => {
               <Pagination
                 currentPage={page}
                 totalPages={totalPages}
-                totalItems={filteredCommunities.length}
+                totalItems={communities.length}
                 pageSize={pageSize}
                 onPageChange={(newPage) => {
                   setPage(newPage);

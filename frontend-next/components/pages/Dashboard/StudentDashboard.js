@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import Link from 'next/link';
 import { useQuery } from '@tanstack/react-query';
 import { dashboardAPI } from '@/services/api';
@@ -14,12 +14,31 @@ import {
   Play,
   MessageSquare,
   Sparkles,
+  X,
 } from 'lucide-react';
 import LoadingSpinner from '@/components/UI/LoadingSpinner';
 import { MetricsSummaryBar, MetricSegment } from '@/components/UI/MetricsSummaryBar';
 import EmptyStateCard from '@/components/UI/EmptyStateCard';
 
 const StudentDashboard = () => {
+  const [showBanner, setShowBanner] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('gurukul_student_banner_dismissed') !== 'true';
+    }
+    return true;
+  });
+
+  const handleDismissBanner = () => {
+    setShowBanner(false);
+    if (typeof window !== 'undefined') {
+      try {
+        localStorage.setItem('gurukul_student_banner_dismissed', 'true');
+      } catch {
+        // ignore localStorage errors
+      }
+    }
+  };
+
   const {
     data: dashboardData,
     isLoading,
@@ -50,30 +69,42 @@ const StudentDashboard = () => {
   return (
     <div className="space-y-8 animate-fade-in">
       {/* Welcome Banner */}
-      <div className="relative overflow-hidden bg-gradient-to-r from-primary-600 via-primary-700 to-primary-800 rounded-2xl p-6 sm:p-8 text-white shadow-sm border border-primary-500/20">
-        <div className="relative z-10 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <div>
-            <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-white/15 text-white text-[11px] font-semibold mb-3 backdrop-blur-xs">
-              <Sparkles className="w-3.5 h-3.5" />
-              <span>Student Overview</span>
+      {showBanner && (
+        <div className="relative overflow-hidden bg-gradient-to-r from-primary-600 via-primary-700 to-primary-800 rounded-2xl p-6 sm:p-8 text-white shadow-sm border border-primary-500/20">
+          {/* Close / Dismiss Button */}
+          <button
+            type="button"
+            onClick={handleDismissBanner}
+            className="absolute top-4 right-4 p-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-white/80 hover:text-white transition-colors backdrop-blur-xs z-20"
+            aria-label="Close welcome banner"
+          >
+            <X className="w-4 h-4" />
+          </button>
+
+          <div className="relative z-10 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pr-8 sm:pr-10">
+            <div>
+              <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-white/15 text-white text-[11px] font-semibold mb-3 backdrop-blur-xs">
+                <Sparkles className="w-3.5 h-3.5" />
+                <span>Student Overview</span>
+              </div>
+              <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight">
+                Welcome back, {dashboard.user.firstName}!
+              </h1>
+              <p className="text-primary-100 text-sm sm:text-base mt-1 max-w-xl">
+                Track your enrollments, community discussions, and ongoing learning milestones.
+              </p>
             </div>
-            <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight">
-              Welcome back, {dashboard.user.firstName}!
-            </h1>
-            <p className="text-primary-100 text-sm sm:text-base mt-1 max-w-xl">
-              Track your enrollments, community discussions, and ongoing learning milestones.
-            </p>
-          </div>
-          <div className="flex items-center gap-2.5">
-            <Link
-              href="/courses"
-              className="px-4 py-2 rounded-xl bg-white text-slate-900 text-xs sm:text-sm font-semibold hover:bg-slate-50 transition-colors shadow-xs"
-            >
-              Browse Courses
-            </Link>
+            <div className="flex items-center gap-2.5">
+              <Link
+                href="/courses"
+                className="px-4 py-2 rounded-xl bg-white text-slate-900 text-xs sm:text-sm font-semibold hover:bg-slate-50 transition-colors shadow-xs"
+              >
+                Browse Courses
+              </Link>
+            </div>
           </div>
         </div>
-      </div>
+      )}
 
       {/* Unified Metrics Summary Bar (Super Admin Prototype Pattern) */}
       <MetricsSummaryBar>
@@ -116,7 +147,7 @@ const StudentDashboard = () => {
         <div className="bg-white rounded-2xl border border-slate-200/80 shadow-[0_1px_3px_0_rgba(15,23,42,0.04)] overflow-hidden flex flex-col">
           <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/40">
             <div className="flex items-center gap-2">
-              <Clock className="w-4.5 h-4.5 text-primary-600" />
+              <Clock className="w-4.5 h-4.5 text-black stroke-[2]" />
               <h2 className="text-sm font-bold text-slate-900 tracking-tight">Continue Learning</h2>
             </div>
             <Link
@@ -142,8 +173,8 @@ const StudentDashboard = () => {
                           className="h-14 w-14 rounded-xl object-cover shadow-2xs"
                         />
                       ) : (
-                        <div className="h-14 w-14 bg-primary-50 rounded-xl flex items-center justify-center border border-primary-100">
-                          <BookOpen className="h-7 w-7 text-primary-600" />
+                        <div className="h-14 w-14 flex items-center justify-center text-black">
+                          <BookOpen className="h-7 w-7 text-black stroke-[1.5]" />
                         </div>
                       )}
                     </div>
@@ -193,7 +224,7 @@ const StudentDashboard = () => {
         <div className="bg-white rounded-2xl border border-slate-200/80 shadow-[0_1px_3px_0_rgba(15,23,42,0.04)] overflow-hidden flex flex-col">
           <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/40">
             <div className="flex items-center gap-2">
-              <Calendar className="w-4.5 h-4.5 text-primary-600" />
+              <Calendar className="w-4.5 h-4.5 text-black stroke-[2]" />
               <h2 className="text-sm font-bold text-slate-900 tracking-tight">Upcoming Events</h2>
             </div>
             <Link
@@ -212,11 +243,11 @@ const StudentDashboard = () => {
                     className="flex items-start space-x-3.5 p-3 rounded-xl border border-slate-100 hover:border-slate-200 hover:bg-slate-50/60 transition-all"
                   >
                     <div className="flex-shrink-0">
-                      <div className="w-11 h-11 bg-primary-50 border border-primary-100 rounded-xl flex flex-col items-center justify-center text-primary-700">
-                        <span className="text-[10px] font-bold uppercase tracking-tight">
+                      <div className="w-11 h-11 border border-slate-200/80 rounded-xl flex flex-col items-center justify-center text-black">
+                        <span className="text-[10px] font-bold uppercase tracking-tight text-slate-500">
                           {new Date(event.startDate).toLocaleString('default', { month: 'short' })}
                         </span>
-                        <span className="text-base font-bold leading-none">
+                        <span className="text-base font-bold leading-none text-black">
                           {new Date(event.startDate).getDate()}
                         </span>
                       </div>
@@ -253,7 +284,7 @@ const StudentDashboard = () => {
       <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
         <div className="p-6 border-b border-gray-100 flex items-center justify-between bg-gray-50/30">
           <h2 className="text-lg font-bold text-gray-900 flex items-center">
-            <MessageSquare className="w-5 h-5 mr-2 text-primary-600" />
+            <MessageSquare className="w-5 h-5 mr-2 text-black stroke-[2]" />
             Recent Community Posts
           </h2>
           <Link
@@ -312,8 +343,8 @@ const StudentDashboard = () => {
             </div>
           ) : (
             <div className="text-center py-12">
-              <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-4">
-                <MessageSquare className="h-8 w-8 text-gray-400" />
+              <div className="flex items-center justify-center mx-auto mb-3 text-black">
+                <MessageSquare className="h-8 w-8 text-black stroke-[1.75]" />
               </div>
               <p className="text-gray-900 font-medium mb-1">No recent posts</p>
               <Link href="/communities" className="btn-primary text-sm mt-2">

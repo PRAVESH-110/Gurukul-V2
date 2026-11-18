@@ -262,12 +262,62 @@ const getUserCourses = async (req, res, next) => {
       });
     }
 
-    const courses = await Course.find({
+    const { search, category, filter } = req.query;
+
+    const baseQuery = {
       'enrolledStudents.user': user._id,
       isPublished: true,
-    })
+    };
+    const query = { ...baseQuery };
+
+    if (search && search.trim()) {
+      const term = search.trim();
+      query.$or = [
+        { title: { $regex: term, $options: 'i' } },
+        { description: { $regex: term, $options: 'i' } },
+      ];
+    }
+
+    if (category && category.trim() && category !== 'all') {
+      query.category = new RegExp(category.trim(), 'i');
+    }
+
+    if (filter === 'in-progress') {
+      query.enrolledStudents = {
+        $elemMatch: {
+          user: user._id,
+          progress: { $lt: 100 },
+        },
+      };
+    } else if (filter === 'completed') {
+      query.enrolledStudents = {
+        $elemMatch: {
+          user: user._id,
+          progress: { $gte: 100 },
+        },
+      };
+    }
+
+    const courses = await Course.find(query)
       .populate('creator', 'firstName lastName avatar')
       .sort({ updatedAt: -1 });
+
+    // Fetch all user enrolled courses to compute aggregate stats
+    const allEnrolledCourses = await Course.find(baseQuery).select('enrolledStudents');
+    let totalEnrolled = allEnrolledCourses.length;
+    let inProgressCount = 0;
+    let completedCount = 0;
+
+    allEnrolledCourses.forEach((c) => {
+      const enrollment = c.enrolledStudents?.find(
+        (s) => s.user && s.user.toString() === user._id.toString(),
+      );
+      if (enrollment && (enrollment.progress || 0) >= 100) {
+        completedCount++;
+      } else {
+        inProgressCount++;
+      }
+    });
 
     // Extract user-specific enrollment data for each course
     const coursesWithProgress = await Promise.all(
@@ -306,6 +356,11 @@ const getUserCourses = async (req, res, next) => {
       success: true,
       data: {
         courses: coursesWithProgress,
+        stats: {
+          total: totalEnrolled,
+          inProgress: inProgressCount,
+          completed: completedCount,
+        },
       },
     });
   } catch (error) {

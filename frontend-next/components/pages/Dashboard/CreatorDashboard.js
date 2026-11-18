@@ -1,7 +1,18 @@
 'use client';
 
+import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { BookOpen, DollarSign, Plus, Star, TrendingUp, Users, Video, Sparkles } from 'lucide-react';
+import {
+  BookOpen,
+  DollarSign,
+  Plus,
+  Star,
+  TrendingUp,
+  Users,
+  Video,
+  Sparkles,
+  X,
+} from 'lucide-react';
 import Link from 'next/link';
 import LoadingSpinner from '@/components/UI/LoadingSpinner';
 import { dashboardAPI } from '@/services/api';
@@ -9,6 +20,24 @@ import { MetricsSummaryBar, MetricSegment } from '@/components/UI/MetricsSummary
 import EmptyStateCard from '@/components/UI/EmptyStateCard';
 
 const CreatorDashboard = () => {
+  const [showBanner, setShowBanner] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('gurukul_creator_banner_dismissed') !== 'true';
+    }
+    return true;
+  });
+
+  const handleDismissBanner = () => {
+    setShowBanner(false);
+    if (typeof window !== 'undefined') {
+      try {
+        localStorage.setItem('gurukul_creator_banner_dismissed', 'true');
+      } catch {
+        // ignore localStorage errors
+      }
+    }
+  };
+
   const {
     data: dashboardData,
     isLoading,
@@ -41,134 +70,113 @@ const CreatorDashboard = () => {
 
   return (
     <div className="space-y-8 animate-fade-in">
-      {/* Welcome Section */}
-      <div
-        className={`relative overflow-hidden rounded-2xl p-8 text-white shadow-lg ${
-          dashboard?.user?.role === 'admin'
-            ? 'bg-gradient-to-br from-red-600 to-red-800 shadow-red-500/20'
-            : 'bg-gradient-to-br from-primary-600 to-primary-800 shadow-primary/20'
-        }`}
-      >
-        <div className="absolute top-0 right-0 -mt-10 -mr-10 w-40 h-40 bg-white/10 rounded-full blur-2xl"></div>
-        <div className="absolute bottom-0 left-0 -mb-10 -ml-10 w-40 h-40 bg-white/10 rounded-full blur-2xl"></div>
-
-        <div className="relative z-10">
-          <h1 className="text-3xl font-bold mb-3 tracking-tight">
-            Welcome back,{' '}
-            {dashboard?.user?.role === 'admin' ? 'SUPERADMIN' : dashboard?.user?.firstName}!
-          </h1>
-          <p className={dashboard?.user?.role === 'admin' ? 'text-red-100' : 'text-primary-100'}>
-            Manage your courses and communities, track your success, and grow your audience.
-          </p>
-        </div>
-      </div>
-
       {/* Welcome Banner */}
-      <div
-        className={`relative overflow-hidden rounded-2xl p-6 sm:p-8 text-white shadow-sm border ${
-          dashboard?.user?.role === 'admin'
-            ? 'bg-gradient-to-r from-red-600 via-rose-700 to-red-800 border-red-500/20'
-            : 'bg-gradient-to-r from-primary-600 via-primary-700 to-primary-800 border-primary-500/20'
-        }`}
-      >
-        <div className="relative z-10 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <div>
-            <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-white/15 text-white text-[11px] font-semibold mb-3 backdrop-blur-xs">
-              <Sparkles className="w-3.5 h-3.5" />
-              <span>
-                {dashboard?.user?.role === 'admin' ? 'Superadmin Workspace' : 'Creator Portal'}
-              </span>
-            </div>
-            <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight">
-              Welcome back,{' '}
-              {dashboard?.user?.role === 'admin' ? 'SUPERADMIN' : dashboard?.user?.firstName}!
-            </h1>
-            <p
-              className={
-                dashboard?.user?.role === 'admin'
-                  ? 'text-red-100 text-sm sm:text-base mt-1 max-w-xl'
-                  : 'text-primary-100 text-sm sm:text-base mt-1 max-w-xl'
-              }
-            >
-              Manage your published courses, community engagement, audience analytics, and earnings.
-            </p>
-          </div>
-          <div className="flex items-center gap-2.5">
-            <Link
-              href="/create-course"
-              className="px-4 py-2 rounded-xl bg-white text-slate-900 text-xs sm:text-sm font-semibold hover:bg-slate-50 transition-colors shadow-xs"
-            >
-              Create Course
-            </Link>
-          </div>
-        </div>
-      </div>
-
-      {/* Quick Actions Bar */}
-      <div className="bg-white rounded-2xl border border-slate-200/80 shadow-[0_1px_3px_0_rgba(15,23,42,0.04)] p-3">
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2">
-          <Link
-            href="/create-course"
-            className="group flex items-center gap-3 p-3 rounded-xl hover:bg-slate-50 border border-transparent hover:border-slate-200/80 transition-all duration-150"
+      {showBanner && (
+        <div
+          className={`relative overflow-hidden rounded-2xl p-6 sm:p-8 text-white shadow-sm border ${
+            dashboard?.user?.role === 'admin'
+              ? 'bg-gradient-to-r from-red-600 via-rose-700 to-red-800 border-red-500/20'
+              : 'bg-gradient-to-r from-primary-600 via-primary-700 to-primary-800 border-primary-500/20'
+          }`}
+        >
+          {/* Close / Dismiss Button */}
+          <button
+            type="button"
+            onClick={handleDismissBanner}
+            className="absolute top-4 right-4 p-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-white/80 hover:text-white transition-colors backdrop-blur-xs z-20"
+            aria-label="Close welcome banner"
           >
-            <div className="w-9 h-9 bg-primary-50 text-primary-600 rounded-lg flex items-center justify-center shrink-0 group-hover:bg-primary-600 group-hover:text-white transition-colors">
-              <Plus className="h-4.5 w-4.5" />
-            </div>
-            <span className="text-xs font-semibold text-slate-700 group-hover:text-slate-900 transition-colors">
-              Create Course
-            </span>
-          </Link>
+            <X className="w-4 h-4" />
+          </button>
 
-          <Link
-            href="/create-community"
-            className="group flex items-center gap-3 p-3 rounded-xl hover:bg-slate-50 border border-transparent hover:border-slate-200/80 transition-all duration-150"
-          >
-            <div className="w-9 h-9 bg-purple-50 text-purple-600 rounded-lg flex items-center justify-center shrink-0 group-hover:bg-purple-600 group-hover:text-white transition-colors">
-              <Users className="h-4.5 w-4.5" />
-            </div>
-            <span className="text-xs font-semibold text-slate-700 group-hover:text-slate-900 transition-colors">
-              Create Community
-            </span>
-          </Link>
-
-          {dashboard?.user?.role !== 'admin' && (
-            <Link
-              href="/upload-video"
-              className="group flex items-center gap-3 p-3 rounded-xl hover:bg-slate-50 border border-transparent hover:border-slate-200/80 transition-all duration-150"
-            >
-              <div className="w-9 h-9 bg-emerald-50 text-emerald-600 rounded-lg flex items-center justify-center shrink-0 group-hover:bg-emerald-600 group-hover:text-white transition-colors">
-                <Video className="h-4.5 w-4.5" />
+          <div className="relative z-10 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pr-8 sm:pr-10">
+            <div>
+              <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-white/15 text-white text-[11px] font-semibold mb-3 backdrop-blur-xs">
+                <Sparkles className="w-3.5 h-3.5" />
+                <span>
+                  {dashboard?.user?.role === 'admin' ? 'Superadmin Workspace' : 'Creator Portal'}
+                </span>
               </div>
-              <span className="text-xs font-semibold text-slate-700 group-hover:text-slate-900 transition-colors">
-                Upload Video
-              </span>
-            </Link>
-          )}
-
-          <Link
-            href="/manage-courses"
-            className="group flex items-center gap-3 p-3 rounded-xl hover:bg-slate-50 border border-transparent hover:border-slate-200/80 transition-all duration-150"
-          >
-            <div className="w-9 h-9 bg-amber-50 text-amber-600 rounded-lg flex items-center justify-center shrink-0 group-hover:bg-amber-600 group-hover:text-white transition-colors">
-              <BookOpen className="h-4.5 w-4.5" />
+              <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight">
+                Welcome back,{' '}
+                {dashboard?.user?.role === 'admin' ? 'SUPERADMIN' : dashboard?.user?.firstName}!
+              </h1>
+              <p
+                className={
+                  dashboard?.user?.role === 'admin'
+                    ? 'text-red-100 text-sm sm:text-base mt-1 max-w-xl'
+                    : 'text-primary-100 text-sm sm:text-base mt-1 max-w-xl'
+                }
+              >
+                Manage your published courses, community engagement, audience analytics, and
+                earnings.
+              </p>
             </div>
-            <span className="text-xs font-semibold text-slate-700 group-hover:text-slate-900 transition-colors">
-              Manage Courses
-            </span>
-          </Link>
-
-          <Link
-            href="/analytics"
-            className="group flex items-center gap-3 p-3 rounded-xl hover:bg-slate-50 border border-transparent hover:border-slate-200/80 transition-all duration-150"
-          >
-            <div className="w-9 h-9 bg-blue-50 text-blue-600 rounded-lg flex items-center justify-center shrink-0 group-hover:bg-blue-600 group-hover:text-white transition-colors">
-              <TrendingUp className="h-4.5 w-4.5" />
+            <div className="flex items-center gap-2.5">
+              <Link
+                href="/create-course"
+                className="px-4 py-2 rounded-xl bg-white text-slate-900 text-xs sm:text-sm font-semibold hover:bg-slate-50 transition-colors shadow-xs"
+              >
+                Create Course
+              </Link>
             </div>
-            <span className="text-xs font-semibold text-slate-700 group-hover:text-slate-900 transition-colors">
-              Analytics
-            </span>
-          </Link>
+          </div>
         </div>
+      )}
+
+      {/* Quick Actions - Separate Action Buttons */}
+      <div className="w-full flex flex-wrap items-center justify-between gap-y-3.5 gap-x-4">
+        <Link
+          href="/create-course"
+          className="group w-fit shrink-0 inline-flex items-center gap-2.5 px-4 py-2 rounded-full bg-white border border-slate-200/90 shadow-2xs hover:shadow-xs hover:border-slate-300 hover:bg-slate-50/80 active:scale-[0.98] transition-all duration-150"
+        >
+          <Plus className="h-4 w-4 text-black stroke-[2] shrink-0" />
+          <span className="text-xs sm:text-sm font-semibold text-slate-700 group-hover:text-slate-900 transition-colors whitespace-nowrap">
+            Create Course
+          </span>
+        </Link>
+
+        <Link
+          href="/create-community"
+          className="group w-fit shrink-0 inline-flex items-center gap-2.5 px-4 py-2 rounded-full bg-white border border-slate-200/90 shadow-2xs hover:shadow-xs hover:border-slate-300 hover:bg-slate-50/80 active:scale-[0.98] transition-all duration-150"
+        >
+          <Users className="h-4 w-4 text-black stroke-[2] shrink-0" />
+          <span className="text-xs sm:text-sm font-semibold text-slate-700 group-hover:text-slate-900 transition-colors whitespace-nowrap">
+            Create Community
+          </span>
+        </Link>
+
+        {dashboard?.user?.role !== 'admin' && (
+          <Link
+            href="/upload-video"
+            className="group w-fit shrink-0 inline-flex items-center gap-2.5 px-4 py-2 rounded-full bg-white border border-slate-200/90 shadow-2xs hover:shadow-xs hover:border-slate-300 hover:bg-slate-50/80 active:scale-[0.98] transition-all duration-150"
+          >
+            <Video className="h-4 w-4 text-black stroke-[2] shrink-0" />
+            <span className="text-xs sm:text-sm font-semibold text-slate-700 group-hover:text-slate-900 transition-colors whitespace-nowrap">
+              Upload Video
+            </span>
+          </Link>
+        )}
+
+        <Link
+          href="/manage-courses"
+          className="group w-fit shrink-0 inline-flex items-center gap-2.5 px-4 py-2 rounded-full bg-white border border-slate-200/90 shadow-2xs hover:shadow-xs hover:border-slate-300 hover:bg-slate-50/80 active:scale-[0.98] transition-all duration-150"
+        >
+          <BookOpen className="h-4 w-4 text-black stroke-[2] shrink-0" />
+          <span className="text-xs sm:text-sm font-semibold text-slate-700 group-hover:text-slate-900 transition-colors whitespace-nowrap">
+            Manage Courses
+          </span>
+        </Link>
+
+        <Link
+          href="/analytics"
+          className="group w-fit shrink-0 inline-flex items-center gap-2.5 px-4 py-2 rounded-full bg-white border border-slate-200/90 shadow-2xs hover:shadow-xs hover:border-slate-300 hover:bg-slate-50/80 active:scale-[0.98] transition-all duration-150"
+        >
+          <TrendingUp className="h-4 w-4 text-black stroke-[2] shrink-0" />
+          <span className="text-xs sm:text-sm font-semibold text-slate-700 group-hover:text-slate-900 transition-colors whitespace-nowrap">
+            Analytics
+          </span>
+        </Link>
       </div>
 
       {/* Unified Metrics Summary Bar */}
@@ -216,7 +224,7 @@ const CreatorDashboard = () => {
         <div className="bg-white rounded-2xl border border-slate-200/80 shadow-[0_1px_3px_0_rgba(15,23,42,0.04)] overflow-hidden flex flex-col">
           <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/40">
             <div className="flex items-center gap-2">
-              <BookOpen className="w-4.5 h-4.5 text-primary-600" />
+              <BookOpen className="w-4.5 h-4.5 text-black stroke-[2]" />
               <h2 className="text-sm font-bold text-slate-900 tracking-tight">Your Courses</h2>
             </div>
             <Link
@@ -242,8 +250,8 @@ const CreatorDashboard = () => {
                           className="h-14 w-14 rounded-xl object-cover shadow-2xs"
                         />
                       ) : (
-                        <div className="h-14 w-14 bg-primary-50 rounded-xl flex items-center justify-center border border-primary-100">
-                          <BookOpen className="h-7 w-7 text-primary-600" />
+                        <div className="h-14 w-14 flex items-center justify-center text-black">
+                          <BookOpen className="h-7 w-7 text-black stroke-[1.5]" />
                         </div>
                       )}
                     </div>
@@ -284,7 +292,7 @@ const CreatorDashboard = () => {
         <div className="bg-white rounded-2xl border border-slate-200/80 shadow-[0_1px_3px_0_rgba(15,23,42,0.04)] overflow-hidden flex flex-col">
           <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/40">
             <div className="flex items-center gap-2">
-              <Users className="w-4.5 h-4.5 text-primary-600" />
+              <Users className="w-4.5 h-4.5 text-black stroke-[2]" />
               <h2 className="text-sm font-bold text-slate-900 tracking-tight">Your Communities</h2>
             </div>
             <Link
@@ -303,8 +311,8 @@ const CreatorDashboard = () => {
                     className="group flex items-start space-x-3.5 p-3 rounded-xl border border-slate-100 hover:border-slate-200 hover:bg-slate-50/60 transition-all"
                   >
                     <div className="flex-shrink-0">
-                      <div className="w-11 h-11 bg-purple-50 text-purple-600 border border-purple-100 rounded-xl flex items-center justify-center">
-                        <Users className="h-5 w-5" />
+                      <div className="w-11 h-11 flex items-center justify-center text-black">
+                        <Users className="h-5 w-5 text-black stroke-[2]" />
                       </div>
                     </div>
                     <div className="flex-1 min-w-0">

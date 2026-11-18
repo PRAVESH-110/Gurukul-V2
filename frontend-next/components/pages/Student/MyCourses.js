@@ -19,6 +19,7 @@ const MyCourses = () => {
   const [filter, setFilter] = useState('all');
   const [searchTerm, setSearchTerm] = useState('');
   const debouncedSearch = useDebounce(searchTerm, 300);
+  const debouncedFilter = useDebounce(filter, 300);
   const [page, setPage] = useState(1);
   const pageSize = 9;
 
@@ -27,9 +28,12 @@ const MyCourses = () => {
     isLoading,
     error,
   } = useQuery({
-    queryKey: ['myCourses', user?._id],
+    queryKey: ['myCourses', user?._id, debouncedSearch, debouncedFilter],
     queryFn: async () => {
-      const result = await userAPI.getUserCourses(user._id);
+      const result = await userAPI.getUserCourses(user._id, {
+        search: debouncedSearch,
+        filter: debouncedFilter,
+      });
       return result;
     },
     enabled: !!user,
@@ -53,22 +57,13 @@ const MyCourses = () => {
   }
 
   const courses = coursesData?.data?.data?.courses || [];
-  console.log('Courses extracted:', courses);
+  const stats = coursesData?.data?.data?.stats || {};
+  const totalEnrolledCount = stats.total ?? courses.length;
+  const inProgressCount = stats.inProgress ?? 0;
+  const completedCount = stats.completed ?? 0;
 
-  const filteredCourses = courses.filter((course) => {
-    const matchesSearch = course.title.toLowerCase().includes(debouncedSearch.toLowerCase());
-    const matchesFilter =
-      filter === 'all' ||
-      (filter === 'in-progress' && course.progress < 100) ||
-      (filter === 'completed' && course.progress >= 100);
-    return matchesSearch && matchesFilter;
-  });
-
-  const totalPages = Math.ceil(filteredCourses.length / pageSize) || 1;
-  const paginatedCourses = filteredCourses.slice((page - 1) * pageSize, page * pageSize);
-
-  const inProgressCount = courses.filter((c) => (c.progress || 0) < 100).length;
-  const completedCount = courses.filter((c) => (c.progress || 0) >= 100).length;
+  const totalPages = Math.ceil(courses.length / pageSize) || 1;
+  const paginatedCourses = courses.slice((page - 1) * pageSize, page * pageSize);
 
   return (
     <div className="w-full space-y-6">
@@ -118,7 +113,7 @@ const MyCourses = () => {
               }}
               className="w-full px-3.5 py-2 bg-slate-50 border border-slate-200/80 rounded-xl text-xs sm:text-sm text-slate-700 focus:bg-white focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-all cursor-pointer"
             >
-              <option value="all">All Enrolled ({courses.length})</option>
+              <option value="all">All Enrolled ({totalEnrolledCount})</option>
               <option value="in-progress">In Progress ({inProgressCount})</option>
               <option value="completed">Completed ({completedCount})</option>
             </select>
@@ -130,7 +125,7 @@ const MyCourses = () => {
       <MetricsSummaryBar>
         <MetricSegment
           label="Total Enrolled"
-          value={courses.length}
+          value={totalEnrolledCount}
           icon={BookOpen}
           badgeText="All Paths"
           badgeColor="blue"
@@ -155,7 +150,7 @@ const MyCourses = () => {
       </MetricsSummaryBar>
 
       {/* Courses Grid */}
-      {filteredCourses.length > 0 ? (
+      {courses.length > 0 ? (
         <>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
             {paginatedCourses.map((course) => {
@@ -177,8 +172,8 @@ const MyCourses = () => {
                         }}
                       />
                     ) : (
-                      <div className="w-full h-full flex items-center justify-center bg-slate-100 text-slate-400">
-                        <BookOpen className="h-10 w-10 stroke-[1.5]" />
+                      <div className="w-full h-full flex items-center justify-center bg-slate-50 text-black">
+                        <BookOpen className="h-10 w-10 stroke-[1.5] text-black" />
                       </div>
                     )}
 
@@ -246,7 +241,7 @@ const MyCourses = () => {
               <Pagination
                 currentPage={page}
                 totalPages={totalPages}
-                totalItems={filteredCourses.length}
+                totalItems={courses.length}
                 pageSize={pageSize}
                 onPageChange={(newPage) => {
                   setPage(newPage);

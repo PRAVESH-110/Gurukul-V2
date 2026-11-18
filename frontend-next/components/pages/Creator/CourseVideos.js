@@ -21,6 +21,10 @@ import {
   HardDrive,
   FileText,
   AlertCircle,
+  Folder,
+  Layers,
+  Check,
+  X,
 } from 'lucide-react';
 
 const CourseVideos = () => {
@@ -36,6 +40,14 @@ const CourseVideos = () => {
   const [activeTab, setActiveTab] = useState('videos'); // 'videos' or 'sections'
   const [editingVideo, setEditingVideo] = useState(null);
   const [showEditModal, setShowEditModal] = useState(false);
+
+  // Sections management state
+  const [newSectionTitle, setNewSectionTitle] = useState('');
+  const [newSectionDescription, setNewSectionDescription] = useState('');
+  const [isCreatingSection, setIsCreatingSection] = useState(false);
+  const [editingSectionId, setEditingSectionId] = useState(null);
+  const [editSectionTitle, setEditSectionTitle] = useState('');
+  const [editSectionDescription, setEditSectionDescription] = useState('');
 
   // Fetch course and videos data
   useEffect(() => {
@@ -141,6 +153,81 @@ const CourseVideos = () => {
   const handleEditVideo = (video) => {
     setEditingVideo(video);
     setShowEditModal(true);
+  };
+
+  // Sections CRUD operations
+  const handleCreateSection = async (e) => {
+    e.preventDefault();
+    if (!newSectionTitle.trim()) {
+      toast.error('Please enter a section title');
+      return;
+    }
+
+    try {
+      const res = await courseAPI.addCourseSection(courseId, {
+        title: newSectionTitle.trim(),
+        description: newSectionDescription.trim(),
+      });
+      toast.success('Section created successfully!');
+      setNewSectionTitle('');
+      setNewSectionDescription('');
+      setIsCreatingSection(false);
+      setCourse((prev) => ({
+        ...prev,
+        sections: res.data?.sections || [...(prev?.sections || []), res.data?.section],
+      }));
+    } catch (err) {
+      console.error('Failed to create section:', err);
+      toast.error(err.response?.data?.message || 'Failed to create section');
+    }
+  };
+
+  const handleUpdateSection = async (sectionId) => {
+    if (!editSectionTitle.trim()) {
+      toast.error('Section title cannot be empty');
+      return;
+    }
+
+    try {
+      const res = await courseAPI.updateCourseSection(courseId, sectionId, {
+        title: editSectionTitle.trim(),
+        description: editSectionDescription.trim(),
+      });
+      toast.success('Section updated successfully!');
+      setEditingSectionId(null);
+      setCourse((prev) => ({
+        ...prev,
+        sections:
+          res.data?.sections ||
+          prev?.sections?.map((s) => (s._id === sectionId ? { ...s, ...res.data?.section } : s)),
+      }));
+    } catch (err) {
+      console.error('Failed to update section:', err);
+      toast.error(err.response?.data?.message || 'Failed to update section');
+    }
+  };
+
+  const handleDeleteSection = async (sectionId, sectionTitle) => {
+    if (
+      !window.confirm(
+        `Are you sure you want to delete "${sectionTitle}"? Any videos in this section will be moved to the General section.`,
+      )
+    ) {
+      return;
+    }
+
+    try {
+      const res = await courseAPI.deleteCourseSection(courseId, sectionId);
+      toast.success('Section deleted successfully!');
+      setCourse((prev) => ({
+        ...prev,
+        sections: res.data?.sections || prev?.sections?.filter((s) => s._id !== sectionId),
+      }));
+      await refetchVideos();
+    } catch (err) {
+      console.error('Failed to delete section:', err);
+      toast.error(err.response?.data?.message || 'Failed to delete section');
+    }
   };
 
   // Handle delete video
@@ -439,18 +526,247 @@ const CourseVideos = () => {
                 )}
               </div>
             ) : (
-              <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-12 text-center">
-                <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <FileText className="h-8 w-8 text-gray-400" />
+              <div className="space-y-6">
+                {/* Section Creation Card */}
+                <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
+                  {!isCreatingSection ? (
+                    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                      <div>
+                        <h2 className="text-lg font-bold text-gray-900">Curriculum Sections</h2>
+                        <p className="text-sm text-gray-500">
+                          Group your course videos into organized modules, chapters, or weeks.
+                        </p>
+                      </div>
+                      <button
+                        onClick={() => setIsCreatingSection(true)}
+                        className="btn-primary flex items-center shrink-0 shadow-sm"
+                      >
+                        <Plus className="mr-2 h-4 w-4" />
+                        Create Section
+                      </button>
+                    </div>
+                  ) : (
+                    <form onSubmit={handleCreateSection} className="space-y-4 animate-fade-in">
+                      <div className="flex items-center justify-between border-b pb-3">
+                        <h3 className="font-semibold text-gray-900 text-base">New Section</h3>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setIsCreatingSection(false);
+                            setNewSectionTitle('');
+                            setNewSectionDescription('');
+                          }}
+                          className="p-1 text-gray-400 hover:text-gray-600 rounded-lg"
+                        >
+                          <X className="h-4 w-4" />
+                        </button>
+                      </div>
+                      <div className="grid grid-cols-1 gap-4">
+                        <div>
+                          <label className="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-1">
+                            Section Title *
+                          </label>
+                          <input
+                            type="text"
+                            value={newSectionTitle}
+                            onChange={(e) => setNewSectionTitle(e.target.value)}
+                            placeholder="e.g. Chapter 1: Introduction to Web Development"
+                            className="input w-full"
+                            autoFocus
+                            required
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-1">
+                            Description (Optional)
+                          </label>
+                          <input
+                            type="text"
+                            value={newSectionDescription}
+                            onChange={(e) => setNewSectionDescription(e.target.value)}
+                            placeholder="Briefly describe what this section covers"
+                            className="input w-full"
+                          />
+                        </div>
+                      </div>
+                      <div className="flex items-center justify-end gap-2 pt-2">
+                        <button
+                          type="button"
+                          onClick={() => setIsCreatingSection(false)}
+                          className="btn-outline text-sm py-2 px-4"
+                        >
+                          Cancel
+                        </button>
+                        <button type="submit" className="btn-primary text-sm py-2 px-5">
+                          Save Section
+                        </button>
+                      </div>
+                    </form>
+                  )}
                 </div>
-                <h2 className="text-lg font-bold text-gray-900 mb-2">Course Sections</h2>
-                <p className="text-gray-500 mb-6 max-w-md mx-auto">
-                  Organize your course content into sections and lectures. This feature is currently
-                  under development.
-                </p>
-                <div className="inline-flex items-center px-4 py-2 rounded-lg bg-gray-100 text-gray-600 text-sm font-medium">
-                  Coming Soon
-                </div>
+
+                {/* Sections List */}
+                {!course?.sections || course.sections.length === 0 ? (
+                  <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-12 text-center">
+                    <div className="w-16 h-16 bg-primary-50 text-primary-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                      <Folder className="h-8 w-8" />
+                    </div>
+                    <h3 className="text-lg font-bold text-gray-900 mb-2">
+                      No sections created yet
+                    </h3>
+                    <p className="text-gray-500 mb-6 max-w-md mx-auto text-sm">
+                      Create your first section above to start organizing your lectures into logical
+                      curriculum milestones.
+                    </p>
+                    <button
+                      onClick={() => setIsCreatingSection(true)}
+                      className="btn-primary inline-flex items-center"
+                    >
+                      <Plus className="mr-2 h-4 w-4" />
+                      Add First Section
+                    </button>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {course.sections.map((section, sIndex) => {
+                      const isEditing = editingSectionId === section._id;
+                      const sectionVideos = videos.filter(
+                        (v) =>
+                          v.section === section._id ||
+                          v.section?.toString() === section._id?.toString() ||
+                          (sIndex === 0 &&
+                            (!v.section || v.section === 'Main' || v.section === 'main')),
+                      );
+
+                      return (
+                        <div
+                          key={section._id || sIndex}
+                          className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden transition-all duration-200"
+                        >
+                          {/* Section Header */}
+                          <div className="p-5 bg-gray-50/70 border-b border-gray-100 flex items-center justify-between">
+                            {isEditing ? (
+                              <div className="flex-1 flex flex-col sm:flex-row items-stretch sm:items-center gap-2 mr-3">
+                                <input
+                                  type="text"
+                                  value={editSectionTitle}
+                                  onChange={(e) => setEditSectionTitle(e.target.value)}
+                                  className="input flex-1 py-1.5 text-sm font-semibold"
+                                  placeholder="Section Title"
+                                />
+                                <input
+                                  type="text"
+                                  value={editSectionDescription}
+                                  onChange={(e) => setEditSectionDescription(e.target.value)}
+                                  className="input flex-1 py-1.5 text-xs"
+                                  placeholder="Section Description"
+                                />
+                                <div className="flex items-center gap-1.5">
+                                  <button
+                                    onClick={() => handleUpdateSection(section._id)}
+                                    className="p-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors"
+                                    title="Save"
+                                  >
+                                    <Check className="h-4 w-4" />
+                                  </button>
+                                  <button
+                                    onClick={() => setEditingSectionId(null)}
+                                    className="p-2 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-lg transition-colors"
+                                    title="Cancel"
+                                  >
+                                    <X className="h-4 w-4" />
+                                  </button>
+                                </div>
+                              </div>
+                            ) : (
+                              <div className="flex items-center gap-3 min-w-0">
+                                <span className="flex items-center justify-center w-8 h-8 rounded-lg bg-primary-100 text-primary-700 text-xs font-bold shrink-0">
+                                  {sIndex + 1}
+                                </span>
+                                <div className="min-w-0">
+                                  <h4 className="text-base font-bold text-gray-900 truncate">
+                                    {section.title}
+                                  </h4>
+                                  {section.description && (
+                                    <p className="text-xs text-gray-500 truncate mt-0.5">
+                                      {section.description}
+                                    </p>
+                                  )}
+                                </div>
+                              </div>
+                            )}
+
+                            {!isEditing && (
+                              <div className="flex items-center gap-2 shrink-0">
+                                <span className="text-xs font-medium text-gray-500 bg-white border px-2.5 py-1 rounded-full">
+                                  {sectionVideos.length}{' '}
+                                  {sectionVideos.length === 1 ? 'lecture' : 'lectures'}
+                                </span>
+                                <button
+                                  onClick={() => {
+                                    setEditingSectionId(section._id);
+                                    setEditSectionTitle(section.title);
+                                    setEditSectionDescription(section.description || '');
+                                  }}
+                                  className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                                  title="Edit Section"
+                                >
+                                  <Edit className="h-4 w-4" />
+                                </button>
+                                <button
+                                  onClick={() => handleDeleteSection(section._id, section.title)}
+                                  className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                                  title="Delete Section"
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </button>
+                              </div>
+                            )}
+                          </div>
+
+                          {/* Section Lectures */}
+                          <div className="p-4">
+                            {sectionVideos.length === 0 ? (
+                              <p className="text-xs text-gray-400 italic py-3 text-center">
+                                No lectures assigned to this section yet. Edit a video or upload one
+                                to assign it here.
+                              </p>
+                            ) : (
+                              <div className="divide-y divide-gray-100">
+                                {sectionVideos.map((video, vIndex) => (
+                                  <div
+                                    key={video._id}
+                                    className="py-2.5 flex items-center justify-between text-sm hover:bg-gray-50/50 px-2 rounded-lg transition-colors"
+                                  >
+                                    <div className="flex items-center gap-3 min-w-0">
+                                      <Play className="h-3.5 w-3.5 text-primary-500 shrink-0" />
+                                      <span className="font-medium text-gray-800 truncate">
+                                        {video.title}
+                                      </span>
+                                    </div>
+                                    <div className="flex items-center gap-3 text-xs text-gray-500 shrink-0">
+                                      <span>
+                                        {video.duration
+                                          ? `${Math.floor(video.duration / 60)}:${(video.duration % 60).toString().padStart(2, '0')}`
+                                          : '0:00'}
+                                      </span>
+                                      <button
+                                        onClick={() => handleEditVideo(video)}
+                                        className="text-primary-600 hover:underline"
+                                      >
+                                        Edit
+                                      </button>
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
               </div>
             )}
           </div>
@@ -462,6 +778,7 @@ const CourseVideos = () => {
           isOpen={showEditModal}
           onClose={handleCloseEditModal}
           courseId={courseId}
+          sections={course?.sections || []}
         />
       </div>
     </div>

@@ -62,7 +62,37 @@ const Layout = ({ children }) => {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-amber-50/60 via-yellow-50/40 to-amber-50/60 font-sans">
-      <Toaster position="top-center" width={400} reverseOrder={false} />
+      <Toaster
+        position="bottom-right"
+        gutter={12}
+        reverseOrder={false}
+        toastOptions={{
+          style: {
+            width: '420px',
+            maxWidth: 'calc(100vw - 32px)',
+            minHeight: '76px',
+            padding: '18px 22px',
+            borderRadius: '14px',
+            fontSize: '15px',
+            lineHeight: 1.5,
+            boxShadow: '0 10px 30px rgba(15, 23, 42, 0.16)',
+          },
+          success: {
+            iconTheme: { primary: '#2563eb', secondary: '#eff6ff' },
+            style: {
+              border: '1px solid #bfdbfe',
+              borderLeft: '5px solid #2563eb',
+            },
+          },
+          error: {
+            iconTheme: { primary: '#dc2626', secondary: '#fef2f2' },
+            style: {
+              border: '1px solid #fecaca',
+              borderLeft: '5px solid #dc2626',
+            },
+          },
+        }}
+      />
       <Header toggleSidebar={toggleSidebar} isSidebarOpen={isSidebarOpen} />
       <div className="flex">
         {user && (

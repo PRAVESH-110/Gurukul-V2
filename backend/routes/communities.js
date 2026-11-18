@@ -31,23 +31,52 @@ const router = express.Router();
 // @access  Public
 const getCommunities = async (req, res, next) => {
   try {
-    const { page = 1, limit = 10, search } = req.query;
+    const { page = 1, limit = 10, search, type, category, sort } = req.query;
 
     const query = { isActive: true };
 
-    // Add search filter
-    if (search) {
-      query.$text = { $search: search };
+    // Add search filter (support regex partial word matching for live keystrokes)
+    if (search && search.trim()) {
+      const term = search.trim();
+      query.$or = [
+        { name: { $regex: term, $options: 'i' } },
+        { description: { $regex: term, $options: 'i' } },
+        { tags: { $regex: term, $options: 'i' } },
+      ];
     }
 
     // Add type filter
-    // This is a public catalog; private communities are never listed here.
-    query.type = 'public';
+    if (type && ['public', 'private'].includes(type)) {
+      query.type = type;
+    } else if (type === 'all') {
+      // Allow all active types
+    } else {
+      query.type = 'public';
+    }
+
+    // Add category filter if provided
+    if (category && category.trim() && category !== 'all') {
+      const catRegex = new RegExp(category.trim(), 'i');
+      if (query.$or) {
+        query.$and = [{ $or: query.$or }, { $or: [{ category: catRegex }, { tags: catRegex }] }];
+        delete query.$or;
+      } else {
+        query.$or = [{ category: catRegex }, { tags: catRegex }];
+      }
+    }
+
+    // Sort options
+    let sortOption = { createdAt: -1 };
+    if (sort === 'popular' || sort === 'members') {
+      sortOption = { memberCount: -1 };
+    } else if (sort === 'oldest') {
+      sortOption = { createdAt: 1 };
+    }
 
     const communities = await Community.find(query)
       .select('-members')
       .populate('creator', 'firstName lastName avatar')
-      .sort({ createdAt: -1 })
+      .sort(sortOption)
       .limit(limit * 1)
       .skip((page - 1) * limit);
 
@@ -628,16 +657,42 @@ const getUserCommunities = async (req, res, next) => {
 // @access  Private (Student only)
 const getStudentCommunities = async (req, res, next) => {
   try {
-    console.log('getStudentCommunities called by user:', req.user._id);
+    console.log('getStudentCommunities called by user:', req.user._id, 'query:', req.query);
+    const { search, type, category } = req.query;
 
     // Get community IDs from Membership collection (fast indexed lookup)
     const memberships = await Membership.find({ user: req.user._id }).select('community').lean();
     let communityIds = memberships.map((m) => m.community);
 
     // Backward compatibility fallback to legacy array if no memberships found
-    let query = { _id: { $in: communityIds }, isActive: true };
-    if (communityIds.length === 0) {
-      query = { 'members.user': req.user._id, isActive: true };
+    const baseQuery =
+      communityIds.length > 0
+        ? { _id: { $in: communityIds }, isActive: true }
+        : { 'members.user': req.user._id, isActive: true };
+
+    const query = { ...baseQuery };
+
+    if (search && search.trim()) {
+      const term = search.trim();
+      query.$or = [
+        { name: { $regex: term, $options: 'i' } },
+        { description: { $regex: term, $options: 'i' } },
+        { tags: { $regex: term, $options: 'i' } },
+      ];
+    }
+
+    if (type && ['public', 'private'].includes(type)) {
+      query.type = type;
+    }
+
+    if (category && category.trim() && category !== 'all') {
+      const catRegex = new RegExp(category.trim(), 'i');
+      if (query.$or) {
+        query.$and = [{ $or: query.$or }, { $or: [{ category: catRegex }, { tags: catRegex }] }];
+        delete query.$or;
+      } else {
+        query.$or = [{ category: catRegex }, { tags: catRegex }];
+      }
     }
 
     const communities = await Community.find(query)
@@ -678,9 +733,40 @@ const getStudentCommunities = async (req, res, next) => {
 // @access  Private (Creator only)
 const getCreatorCommunities = async (req, res, next) => {
   try {
-    console.log('getCreatorCommunities called by user:', req.user._id);
+    console.log('getCreatorCommunities called by user:', req.user._id, 'query:', req.query);
+    const { search, type, status, category } = req.query;
 
-    const communities = await Community.find({ creator: req.user._id })
+    const baseQuery = { creator: req.user._id };
+    const query = { ...baseQuery };
+
+    if (search && search.trim()) {
+      const term = search.trim();
+      query.$or = [
+        { name: { $regex: term, $options: 'i' } },
+        { description: { $regex: term, $options: 'i' } },
+        { tags: { $regex: term, $options: 'i' } },
+      ];
+    }
+
+    if (type && ['public', 'private'].includes(type)) {
+      query.type = type;
+    }
+
+    if (status && status !== 'all') {
+      query.isActive = status === 'active';
+    }
+
+    if (category && category.trim() && category !== 'all') {
+      const catRegex = new RegExp(category.trim(), 'i');
+      if (query.$or) {
+        query.$and = [{ $or: query.$or }, { $or: [{ category: catRegex }, { tags: catRegex }] }];
+        delete query.$or;
+      } else {
+        query.$or = [{ category: catRegex }, { tags: catRegex }];
+      }
+    }
+
+    const communities = await Community.find(query)
       .populate('creator', 'firstName lastName avatar')
       .sort({ createdAt: -1 });
 

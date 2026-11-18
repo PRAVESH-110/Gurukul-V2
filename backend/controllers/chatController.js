@@ -22,8 +22,13 @@ const sendChatReply = async (req, res) => {
       return { role: message.role, content };
     });
 
-    const reply = await getAssistantReply(safeMessages);
-    return res.json({ reply });
+    const result = await getAssistantReply(safeMessages, req.user);
+    return res.json({
+      success: true,
+      reply: typeof result === 'string' ? result : result.reply,
+      plan: result?.plan,
+      sources: result?.sources,
+    });
   } catch (error) {
     if (
       error.message === 'Invalid chat message' ||

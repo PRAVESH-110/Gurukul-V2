@@ -28,16 +28,17 @@ const CommunityList = () => {
   const limit = 10;
 
   const debouncedSearch = useDebounce(searchTerm, 300);
+  const debouncedFilterType = useDebounce(filterType, 300);
 
   const {
     data: communitiesData,
     isLoading,
     error,
   } = useQuery({
-    queryKey: ['communities', { search: debouncedSearch, type: filterType, page, limit }],
+    queryKey: ['communities', { search: debouncedSearch, type: debouncedFilterType, page, limit }],
     queryFn: async () => {
       try {
-        if (filterType === 'my' && user) {
+        if (debouncedFilterType === 'my' && user) {
           const result = await communityAPI.getCreatorCommunities({
             search: debouncedSearch,
             page,
@@ -47,7 +48,7 @@ const CommunityList = () => {
         } else {
           const result = await communityAPI.getCommunities({
             search: debouncedSearch,
-            type: filterType === 'all' ? '' : filterType,
+            type: debouncedFilterType === 'all' ? '' : debouncedFilterType,
             page,
             limit,
           });
@@ -58,7 +59,7 @@ const CommunityList = () => {
         throw err;
       }
     },
-    enabled: filterType !== 'my' || !!user, // Only enable query if not 'my' or user exists
+    enabled: debouncedFilterType !== 'my' || !!user, // Only enable query if not 'my' or user exists
   });
 
   if (isLoading) {

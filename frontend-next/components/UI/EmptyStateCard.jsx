@@ -21,8 +21,8 @@ export function EmptyStateCard({
       className={`flex flex-col items-center justify-center p-8 sm:p-12 text-center rounded-2xl bg-white/60 border border-dashed border-slate-200/90 ${className}`}
     >
       {Icon && (
-        <div className="w-14 h-14 rounded-2xl bg-slate-100/80 text-slate-400 flex items-center justify-center mb-4 ring-1 ring-slate-200/50">
-          <Icon className="h-6 w-6 stroke-[1.75]" />
+        <div className="mb-3 flex items-center justify-center text-black">
+          <Icon className="h-8 w-8 text-black stroke-[1.75]" />
         </div>
       )}
       <h3 className="text-[16px] font-bold text-slate-900 tracking-tight mb-1">{title}</h3>

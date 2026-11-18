@@ -21,6 +21,7 @@ import {
 import LoadingSpinner from '@/components/UI/LoadingSpinner';
 import Pagination from '@/components/UI/Pagination';
 import toast from 'react-hot-toast';
+import { useDebounce } from '@/providers/useDebounceHook';
 
 const ManageCommunities = () => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -29,14 +30,21 @@ const ManageCommunities = () => {
   const [page, setPage] = useState(1);
   const pageSize = 10;
 
+  const debouncedSearch = useDebounce(searchTerm, 300);
+  const debouncedStatus = useDebounce(statusFilter, 300);
+
   const {
     data: communitiesData,
     isLoading,
     error,
     refetch,
   } = useQuery({
-    queryKey: ['creatorCommunities'],
-    queryFn: () => communityAPI.getCreatorCommunities(),
+    queryKey: ['creatorCommunities', debouncedSearch, debouncedStatus],
+    queryFn: () =>
+      communityAPI.getCreatorCommunities({
+        search: debouncedSearch,
+        status: debouncedStatus,
+      }),
   });
 
   const handleDeleteCommunity = async (communityId, communityName) => {
@@ -91,19 +99,8 @@ const ManageCommunities = () => {
 
   const communities = communitiesData?.data?.data?.data || [];
 
-  const filteredCommunities = communities.filter((community) => {
-    const matchesSearch =
-      community.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      community.description?.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesStatus =
-      statusFilter === 'all' ||
-      (statusFilter === 'active' && community.isActive) ||
-      (statusFilter === 'inactive' && !community.isActive);
-    return matchesSearch && matchesStatus;
-  });
-
-  const totalPages = Math.ceil(filteredCommunities.length / pageSize) || 1;
-  const paginatedCommunities = filteredCommunities.slice((page - 1) * pageSize, page * pageSize);
+  const totalPages = Math.ceil(communities.length / pageSize) || 1;
+  const paginatedCommunities = communities.slice((page - 1) * pageSize, page * pageSize);
 
   // Debug logging
   console.log('communitiesData:', communitiesData);
@@ -182,8 +179,8 @@ const ManageCommunities = () => {
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
         <div className="bg-white p-6 rounded-lg shadow-sm border">
           <div className="flex items-center">
-            <div className="p-2 bg-blue-100 rounded-lg">
-              <Users className="h-6 w-6 text-blue-600" />
+            <div className="flex items-center justify-center text-black">
+              <Users className="h-6 w-6 text-black stroke-[2]" />
             </div>
             <div className="ml-4">
               <p className="text-sm font-medium text-gray-600">Total Communities</p>
@@ -197,8 +194,8 @@ const ManageCommunities = () => {
 
         <div className="bg-white p-6 rounded-lg shadow-sm border">
           <div className="flex items-center">
-            <div className="p-2 bg-green-100 rounded-lg">
-              <Users className="h-6 w-6 text-green-600" />
+            <div className="flex items-center justify-center text-black">
+              <Users className="h-6 w-6 text-black stroke-[2]" />
             </div>
             <div className="ml-4">
               <p className="text-sm font-medium text-gray-600">Total Members</p>
@@ -211,8 +208,8 @@ const ManageCommunities = () => {
 
         <div className="bg-white p-6 rounded-lg shadow-sm border">
           <div className="flex items-center">
-            <div className="p-2 bg-purple-100 rounded-lg">
-              <MessageSquare className="h-6 w-6 text-purple-600" />
+            <div className="flex items-center justify-center text-black">
+              <MessageSquare className="h-6 w-6 text-black stroke-[2]" />
             </div>
             <div className="ml-4">
               <p className="text-sm font-medium text-gray-600">Total Posts</p>
@@ -225,8 +222,8 @@ const ManageCommunities = () => {
 
         <div className="bg-white p-6 rounded-lg shadow-sm border">
           <div className="flex items-center">
-            <div className="p-2 bg-orange-100 rounded-lg">
-              <Calendar className="h-6 w-6 text-orange-600" />
+            <div className="flex items-center justify-center text-black">
+              <Calendar className="h-6 w-6 text-black stroke-[2]" />
             </div>
             <div className="ml-4">
               <p className="text-sm font-medium text-gray-600">Total Events</p>
@@ -295,8 +292,8 @@ const ManageCommunities = () => {
                               alt={community.name}
                             />
                           ) : (
-                            <div className="h-12 w-12 bg-primary-100 rounded-lg flex items-center justify-center">
-                              <Users className="h-6 w-6 text-primary-600" />
+                            <div className="h-12 w-12 flex items-center justify-center text-black">
+                              <Users className="h-6 w-6 text-black stroke-[1.5]" />
                             </div>
                           )}
                         </div>
@@ -402,7 +399,7 @@ const ManageCommunities = () => {
                 <Pagination
                   currentPage={page}
                   totalPages={totalPages}
-                  totalItems={filteredCommunities.length}
+                  totalItems={communities.length}
                   pageSize={pageSize}
                   onPageChange={(newPage) => {
                     setPage(newPage);

@@ -31,13 +31,19 @@ const getCourses = async (req, res, next) => {
     const query = { isPublished: true };
     console.log('Initial query:', query);
 
-    // Add search filter
+    // Add search filter (support regex matching for partial word and live search)
     if (search && search.trim()) {
-      query.$text = { $search: search.trim() };
+      const term = search.trim();
+      query.$or = [
+        { title: { $regex: term, $options: 'i' } },
+        { description: { $regex: term, $options: 'i' } },
+        { subtitle: { $regex: term, $options: 'i' } },
+        { tags: { $regex: term, $options: 'i' } },
+      ];
     }
 
-    // Add category filter
-    if (category && category.trim()) {
+    // Add category filter (server-side database filter)
+    if (category && category.trim() && category !== 'all') {
       query.category = new RegExp(category.trim(), 'i');
     }
 
@@ -53,7 +59,11 @@ const getCourses = async (req, res, next) => {
         sortOption = { 'rating.average': -1 };
         break;
       case 'price':
+      case 'price-low':
         sortOption = { price: 1 };
+        break;
+      case 'price-high':
+        sortOption = { price: -1 };
         break;
       case 'enrollments':
       case 'popular':
@@ -752,15 +762,168 @@ const addCourseReview = async (req, res, next) => {
   }
 };
 
+// @desc    Add a section to a course
+// @route   POST /api/courses/:id/sections
+// @access  Private (Creator or Admin)
+const addCourseSection = async (req, res, next) => {
+  try {
+    const { title, description } = req.body;
+    if (!title || !title.trim()) {
+      return res.status(400).json({ success: false, message: 'Section title is required' });
+    }
+
+    const course = await Course.findById(req.params.id);
+    if (!course) {
+      return res.status(404).json({ success: false, message: 'Course not found' });
+    }
+
+    if (course.creator.toString() !== req.user._id.toString() && req.user.role !== 'admin') {
+      return res.status(403).json({ success: false, message: 'Not authorized' });
+    }
+
+    const newSection = {
+      title: title.trim(),
+      description: description ? description.trim() : '',
+      order: course.sections ? course.sections.length : 0,
+      lectures: [],
+    };
+
+    course.sections.push(newSection);
+    await course.save();
+
+    res.status(201).json({
+      success: true,
+      message: 'Section created successfully',
+      sections: course.sections,
+      section: course.sections[course.sections.length - 1],
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// @desc    Update a course section
+// @route   PUT /api/courses/:id/sections/:sectionId
+// @access  Private (Creator or Admin)
+const updateCourseSection = async (req, res, next) => {
+  try {
+    const { title, description, order } = req.body;
+    const course = await Course.findById(req.params.id);
+    if (!course) {
+      return res.status(404).json({ success: false, message: 'Course not found' });
+    }
+
+    if (course.creator.toString() !== req.user._id.toString() && req.user.role !== 'admin') {
+      return res.status(403).json({ success: false, message: 'Not authorized' });
+    }
+
+    const section = course.sections.id(req.params.sectionId);
+    if (!section) {
+      return res.status(404).json({ success: false, message: 'Section not found' });
+    }
+
+    if (title !== undefined) section.title = title.trim();
+    if (description !== undefined) section.description = description.trim();
+    if (order !== undefined) section.order = Number(order);
+
+    await course.save();
+
+    res.status(200).json({
+      success: true,
+      message: 'Section updated successfully',
+      sections: course.sections,
+      section,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// @desc    Delete a course section
+// @route   DELETE /api/courses/:id/sections/:sectionId
+// @access  Private (Creator or Admin)
+const deleteCourseSection = async (req, res, next) => {
+  try {
+    const course = await Course.findById(req.params.id);
+    if (!course) {
+      return res.status(404).json({ success: false, message: 'Course not found' });
+    }
+
+    if (course.creator.toString() !== req.user._id.toString() && req.user.role !== 'admin') {
+      return res.status(403).json({ success: false, message: 'Not authorized' });
+    }
+
+    const section = course.sections.id(req.params.sectionId);
+    if (!section) {
+      return res.status(404).json({ success: false, message: 'Section not found' });
+    }
+
+    // Reset video section field for videos in this section back to 'Main'
+    await Video.updateMany(
+      { course: course._id, section: req.params.sectionId },
+      { $set: { section: 'Main' } },
+    );
+
+    course.sections.pull(req.params.sectionId);
+    await course.save();
+
+    res.status(200).json({
+      success: true,
+      message: 'Section deleted successfully',
+      sections: course.sections,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 // @desc    Get creator's courses
 // @route   GET /api/courses/creator/me
 // @access  Private (Creator or Admin only)
 const getCreatorCourses = async (req, res, next) => {
   try {
-    console.log('getCreatorCourses called by user:', req.user._id, 'role:', req.user.role);
+    console.log(
+      'getCreatorCourses called by user:',
+      req.user._id,
+      'role:',
+      req.user.role,
+      'query:',
+      req.query,
+    );
+    const { search, visibility, category } = req.query;
 
-    // For admins, show all courses; for creators, show only their own
-    const courses = await Course.find(req.user.role === 'admin' ? {} : { creator: req.user._id })
+    const baseQuery = req.user.role === 'admin' ? {} : { creator: req.user._id };
+    const query = { ...baseQuery };
+
+    if (search && search.trim()) {
+      const term = search.trim();
+      query.$or = [
+        { title: { $regex: term, $options: 'i' } },
+        { description: { $regex: term, $options: 'i' } },
+        { tags: { $regex: term, $options: 'i' } },
+      ];
+    }
+
+    if (visibility && visibility !== 'all') {
+      const visibilityCondition =
+        visibility === 'public'
+          ? [{ visibility: 'public' }, { isPublished: true }]
+          : [{ visibility: 'private' }, { isPublished: false }];
+
+      if (query.$or) {
+        query.$and = [{ $or: query.$or }, { $or: visibilityCondition }];
+        delete query.$or;
+      } else {
+        query.$or = visibilityCondition;
+      }
+    }
+
+    if (category && category.trim() && category !== 'all') {
+      query.category = new RegExp(category.trim(), 'i');
+    }
+
+    // For admins, show all courses; for creators, show matching their query
+    const courses = await Course.find(query)
       .populate('creator', 'firstName lastName avatar')
       .sort({ createdAt: -1 });
 
@@ -791,16 +954,20 @@ const getCreatorCourses = async (req, res, next) => {
       };
     });
 
-    // Calculate overall stats
-    const totalCourses = courses.length;
-    const totalStudents = courses.reduce(
+    // Calculate overarching stats across all courses owned by creator
+    const allCreatorCourses = await Course.find(baseQuery).select('enrolledStudents price rating');
+    const totalCourses = allCreatorCourses.length;
+    const totalStudents = allCreatorCourses.reduce(
       (sum, course) => sum + (course.enrolledStudents?.length || 0),
       0,
     );
-    const totalRevenue = coursesWithStats.reduce((sum, course) => sum + (course.revenue || 0), 0);
+    const totalRevenue = allCreatorCourses.reduce(
+      (sum, course) => sum + (course.price || 0) * (course.enrolledStudents?.length || 0),
+      0,
+    );
 
     // Calculate average rating across all courses
-    const coursesWithRatings = courses.filter(
+    const coursesWithRatings = allCreatorCourses.filter(
       (course) => course.rating && course.rating.average > 0,
     );
     const averageRating =
@@ -868,6 +1035,29 @@ router.delete('/:id/test-delete', (req, res) => {
 router.get('/:id/videos', optionalProtect, validateObjectId('id'), getCourseVideos);
 router.get('/:id/students', protect, validateObjectId('id'), getEnrolledStudents);
 router.post('/:id/review', protect, validateObjectId('id'), addCourseReview);
+
+// Course Sections Management
+router.post(
+  '/:id/sections',
+  protect,
+  authorize('creator', 'admin'),
+  validateObjectId('id'),
+  addCourseSection,
+);
+router.put(
+  '/:id/sections/:sectionId',
+  protect,
+  authorize('creator', 'admin'),
+  validateObjectId('id'),
+  updateCourseSection,
+);
+router.delete(
+  '/:id/sections/:sectionId',
+  protect,
+  authorize('creator', 'admin'),
+  validateObjectId('id'),
+  deleteCourseSection,
+);
 
 // Generic routes that should come last
 router.get('/:id', optionalProtect, validateObjectId('id'), getCourse);

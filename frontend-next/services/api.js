@@ -328,8 +328,8 @@ export const userAPI = {
   getUser: (id) => api.get(`/users/${id}`),
   updateUser: (id, data) => api.put(`/users/${id}`, data),
   deleteUser: (id) => api.delete(`/users/${id}`),
-  getUserCommunities: (id) => api.get(`/users/${id}/communities`),
-  getUserCourses: (id) => api.get(`/users/${id}/courses`),
+  getUserCommunities: (id, params) => api.get(`/users/${id}/communities`, { params }),
+  getUserCourses: (id, params) => api.get(`/users/${id}/courses`, { params }),
   getWishlist: () => api.get('/users/me/wishlist'),
   toggleWishlist: (courseId) => api.post(`/users/me/wishlist/${courseId}`),
 };
@@ -379,7 +379,7 @@ export const communityAPI = {
 // Course API
 export const courseAPI = {
   getCourses: (params) => api.get('/courses', { params }),
-  getCreatorCourses: () => api.get('/courses/creator/me'),
+  getCreatorCourses: (params) => api.get('/courses/creator/me', { params }),
   createCourse: (data) => api.post('/courses', data),
   getCourse: (id) => api.get(`/courses/${id}`),
   updateCourse: (id, data) => api.put(`/courses/${id}`, data),
@@ -389,6 +389,11 @@ export const courseAPI = {
   getCourseVideos: (id) => api.get(`/videos/course/${id}`),
   getEnrolledStudents: (id) => api.get(`/courses/${id}/students`),
   addCourseReview: (id, data) => api.post(`/courses/${id}/review`, data),
+  addCourseSection: (courseId, data) => api.post(`/courses/${courseId}/sections`, data),
+  updateCourseSection: (courseId, sectionId, data) =>
+    api.put(`/courses/${courseId}/sections/${sectionId}`, data),
+  deleteCourseSection: (courseId, sectionId) =>
+    api.delete(`/courses/${courseId}/sections/${sectionId}`),
 };
 
 // Video API

@@ -31,6 +31,8 @@ const Search = () => {
     level: '',
     price: '',
   });
+  const debouncedFilters = useDebounce(filters, 300);
+  const debouncedActiveTab = useDebounce(activeTab, 300);
 
   // Update query state if URL param changes externally
   useEffect(() => {
@@ -63,16 +65,16 @@ const Search = () => {
     isLoading,
     error,
   } = useQuery({
-    queryKey: ['search', debouncedQuery, activeTab, filters],
+    queryKey: ['search', debouncedQuery, debouncedActiveTab, debouncedFilters],
     queryFn: () => {
       if (!debouncedQuery.trim())
         return { data: { courses: [], communities: [], users: [], posts: [] } };
 
       const params = { q: debouncedQuery };
-      if (activeTab !== 'all') params.type = activeTab;
-      if (filters.category) params.category = filters.category;
-      if (filters.level) params.level = filters.level;
-      if (filters.price) params.price = filters.price;
+      if (debouncedActiveTab !== 'all') params.type = debouncedActiveTab;
+      if (debouncedFilters.category) params.category = debouncedFilters.category;
+      if (debouncedFilters.level) params.level = debouncedFilters.level;
+      if (debouncedFilters.price) params.price = debouncedFilters.price;
 
       return searchAPI.globalSearch(params);
     },
