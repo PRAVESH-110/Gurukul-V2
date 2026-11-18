@@ -1,6 +1,7 @@
 const express = require('express');
 const Event = require('../models/Event');
 const Community = require('../models/Community');
+const Notification = require('../models/Notification');
 const {
   protect,
   checkCommunityMembership,
@@ -316,6 +317,21 @@ const rsvpToEvent = async (req, res, next) => {
     // Update RSVP
     event.updateRSVP(req.user._id, status);
     await event.save();
+
+    if (status === 'going' && event.creator.toString() !== req.user._id.toString()) {
+      try {
+        await Notification.create({
+          recipient: event.creator,
+          type: 'EVENT_RSVP',
+          content: `📅 ${req.user.firstName || 'Someone'} ${req.user.lastName || ''} is attending your event "${event.title.slice(0, 45)}"!`,
+          link: `/communities/${event.community}`,
+          refId: event._id,
+          refModel: 'Event',
+        });
+      } catch (notifErr) {
+        console.warn('Failed to send RSVP notification:', notifErr.message);
+      }
+    }
 
     res.status(200).json({
       success: true,

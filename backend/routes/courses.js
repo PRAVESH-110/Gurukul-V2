@@ -753,6 +753,21 @@ const addCourseReview = async (req, res, next) => {
     course.calculateAverageRating();
     await course.save();
 
+    if (course.creator.toString() !== req.user._id.toString()) {
+      try {
+        await Notification.create({
+          recipient: course.creator,
+          type: 'COURSE_REVIEW',
+          content: `⭐ ${req.user.firstName || 'A student'} left a ${rating}-star review on "${course.title.slice(0, 45)}"`,
+          link: `/courses/${course._id}`,
+          refId: course._id,
+          refModel: 'Course',
+        });
+      } catch (notifErr) {
+        console.warn('Failed to send review notification:', notifErr.message);
+      }
+    }
+
     res.status(201).json({
       success: true,
       message: 'Review added successfully',

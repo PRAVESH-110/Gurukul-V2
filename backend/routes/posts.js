@@ -1,6 +1,7 @@
 const express = require('express');
 const Post = require('../models/Post');
 const Community = require('../models/Community');
+const Notification = require('../models/Notification');
 const {
   protect,
   checkCommunityMembership,
@@ -309,6 +310,21 @@ const toggleLike = async (req, res, next) => {
     const liked = post.toggleLike(req.user._id);
     await post.save();
 
+    if (liked && post.author.toString() !== req.user._id.toString()) {
+      try {
+        await Notification.create({
+          recipient: post.author,
+          type: 'POST_LIKE',
+          content: `❤️ ${req.user.firstName || 'Someone'} ${req.user.lastName || ''} liked your post "${post.title.slice(0, 45)}"`,
+          link: `/communities/${post.community}`,
+          refId: post._id,
+          refModel: 'Post',
+        });
+      } catch (notifErr) {
+        console.warn('Failed to send like notification:', notifErr.message);
+      }
+    }
+
     res.status(200).json({
       success: true,
       message: liked ? 'Post liked' : 'Post unliked',
@@ -352,6 +368,21 @@ const addComment = async (req, res, next) => {
     await post.save();
 
     await post.populate('comments.author', 'firstName lastName avatar');
+
+    if (post.author.toString() !== req.user._id.toString()) {
+      try {
+        await Notification.create({
+          recipient: post.author,
+          type: 'POST_COMMENT',
+          content: `💬 ${req.user.firstName || 'Someone'} ${req.user.lastName || ''} commented on your post "${post.title.slice(0, 45)}"`,
+          link: `/communities/${post.community}`,
+          refId: post._id,
+          refModel: 'Post',
+        });
+      } catch (notifErr) {
+        console.warn('Failed to send comment notification:', notifErr.message);
+      }
+    }
 
     res.status(201).json({
       success: true,

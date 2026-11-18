@@ -6,6 +6,8 @@ const videoController = require('../controllers/videoController');
 const { protect, authorize, optionalProtect } = require('../middleware/auth');
 const Video = require('../models/Video');
 const Course = require('../models/Course');
+const Enrollment = require('../models/Enrollment');
+const Notification = require('../models/Notification');
 const ImageKit = require('imagekit');
 const { validateObjectId } = require('../middleware/validation');
 
@@ -103,6 +105,8 @@ router.post('/:id/watch', protect, validateObjectId('id'), async (req, res, next
     video.markAsWatched(req.user._id, completed, Math.max(0, watchTime), Math.max(0, position));
     await video.save();
 
+    const activeVideoCount = await Video.countDocuments({ course: course._id, isActive: true });
+
     if (enrollment) {
       if (
         completed &&
@@ -110,11 +114,51 @@ router.post('/:id/watch', protect, validateObjectId('id'), async (req, res, next
       ) {
         enrollment.completedVideos.push(video._id);
       }
-      const activeVideoCount = await Video.countDocuments({ course: course._id, isActive: true });
       enrollment.progress = activeVideoCount
         ? Math.min(100, Math.round((enrollment.completedVideos.length / activeVideoCount) * 100))
         : 0;
       await course.save();
+    }
+
+    // Keep standalone Enrollment collection perfectly in sync
+    const standaloneEnrollment = await Enrollment.findOne({
+      course: course._id,
+      user: req.user._id,
+    });
+
+    let currentProgress = enrollment?.progress || 0;
+    if (standaloneEnrollment) {
+      if (
+        completed &&
+        !standaloneEnrollment.completedVideos.some((id) => id.toString() === video._id.toString())
+      ) {
+        standaloneEnrollment.completedVideos.push(video._id);
+      }
+      const prevProgress = standaloneEnrollment.progress || 0;
+      standaloneEnrollment.progress = activeVideoCount
+        ? Math.min(
+            100,
+            Math.round((standaloneEnrollment.completedVideos.length / activeVideoCount) * 100),
+          )
+        : 0;
+      await standaloneEnrollment.save();
+      currentProgress = standaloneEnrollment.progress;
+
+      // Trigger Course Completion Notification when student reaches 100%
+      if (standaloneEnrollment.progress >= 100 && prevProgress < 100) {
+        try {
+          await Notification.create({
+            recipient: req.user._id,
+            type: 'COURSE_COMPLETED',
+            content: `🎉 Congratulations! You have completed all lessons in "${course.title}"!`,
+            link: `/courses/${course._id}`,
+            refId: course._id,
+            refModel: 'Course',
+          });
+        } catch (notifErr) {
+          console.warn('Failed to send course completed notification:', notifErr.message);
+        }
+      }
     }
 
     return res.status(200).json({
@@ -122,7 +166,7 @@ router.post('/:id/watch', protect, validateObjectId('id'), async (req, res, next
       progress,
       completed,
       lastPosition: position,
-      courseProgress: enrollment?.progress || 0,
+      courseProgress: currentProgress,
     });
   } catch (error) {
     return next(error);

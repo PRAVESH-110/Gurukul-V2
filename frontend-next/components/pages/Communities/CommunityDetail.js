@@ -14,13 +14,15 @@ import {
   MoreHorizontal,
   Clock,
   MapPin,
+  Send,
+  Trash2,
 } from 'lucide-react';
 import { useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import LoadingSpinner from '@/components/UI/LoadingSpinner';
 import { getImageUrl } from '@/utils/imageUtils';
 import { useAuth } from '@/context/AuthContext';
-import { communityAPI, eventAPI } from '@/services/api';
+import { communityAPI, eventAPI, postAPI } from '@/services/api';
 import toast from 'react-hot-toast';
 
 const CommunityDetail = () => {
@@ -30,7 +32,85 @@ const CommunityDetail = () => {
   const { user } = useAuth();
   const [activeTab, setActiveTab] = useState('posts');
   const [joining, setJoining] = useState(false);
+  const [openComments, setOpenComments] = useState({});
+  const [commentInputs, setCommentInputs] = useState({});
+  const [submittingComment, setSubmittingComment] = useState({});
   const queryClient = useQueryClient();
+
+  const handleLikePost = async (postId) => {
+    if (!user) {
+      toast.error('Please log in to like posts');
+      return;
+    }
+    try {
+      const res = await postAPI.toggleLike(postId);
+      if (res.data?.success) {
+        queryClient.setQueryData(['communityPosts', id], (oldData) => {
+          if (!oldData?.data?.posts) return oldData;
+          const currentUserId = (user._id || user.id)?.toString();
+          const updatedPosts = oldData.data.posts.map((p) => {
+            if (p._id !== postId) return p;
+            const isNowLiked = res.data.liked;
+            const prevLikes = p.likes || [];
+            const newLikes = isNowLiked
+              ? [...prevLikes, currentUserId]
+              : prevLikes.filter(
+                  (uid) => (typeof uid === 'string' ? uid : uid?._id)?.toString() !== currentUserId,
+                );
+            return {
+              ...p,
+              likes: newLikes,
+              likeCount: res.data.likeCount !== undefined ? res.data.likeCount : newLikes.length,
+            };
+          });
+          return {
+            ...oldData,
+            data: {
+              ...oldData.data,
+              posts: updatedPosts,
+            },
+          };
+        });
+      }
+    } catch (err) {
+      toast.error(err.response?.data?.message || err.message || 'Failed to update like');
+    }
+  };
+
+  const handleAddComment = async (postId) => {
+    if (!user) {
+      toast.error('Please log in to comment');
+      return;
+    }
+    const content = (commentInputs[postId] || '').trim();
+    if (!content) return;
+
+    setSubmittingComment((prev) => ({ ...prev, [postId]: true }));
+    try {
+      const res = await postAPI.addComment(postId, { content });
+      if (res.data?.success) {
+        toast.success('Comment added');
+        setCommentInputs((prev) => ({ ...prev, [postId]: '' }));
+        queryClient.invalidateQueries({ queryKey: ['communityPosts', id] });
+      }
+    } catch (err) {
+      toast.error(err.response?.data?.message || err.message || 'Failed to add comment');
+    } finally {
+      setSubmittingComment((prev) => ({ ...prev, [postId]: false }));
+    }
+  };
+
+  const handleDeleteComment = async (postId, commentId) => {
+    try {
+      const res = await postAPI.deleteComment(postId, commentId);
+      if (res.data?.success) {
+        toast.success('Comment deleted');
+        queryClient.invalidateQueries({ queryKey: ['communityPosts', id] });
+      }
+    } catch (err) {
+      toast.error(err.response?.data?.message || err.message || 'Failed to delete comment');
+    }
+  };
 
   const {
     data: communityData,
@@ -317,20 +397,198 @@ const CommunityDetail = () => {
                         <ReactMarkdown>{post.content}</ReactMarkdown>
                       </div>
 
-                      <div className="flex items-center gap-6 pt-4 border-t border-gray-50">
-                        <button className="flex items-center gap-2 text-sm text-gray-500 hover:text-red-500 transition-colors group">
-                          <Heart className="h-5 w-5 group-hover:fill-current" />
-                          <span>{post.likeCount || 0} Likes</span>
-                        </button>
-                        <button className="flex items-center gap-2 text-sm text-gray-500 hover:text-primary-600 transition-colors">
-                          <MessageSquare className="h-5 w-5" />
-                          <span>{post.commentCount || 0} Comments</span>
-                        </button>
-                        <button className="flex items-center gap-2 text-sm text-gray-500 hover:text-gray-700 transition-colors ml-auto">
-                          <Share2 className="h-5 w-5" />
-                          <span>Share</span>
-                        </button>
-                      </div>
+                      {(() => {
+                        const currentUserId = (user?._id || user?.id)?.toString();
+                        const isLiked =
+                          Boolean(currentUserId) &&
+                          (post.likes || []).some((like) => {
+                            const likeId = (
+                              typeof like === 'string' ? like : like?._id || like?.id
+                            )?.toString();
+                            return likeId === currentUserId;
+                          });
+
+                        return (
+                          <>
+                            <div className="flex items-center gap-6 pt-4 border-t border-gray-50">
+                              {/* Like Button */}
+                              <button
+                                onClick={() => handleLikePost(post._id)}
+                                className={`flex items-center gap-2 text-sm transition-colors group ${
+                                  isLiked
+                                    ? 'text-rose-600 font-medium'
+                                    : 'text-gray-500 hover:text-rose-500'
+                                }`}
+                              >
+                                <Heart
+                                  className={`h-5 w-5 transition-transform duration-150 active:scale-125 ${
+                                    isLiked
+                                      ? 'fill-rose-500 text-rose-500'
+                                      : 'group-hover:fill-current'
+                                  }`}
+                                />
+                                <span>{post.likeCount || 0} Likes</span>
+                              </button>
+
+                              {/* Comment Toggle Button */}
+                              <button
+                                onClick={() =>
+                                  setOpenComments((prev) => ({
+                                    ...prev,
+                                    [post._id]: !prev[post._id],
+                                  }))
+                                }
+                                className={`flex items-center gap-2 text-sm transition-colors ${
+                                  openComments[post._id]
+                                    ? 'text-primary-600 font-semibold'
+                                    : 'text-gray-500 hover:text-primary-600'
+                                }`}
+                              >
+                                <MessageSquare className="h-5 w-5" />
+                                <span>
+                                  {post.comments?.length !== undefined
+                                    ? post.comments.length
+                                    : post.commentCount || 0}{' '}
+                                  Comments
+                                </span>
+                              </button>
+
+                              {/* Share Button */}
+                              <button
+                                onClick={() => {
+                                  if (typeof window !== 'undefined') {
+                                    navigator.clipboard.writeText(window.location.href);
+                                    toast.success('Community link copied to clipboard!');
+                                  }
+                                }}
+                                className="flex items-center gap-2 text-sm text-gray-500 hover:text-gray-700 transition-colors ml-auto"
+                              >
+                                <Share2 className="h-5 w-5" />
+                                <span>Share</span>
+                              </button>
+                            </div>
+
+                            {/* Expandable Comments Drawer */}
+                            {openComments[post._id] && (
+                              <div className="mt-4 pt-4 border-t border-gray-100 space-y-4">
+                                {/* Comment Input */}
+                                {user ? (
+                                  <div className="flex gap-3 items-start">
+                                    <div className="w-8 h-8 rounded-full bg-primary-100 text-primary-700 flex items-center justify-center text-xs font-semibold shrink-0 mt-0.5">
+                                      {user.avatar ? (
+                                        <img
+                                          src={user.avatar}
+                                          alt={user.firstName}
+                                          className="w-full h-full rounded-full object-cover"
+                                        />
+                                      ) : (
+                                        user.firstName?.[0] || 'U'
+                                      )}
+                                    </div>
+                                    <div className="flex-1 flex gap-2">
+                                      <input
+                                        type="text"
+                                        value={commentInputs[post._id] || ''}
+                                        onChange={(e) =>
+                                          setCommentInputs((prev) => ({
+                                            ...prev,
+                                            [post._id]: e.target.value,
+                                          }))
+                                        }
+                                        onKeyDown={(e) => {
+                                          if (e.key === 'Enter') {
+                                            e.preventDefault();
+                                            handleAddComment(post._id);
+                                          }
+                                        }}
+                                        placeholder="Write a comment..."
+                                        className="flex-1 bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-xs sm:text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500"
+                                      />
+                                      <button
+                                        onClick={() => handleAddComment(post._id)}
+                                        disabled={
+                                          submittingComment[post._id] ||
+                                          !(commentInputs[post._id] || '').trim()
+                                        }
+                                        className="bg-primary-600 hover:bg-primary-700 disabled:opacity-40 text-white p-2.5 rounded-xl transition-colors shrink-0"
+                                        title="Send comment"
+                                      >
+                                        <Send className="w-4 h-4" />
+                                      </button>
+                                    </div>
+                                  </div>
+                                ) : (
+                                  <p className="text-xs text-gray-500 text-center py-2">
+                                    Please log in to leave a comment.
+                                  </p>
+                                )}
+
+                                {/* Comments List */}
+                                {post.comments && post.comments.length > 0 ? (
+                                  <div className="space-y-2.5 pt-1">
+                                    {post.comments.map((comment) => {
+                                      const isAuthor =
+                                        (comment.author?._id || comment.author)?.toString() ===
+                                        currentUserId;
+                                      const isAdmin = user?.role === 'admin';
+
+                                      return (
+                                        <div
+                                          key={comment._id}
+                                          className="flex items-start justify-between gap-3 bg-gray-50/80 p-3 rounded-xl text-xs sm:text-sm"
+                                        >
+                                          <div className="flex gap-2.5 items-start flex-1 min-w-0">
+                                            <div className="w-7 h-7 rounded-full bg-gray-200 text-gray-700 flex items-center justify-center text-xs font-semibold shrink-0">
+                                              {comment.author?.avatar ? (
+                                                <img
+                                                  src={comment.author.avatar}
+                                                  alt={comment.author.firstName}
+                                                  className="w-full h-full rounded-full object-cover"
+                                                />
+                                              ) : (
+                                                comment.author?.firstName?.[0] || 'U'
+                                              )}
+                                            </div>
+                                            <div className="min-w-0 flex-1">
+                                              <div className="flex items-center gap-2">
+                                                <span className="font-semibold text-gray-900">
+                                                  {comment.author?.firstName}{' '}
+                                                  {comment.author?.lastName}
+                                                </span>
+                                                <span className="text-[10px] text-gray-400">
+                                                  {new Date(comment.createdAt).toLocaleDateString()}
+                                                </span>
+                                              </div>
+                                              <p className="text-gray-700 mt-1 whitespace-pre-wrap break-words">
+                                                {comment.content}
+                                              </p>
+                                            </div>
+                                          </div>
+                                          {(isAuthor || isAdmin) && (
+                                            <button
+                                              onClick={() =>
+                                                handleDeleteComment(post._id, comment._id)
+                                              }
+                                              className="text-gray-400 hover:text-red-500 p-1 rounded-md transition-colors shrink-0"
+                                              title="Delete comment"
+                                            >
+                                              <Trash2 className="w-3.5 h-3.5" />
+                                            </button>
+                                          )}
+                                        </div>
+                                      );
+                                    })}
+                                  </div>
+                                ) : (
+                                  <p className="text-xs text-gray-400 text-center py-2">
+                                    No comments yet. Start the conversation!
+                                  </p>
+                                )}
+                              </div>
+                            )}
+                          </>
+                        );
+                      })()}
                     </div>
                   ))
                 ) : (

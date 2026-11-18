@@ -1,12 +1,27 @@
 'use client';
 
 import React, { useRef, useCallback, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { Bell, BookOpen, Users, Trash2, Check, CheckCheck, Loader2 } from 'lucide-react';
+import {
+  Bell,
+  BookOpen,
+  Users,
+  Trash2,
+  Check,
+  CheckCheck,
+  Loader2,
+  MessageSquare,
+  Heart,
+  Star,
+  Calendar,
+  Award,
+} from 'lucide-react';
 import { notificationAPI } from '@/services/api';
 import toast from 'react-hot-toast';
 
 const NotificationDropdown = ({ isOpen, unreadCount, setUnreadCount }) => {
+  const router = useRouter();
   const queryClient = useQueryClient();
   const readRequests = useRef(new Set());
 
@@ -145,6 +160,7 @@ const NotificationDropdown = ({ isOpen, unreadCount, setUnreadCount }) => {
     switch (type) {
       case 'COURSE_CREATION':
       case 'NEW_COURSE':
+      case 'NEW_LECTURE':
         return <BookOpen className="h-5 w-5 text-blue-600" />;
       case 'ENROLLMENT':
       case 'ENROLLMENT_CREATOR':
@@ -152,6 +168,16 @@ const NotificationDropdown = ({ isOpen, unreadCount, setUnreadCount }) => {
       case 'COMMUNITY_JOIN':
       case 'COMMUNITY_JOIN_CREATOR':
         return <Users className="h-5 w-5 text-purple-600" />;
+      case 'POST_COMMENT':
+        return <MessageSquare className="h-5 w-5 text-emerald-600" />;
+      case 'POST_LIKE':
+        return <Heart className="h-5 w-5 text-rose-500 fill-rose-500" />;
+      case 'COURSE_REVIEW':
+        return <Star className="h-5 w-5 text-amber-500 fill-amber-500" />;
+      case 'EVENT_RSVP':
+        return <Calendar className="h-5 w-5 text-indigo-600" />;
+      case 'COURSE_COMPLETED':
+        return <Award className="h-5 w-5 text-yellow-500" />;
       default:
         return <Bell className="h-5 w-5 text-gray-500" />;
     }
@@ -161,6 +187,7 @@ const NotificationDropdown = ({ isOpen, unreadCount, setUnreadCount }) => {
     switch (type) {
       case 'COURSE_CREATION':
       case 'NEW_COURSE':
+      case 'NEW_LECTURE':
         return 'bg-blue-50';
       case 'ENROLLMENT':
       case 'ENROLLMENT_CREATOR':
@@ -168,6 +195,16 @@ const NotificationDropdown = ({ isOpen, unreadCount, setUnreadCount }) => {
       case 'COMMUNITY_JOIN':
       case 'COMMUNITY_JOIN_CREATOR':
         return 'bg-purple-50';
+      case 'POST_COMMENT':
+        return 'bg-emerald-50';
+      case 'POST_LIKE':
+        return 'bg-rose-50';
+      case 'COURSE_REVIEW':
+        return 'bg-amber-50';
+      case 'EVENT_RSVP':
+        return 'bg-indigo-50';
+      case 'COURSE_COMPLETED':
+        return 'bg-yellow-50';
       default:
         return 'bg-gray-50';
     }
@@ -235,7 +272,12 @@ const NotificationDropdown = ({ isOpen, unreadCount, setUnreadCount }) => {
                 key={notif._id}
                 data-id={notif._id}
                 data-notification-unread={!notif.isRead}
-                className={`flex items-start p-4 hover:bg-gray-50/80 transition-colors group relative ${!notif.isRead ? 'bg-primary-50/30' : ''}`}
+                onClick={() => {
+                  if (notif.link) {
+                    router.push(notif.link);
+                  }
+                }}
+                className={`flex items-start p-4 hover:bg-gray-50/80 transition-colors group relative ${notif.link ? 'cursor-pointer' : ''} ${!notif.isRead ? 'bg-primary-50/30' : ''}`}
               >
                 {/* Left Side Icon */}
                 <div className={`p-2 rounded-xl shrink-0 mr-3 ${getBgColor(notif.type)}`}>

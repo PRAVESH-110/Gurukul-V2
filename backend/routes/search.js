@@ -7,6 +7,8 @@ const { protect } = require('../middleware/auth');
 
 const router = express.Router();
 
+const escapeRegex = (str = '') => str.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, '\\$&');
+
 // @desc    Search communities
 // @route   GET /api/search/communities
 // @access  Public
@@ -25,11 +27,22 @@ const searchCommunities = async (req, res, next) => {
     const safePage = Math.max(1, parseInt(page, 10) || 1);
     const safeLimit = Math.min(50, Math.max(1, parseInt(limit, 10) || 10));
 
-    // Use MongoDB Text Search index on (name, description)
+    const keywords = trimmedQuery.split(/\s+/).filter(Boolean).map(escapeRegex);
+    const keywordConditions = keywords.map((kw) => {
+      const reg = new RegExp(kw, 'i');
+      return {
+        $or: [{ name: reg }, { description: reg }, { category: reg }],
+      };
+    });
+
+    // Flexible regex search allowing partial words and multiple keywords
     const query = {
       isActive: true,
       type: 'public',
-      $text: { $search: trimmedQuery },
+      $and:
+        keywordConditions.length > 0
+          ? keywordConditions
+          : [{ name: new RegExp(escapeRegex(trimmedQuery), 'i') }],
     };
 
     const communities = await Community.find(query)
@@ -76,21 +89,38 @@ const searchCourses = async (req, res, next) => {
     const safePage = Math.max(1, parseInt(page, 10) || 1);
     const safeLimit = Math.min(50, Math.max(1, parseInt(limit, 10) || 10));
 
-    // Use MongoDB Text Search index on (title, subtitle, description, tags)
-    const query = {
-      isPublished: true,
-      $text: { $search: trimmedQuery },
-    };
+    const keywords = trimmedQuery.split(/\s+/).filter(Boolean).map(escapeRegex);
+    const keywordConditions = keywords.map((kw) => {
+      const reg = new RegExp(kw, 'i');
+      return {
+        $or: [
+          { title: reg },
+          { subtitle: reg },
+          { description: reg },
+          { category: reg },
+          { tags: reg },
+        ],
+      };
+    });
+
+    const andConditions = [
+      { isPublished: true },
+      ...(keywordConditions.length > 0
+        ? keywordConditions
+        : [{ title: new RegExp(escapeRegex(trimmedQuery), 'i') }]),
+    ];
 
     // Add category filter
     if (category && category.trim()) {
-      query.category = new RegExp(category.trim(), 'i');
+      andConditions.push({ category: new RegExp(escapeRegex(category.trim()), 'i') });
     }
 
     // Add level filter
     if (level && ['beginner', 'intermediate', 'advanced'].includes(level)) {
-      query.level = level;
+      andConditions.push({ level });
     }
+
+    const query = { $and: andConditions };
 
     const courses = await Course.find(query)
       .select('-enrolledStudents -reviews -sections -resources -requirements -learningOutcomes')
