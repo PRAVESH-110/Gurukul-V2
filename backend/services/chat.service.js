@@ -127,10 +127,34 @@ INSTRUCTIONS:
     content: systemPromptContent,
   };
 
-  const response = await createChatClient().invoke([systemPrompt, ...messages]);
+  let replyText;
+  if (!process.env.GEMINI_API_KEY) {
+    console.warn(
+      '[ChatService] GEMINI_API_KEY is not configured in environment variables. Falling back to deterministic context.',
+    );
+    if (retrievedContext && retrievedContext.trim()) {
+      replyText = `Here is what I found in Gurukul:\n\n${retrievedContext}`;
+    } else {
+      replyText =
+        'Welcome to Gurukul! You can explore courses in our [Course Catalog](/courses), join groups in [Communities](/communities), or start creating your own content as an instructor.\n\nHow can I help you today?';
+    }
+  } else {
+    try {
+      const response = await createChatClient().invoke([systemPrompt, ...messages]);
+      replyText = response.content;
+    } catch (aiError) {
+      console.error('[ChatService] Gemini invoke failed:', aiError.message);
+      if (retrievedContext && retrievedContext.trim()) {
+        replyText = `Here is what I found in our database:\n\n${retrievedContext}`;
+      } else {
+        replyText =
+          'Welcome to Gurukul! You can browse our courses at [Course Catalog](/courses) or connect with other learners in [Communities](/communities). What would you like to explore today?';
+      }
+    }
+  }
 
   return {
-    reply: response.content,
+    reply: replyText,
     plan,
     sources: {
       courses: (searchResults.courses || []).map((c) => ({

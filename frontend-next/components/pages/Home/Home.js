@@ -166,17 +166,19 @@ const Home = () => {
           </div>
 
           {/* Uploadable Main Image */}
-          <div className="main-image flex-1 max-w-[620px] flex flex-col items-center">
+          <div className="main-image flex-1 max-w-[640px] flex flex-col items-center">
             <h3 className="w-full py-2 mb-2 text-center text-lg md:text-xl font-bold text-gray-900">
               Create what you love
             </h3>
-            <div className="w-full flex justify-center rounded-2xl ">
+            <div className="w-full flex justify-center rounded-2xl overflow-hidden shadow-sm border border-slate-200/80 bg-white">
               <Image
                 src="/monetizehobby.png"
-                alt="Main course showcase"
-                width={610}
-                height={290}
-                className="object-contain w-full h-auto max-h-[340px] rounded-2xl"
+                alt="Create what you love - Course showcase"
+                width={1024}
+                height={480}
+                quality={95}
+                priority
+                className="object-contain w-full h-auto rounded-2xl"
               />
             </div>
           </div>

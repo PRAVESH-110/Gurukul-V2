@@ -1,446 +1,267 @@
+<div align="center">
+
+<img src="docs/assets/logo.png" alt="Gurukul Logo" width="130" />
+
 # Gurukul Learning Platform
 
-A modern, full-featured online learning platform that connects educators and students through courses, communities, and interactive content. Built with the MERN stack for scalability and performance.
+**A full-stack, open-source educational platform uniting video learning, community discussions, creator monetization, and grounded AI assistance.**
 
-![Platform Demo](https://img.shields.io/badge/Status-Production%20Ready-green)
-![React](https://img.shields.io/badge/React-18.x-blue)
-![Node.js](https://img.shields.io/badge/Node.js-18.x-green)
-![MongoDB](https://img.shields.io/badge/MongoDB-6.x-brightgreen)
-![License](https://img.shields.io/badge/License-MIT-yellow)
+[![Next.js](https://img.shields.io/badge/Next.js-15.0-black?style=flat&logo=next.js&logoColor=white)](https://nextjs.org/)
+[![React](https://img.shields.io/badge/React-19.0-61DAFB?style=flat&logo=react&logoColor=black)](https://react.dev/)
+[![Node.js](https://img.shields.io/badge/Node.js-18+-339933?style=flat&logo=node.js&logoColor=white)](https://nodejs.org/)
+[![Express](https://img.shields.io/badge/Express-4.x-000000?style=flat&logo=express&logoColor=white)](https://expressjs.com/)
+[![MongoDB](https://img.shields.io/badge/MongoDB-Atlas_Mongoose_8-47A248?style=flat&logo=mongodb&logoColor=white)](https://www.mongodb.com/)
+[![Gemini](https://img.shields.io/badge/Gemini_2.5_Flash-AI_Assistant-4285F4?style=flat&logo=google&logoColor=white)](https://ai.google.dev/)
+[![Tailwind CSS](https://img.shields.io/badge/Tailwind-3.4-38B2AC?style=flat&logo=tailwind-css&logoColor=white)](https://tailwindcss.com/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-## Live Demo
+<br />
 
-- **Student Dashboard**: Browse courses, join communities, track progress
-- **Creator Dashboard**: Manage courses, upload videos, build communities
-- **Video Learning**: Stream videos with progress tracking
-- **Community Features**: Posts, events, discussions
+<img src="docs/assets/course-detail.png" alt="Gurukul Course Experience" width="760" />
 
-## Key Features
-
-### For Students
-- **Course Enrollment**: Browse and enroll in published courses
-- **Video Learning**: Watch course videos with progress tracking
-- **Community Participation**: Join communities, participate in discussions
-- **Progress Tracking**: Track course completion and learning progress
-- **Dashboard**: Personalized student dashboard with analytics
-
-###  For Creators
-- **Course Management**: Create, edit, and manage courses
-- **Video Upload**: Upload and organize course videos
-- **Community Building**: Create and manage learning communities
-- **Analytics**: Real-time statistics on enrollments, revenue, and engagement
-- **Content Organization**: Structure courses with videos and resources
-
-###  Community Features
-- **Public/Private Communities**: Create open or invitation-only communities
-- **Posts & Discussions**: Rich text posts with image uploads
-- **Events Management**: Schedule and manage community events
-- **Member Management**: Role-based permissions and moderation
-
-##  System Architecture
-
-```mermaid
-graph TB
-    subgraph "Frontend (Next.js App Router)"
-        A[Authentication] --> B[Student Dashboard]
-        A --> C[Creator Dashboard]
-        B --> D[Course Catalog]
-        B --> E[Video Player]
-        B --> F[Communities]
-        C --> G[Course Management]
-        C --> H[Video Upload]
-        C --> I[Community Management]
-        C --> J[Analytics]
-    end
-    
-    subgraph "Backend (Node.js + Express)"
-        K[Auth Services] --> L[JWT Middleware]
-        M[Course APIs] --> N[Video Processing]
-        O[Community APIs] --> P[Post Management]
-        Q[Analytics APIs] --> R[Dashboard Data]
-        S[Upload Services] --> T[File Processing]
-    end
-    
-    subgraph "Database & Storage"
-        U[(MongoDB)]
-        V[ImageKit.io CDN]
-        W[Local File Storage]
-    end
-    
-    B --> M
-    D --> M
-    E --> N
-    F --> O
-    G --> M
-    H --> S
-    I --> O
-    J --> Q
-    
-    K --> U
-    M --> U
-    O --> U
-    Q --> U
-    S --> V
-    S --> W
-```
-
-## 💻 Tech Stack
-
-### Frontend
-- **Next.js App Router** - Server-rendered pages and client islands
-- **React 19** - Modern UI library with hooks
-- **React Query** - Server state management
-- **Tailwind CSS** - Utility-first CSS framework
-- **Lucide React** - Beautiful icons
-- **React Hot Toast** - Toast notifications
-- **Axios** - HTTP client
-
-### Backend
-- **Node.js 18+** - JavaScript runtime
-- **Express.js** - Web framework
-- **MongoDB** - NoSQL database
-- **Mongoose** - ODM for MongoDB
-- **JWT** - Authentication tokens
-- **Multer** - File upload handling
-- **ImageKit.io** - Image optimization CDN
-- **bcryptjs** - Password hashing
-- **express-validator** - Request validation
-
-### Development Tools
-- **nodemon** - Auto-restart development server
-- **cors** - Cross-origin resource sharing
-- **dotenv** - Environment variables
-- **morgan** - HTTP request logger
-- **helmet** - Security middleware
-
-## 📱 Detailed Features
-
-### 🔐 Authentication & Authorization
-- **JWT-based Authentication**: Secure token-based auth
-- **Role-based Access Control**: Student and Creator roles
-- **Protected Routes**: Route-level permission controls
-- **Session Management**: Auto-logout on token expiry
-- **Password Security**: Bcrypt hashing
-
-### 📚 Course Management
-- **Course Creation**: Rich course creation with thumbnails
-- **Video Upload**: Support for MP4, WebM, OGG formats
-- **Course Editing**: Update course details, pricing, settings
-- **Publication Control**: Draft/Published states
-- **Enrollment System**: Student enrollment tracking
-- **Progress Tracking**: Video completion tracking
-- **Course Analytics**: Enrollment, revenue, rating analytics
-
-### 🎥 Video System
-- **Video Player**: Custom video player with controls
-- **Progress Tracking**: Resume from last position
-- **Video Management**: Edit video details, order, settings
-- **Preview System**: Preview videos for non-enrolled users
-- **Streaming Optimization**: Efficient video delivery
-
-### 🏘️ Community System
-- **Community Creation**: Public/private communities
-- **Post Management**: Rich text posts with images
-- **Event Scheduling**: Community events with RSVP
-- **Member Management**: Join/leave, role management
-- **Moderation Tools**: Content moderation capabilities
-- **Community Analytics**: Member growth, post activity
-
-### 📊 Analytics & Dashboards
-- **Student Dashboard**: Enrolled courses, progress, communities
-- **Creator Dashboard**: Course performance, revenue, students
-- **Real-time Statistics**: Live data updates
-- **Revenue Tracking**: Course pricing and earnings
-- **Progress Analytics**: Course completion rates
-
-### 🛠️ Admin Features
-- **Content Management**: CRUD operations for all content
-- **User Management**: User roles and permissions
-- **File Management**: Image and video uploads
-- **System Health**: Error handling and logging
-
-## 📋 Project Structure
-
-```
-gurukul-platform/
-├── backend/                  # Node.js/Express API
-│   ├── controllers/         # Business logic
-│   ├── models/              # MongoDB schemas
-│   ├── routes/              # API endpoints
-│   ├── middleware/          # Auth, validation, etc.
-│   ├── config/              # Database, ImageKit config
-│   ├── uploads/             # Local file storage
-│   ├── .env                 # Environment variables
-│   ├── package.json
-│   └── server.js            # Application entry point
-├── frontend/               # React Application
-│   ├── src/
-│   │   ├── components/      # Reusable UI components
-│   │   │   ├── Auth/        # Authentication components
-│   │   │   ├── Layout/      # Layout components
-│   │   │   ├── UI/          # Basic UI elements
-│   │   │   └── Video/       # Video player components
-│   │   ├── pages/           # Page components
-│   │   │   ├── Auth/        # Login, Register
-│   │   │   ├── Student/     # Student pages
-│   │   │   ├── Creator/     # Creator pages
-│   │   │   ├── Communities/ # Community pages
-│   │   │   └── Courses/     # Course pages
-│   │   ├── contexts/        # React contexts
-│   │   ├── services/        # API services
-│   │   ├── hooks/           # Custom React hooks
-│   │   └── utils/           # Utility functions
-│   ├── public/              # Static assets
-│   ├── package.json
-│   └── vite.config.js       # Vite configuration
-├── uploads/                # File uploads directory
-├── API_ENDPOINTS.md        # API documentation
-├── DATABASE_SCHEMA.md      # Database schema
-├── DEPLOYMENT_GUIDE.md     # Deployment instructions
-└── README.md               # Project documentation
-```
-
-## 🚀 Quick Start
-
-### Prerequisites
-- **Node.js** 18+ and npm
-- **MongoDB** 6+ (local or MongoDB Atlas)
-- **ImageKit.io** account (optional, for image optimization)
-
-### 1. Clone the Repository
-```bash
-git clone <repository-url>
-cd gurukul-platform
-```
-
-### 2. Backend Setup
-```bash
-cd backend
-npm install
-
-# Create environment file
-cp .env.example .env
-# Edit .env with your configuration
-
-# Start the backend server
-npm run dev
-```
-
-### 3. Frontend Setup
-```bash
-# Open a new terminal
-cd frontend
-npm install
-
-# Start the frontend development server
-npm run dev
-```
-
-### 4. Access the Application
-- **Frontend**: http://localhost:3000
-- **Backend API**: http://localhost:5001
-- **API Health Check**: http://localhost:5001/api/health
-
-## ⚙️ Environment Variables
-
-### Backend (.env)
-```env
-# Database
-MONGODB_URI=mongodb://localhost:27017/gurukul
-
-# Authentication
-JWT_SECRET=your_super_secret_jwt_key_here
-
-# Server Configuration
-PORT=5001
-NODE_ENV=development
-
-# ImageKit.io (Optional - for image optimization)
-IMAGEKIT_PUBLIC_KEY=your_imagekit_public_key
-IMAGEKIT_PRIVATE_KEY=your_imagekit_private_key
-IMAGEKIT_URL_ENDPOINT=https://ik.imagekit.io/your_imagekit_id
-
-# CORS (Frontend URL)
-CLIENT_URL=http://localhost:3000
-```
-
-### Frontend (.env)
-```env
-# API Base URL
-VITE_API_URL=http://localhost:5001/api
-
-# Environment
-VITE_APP_ENV=development
-
-# Debug Logging
-VITE_ENABLE_DEBUG_LOGS=true
-```
-
-## 📚 User Guide
-
-### For Students
-1. **Registration**: Sign up with student role
-2. **Browse Courses**: Explore available courses in the catalog
-3. **Enroll**: Click "Enroll Now" on course details page
-4. **Learn**: Watch course videos and track progress
-5. **Communities**: Join communities to connect with peers
-6. **Dashboard**: Monitor your learning progress
-
-### For Creators
-1. **Registration**: Sign up with creator role
-2. **Create Course**: Use the course creation form
-3. **Upload Videos**: Add video content to courses
-4. **Manage**: Edit courses, videos, and settings
-5. **Build Community**: Create learning communities
-6. **Analytics**: Track enrollments and revenue
-
-## 🔗 Key API Endpoints
-
-### Authentication
-```
-POST /api/auth/register    # User registration
-POST /api/auth/login       # User login
-GET  /api/auth/me          # Get current user
-```
-
-### Courses
-```
-GET  /api/courses          # Browse published courses
-POST /api/courses          # Create course (Creator)
-GET  /api/courses/:id      # Course details
-POST /api/courses/:id/enroll # Enroll in course
-```
-
-### Communities
-```
-GET  /api/communities      # Browse communities
-POST /api/communities      # Create community (Creator)
-GET  /api/communities/me   # User's communities
-POST /api/communities/:id/join # Join community
-```
-
-### Videos
-```
-GET  /api/videos/:id       # Video details
-POST /api/videos           # Upload video (Creator)
-PUT  /api/videos/:id       # Update video (Creator)
-```
-
-## 📊 Database Schema
-
-### Key Collections
-- **Users**: Authentication, roles, profiles
-- **Courses**: Course information, pricing, status
-- **Videos**: Video metadata, URLs, progress
-- **Communities**: Community details, members
-- **Posts**: Community posts and discussions
-- **Events**: Community events and scheduling
-
-*See [DATABASE_SCHEMA.md](DATABASE_SCHEMA.md) for detailed schema*
-
-## 🚀 Deployment
-
-### Production Deployment
-1. **Database**: Set up MongoDB Atlas or self-hosted MongoDB
-2. **Backend**: Deploy to Heroku, AWS, or DigitalOcean
-3. **Frontend**: Deploy to Vercel, Netlify, or AWS S3
-4. **CDN**: Configure ImageKit.io for image optimization
-5. **Environment**: Set production environment variables
-
-*See [DEPLOYMENT_GUIDE.md](DEPLOYMENT_GUIDE.md) for detailed instructions*
-
-## 🛠️ Development
-
-### Available Scripts
-
-#### Backend
-```bash
-npm run dev      # Start development server with nodemon
-npm start        # Start production server
-npm run test     # Run tests (if configured)
-```
-
-#### Frontend
-```bash
-npm run dev      # Start development server
-npm run build    # Build for production
-npm run preview  # Preview production build
-npm run lint     # Run ESLint
-```
-
-### Development Tips
-- Use **MongoDB Compass** for database visualization
-- Install **React Developer Tools** for debugging
-- Use **Postman** or **Thunder Client** for API testing
-- Enable debug logs in development environment
-
-## 🐛 Troubleshooting
-
-### Common Issues
-
-**Backend won't start:**
-- Check MongoDB connection
-- Verify environment variables
-- Ensure port 5001 is not in use
-
-**Frontend errors:**
-- Clear browser cache
-- Check API URL configuration
-- Verify backend is running
-
-**File uploads failing:**
-- Check file size limits
-- Verify ImageKit configuration
-- Ensure uploads directory exists
-
-**Database connection issues:**
-- Verify MongoDB is running
-- Check connection string format
-- Ensure database permissions
-
-## 🤝 Contributing
-
-We welcome contributions! Here's how to get started:
-
-1. **Fork** the repository
-2. **Create** a feature branch (`git checkout -b feature/amazing-feature`)
-3. **Commit** your changes (`git commit -m 'Add amazing feature'`)
-4. **Push** to the branch (`git push origin feature/amazing-feature`)
-5. **Open** a Pull Request
-
-### Development Guidelines
-- Follow existing code style and conventions
-- Write clear commit messages
-- Add tests for new features
-- Update documentation as needed
-- Ensure all tests pass before submitting
-
-## 📜 Documentation
-
-- [API Documentation](API_ENDPOINTS.md)
-- [Database Schema](DATABASE_SCHEMA.md)
-- [Deployment Guide](DEPLOYMENT_GUIDE.md)
-- [Installation Guide](INSTALLATION.md)
-- [Test Scripts](TEST_SCRIPT.md)
-
-## 📧 Support
-
-For support and questions:
-- Create an issue on GitHub
-- Check existing documentation
-- Review troubleshooting guide
-
-## 📝 License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-## 🙏 Acknowledgments
-
-- React team for the amazing framework
-- MongoDB team for the excellent database
-- ImageKit.io for image optimization
-- All open source contributors
+</div>
 
 ---
 
-🎆 **Happy Learning with Gurukul Platform!** 🎆
+## Overview
+
+Gurukul is an open-source educational suite built to provide an end-to-end learning and course-authoring ecosystem. It connects content creators and students through curated video courses, interactive community groups, scheduled live events, and a grounded AI learning companion.
+
+The platform is designed with three core architectural objectives:
+
+1. **Zero-Hallucination AI Support**: An on-platform assistant utilizing a deterministic query-generation pipeline with Google Gemini 2.5 Flash, providing verified platform responses and direct Markdown deep-links.
+2. **Server-Side Debounced Discovery**: High-efficiency search and filtering executed on indexed MongoDB collections with 300ms debouncing, minimizing server load while delivering responsive catalog browsing.
+3. **Turnkey Creator Studio**: Streamlined video uploading, modular curriculum creation, course pricing in USD, and clean visual analytics for enrollments and revenue.
+
+---
+
+## Core Highlights
+
+- 🎓 **Structured Video Curriculums** — Modular lessons, integrated video playback, resume-from-last-point progress tracking, and public preview lectures.
+- 👥 **Interactive Community Spaces** — Dedicated discussion groups, image-supported forum posts, and event scheduling with RSVP functionality.
+- 🤖 **Context-Aware AI Assistant** — Natural language search for courses, communities, and upcoming events with role-enforced access controls.
+- 📊 **Creator Analytics & Insights** — Lightweight visual charts tracking course enrollments, active student metrics, and cumulative revenue.
+- 🔐 **Hardened Role-Based Auth** — Granular permissions across `guest`, `student`, `creator`, and `admin` roles, backed by bcrypt password hashing and JSON Web Tokens.
+- ⚡ **Modern Responsive Interface** — Built using Next.js 15 App Router, React 19, and Tailwind CSS with clean, borderless icons and mobile-first ergonomics.
+
+---
+
+## Platform Showcase
+
+| Course Experience | Creator Analytics |
+|:---:|:---:|
+| <img src="docs/assets/course-detail.png" width="380" alt="Course Learning Page" /> | <img src="docs/assets/creator-analytics.png" width="380" alt="Creator Analytics Charts" /> |
+| **Immersive Course Catalog & Lessons**<br />Detailed curriculums, ratings, previews, and enrollment actions. | **Creator Studio & Performance Metrics**<br />Visual analytics on monthly revenue and student participation. |
+| <img src="docs/assets/data-science-community.png" width="380" alt="Community Discussions" /> | <img src="docs/assets/web-dev-course.png" width="380" alt="Technical Courses" /> |
+| **Community Discussion Hub**<br />Topic-based discussions, media uploads, and scheduled events. | **Full-Spectrum Technical Curriculums**<br />Rich metadata, category filters, and cross-discipline learning. |
+
+---
+
+## Architecture & AI Retrieval Pipeline
+
+Gurukul combines traditional relational data querying with generative AI synthesis to ensure platform data remains accurate and grounded.
+
+```mermaid
+flowchart TD
+    User([User Prompt / Search]) --> WebClient[Next.js 15 App Router]
+    WebClient --> API[Express.js REST API]
+    API --> AuthGuard{JWT & Role Guard}
+    
+    AuthGuard -->|Authorized| NLPEngine[Deterministic NLP Tokenizer]
+    NLPEngine --> QueryBuilder[Safe MongoDB Query Builder]
+    QueryBuilder --> Database[(MongoDB Atlas)]
+    
+    Database --> RawContext[Verified Database Records]
+    RawContext --> LLMSynthesis[LangChain + Gemini 2.5 Flash]
+    LLMSynthesis --> FormattedReply[Markdown Response with Direct Route Links]
+    FormattedReply --> WebClient
+```
+
+- **Query Tokenization**: Incoming queries are analyzed to detect intent (courses, communities, events, profile) and extract relevant keywords.
+- **Data Grounding**: Queries run directly against MongoDB Atlas, scoping retrieval to the user's role permissions.
+- **Synthesis**: The Gemini model receives the verified context to construct a clear, friendly summary containing clickable application paths.
+
+---
+
+## Directory Structure
+
+```text
+gurukul-platform/
+├── backend/                       # Node.js & Express REST Backend
+│   ├── config/                    # Database (Mongoose) & ImageKit settings
+│   ├── controllers/               # Route handlers (auth, course, community, chat)
+│   ├── middleware/                # JWT verification & role authorization guards
+│   ├── models/                    # MongoDB schemas (User, Course, Community, Post)
+│   ├── routes/                    # API route definitions
+│   ├── scripts/                   # Database seed scripts (seed.js)
+│   ├── services/                  # Business logic & AI pipeline (chatNLP.service.js)
+│   └── server.js                  # Backend application entry point
+│
+├── frontend-next/                 # Next.js 15 App Router Frontend
+│   ├── app/                       # Page routes & layouts
+│   ├── assets/                    # Platform logos and branding assets
+│   ├── components/                # Modular UI components (Navbar, ChatAssistant, Cards)
+│   ├── contexts/                  # React context providers (AuthContext)
+│   ├── hooks/                     # Custom React hooks (debouncing, analytics)
+│   ├── public/                    # Static images, icons, and banners
+│   └── tailwind.config.js         # Tailwind CSS design system configuration
+│
+├── docs/                          # Project documentation and screenshots
+│   └── assets/                    # Showcase graphics and diagram assets
+└── README.md                      # Repository documentation
+```
+
+---
+
+## Role-Based Access Control (RBAC)
+
+| Feature / Resource | Guest | Student | Creator | Admin |
+|:---|:---:|:---:|:---:|:---:|
+| **Browse Courses & Communities** | ✅ | ✅ | ✅ | ✅ |
+| **Search & Debounced Filters** | ✅ | ✅ | ✅ | ✅ |
+| **Enroll in Courses** | ❌ | ✅ | ✅ | ✅ |
+| **Post in Communities & RSVP** | ❌ | ✅ | ✅ | ✅ |
+| **Create & Publish Courses** | ❌ | ❌ | ✅ | ✅ |
+| **Upload Course Videos** | ❌ | ❌ | ✅ | ✅ |
+| **Access Creator Analytics** | ❌ | ❌ | ✅ | ✅ |
+| **AI Learning Assistant** | ✅ *(General)* | ✅ *(Enrolled)* | ✅ *(Teaching)* | ✅ *(Full)* |
+
+---
+
+## Quick Start Guide
+
+### Prerequisites
+- **Node.js**: v18.0.0 or later
+- **npm**: v9.0.0 or later
+- **MongoDB**: Local MongoDB instance or free MongoDB Atlas cluster
+
+---
+
+### 1. Repository Setup
+
+```bash
+git clone https://github.com/PRAVESH-110/Gurukul-V2.git
+cd Gurukul-V2
+```
+
+---
+
+### 2. Backend Setup
+
+Navigate to the `backend` directory and install dependencies:
+
+```bash
+cd backend
+npm install
+```
+
+Configure your environment variables by creating a `.env` file:
+
+```env
+PORT=5001
+NODE_ENV=development
+MONGODB_URI=your_mongodb_connection_string
+JWT_SECRET=your_jwt_secret_key
+CLIENT_URL=http://localhost:3000
+
+# Optional Services
+GEMINI_API_KEY=your_gemini_api_key
+IMAGEKIT_PUBLIC_KEY=your_imagekit_public_key
+IMAGEKIT_PRIVATE_KEY=your_imagekit_private_key
+IMAGEKIT_URL_ENDPOINT=your_imagekit_endpoint
+```
+
+Populate the database with sample courses, instructors, and communities:
+
+```bash
+npm run seed
+```
+
+Start the backend server:
+
+```bash
+npm run dev
+```
+
+The API will be available at `http://localhost:5001`.
+
+---
+
+### 3. Frontend Setup
+
+In a new terminal, navigate to the `frontend-next` directory and install dependencies:
+
+```bash
+cd frontend-next
+npm install
+```
+
+Create a `.env.local` file in the `frontend-next` folder:
+
+```env
+NEXT_PUBLIC_API_URL=http://localhost:5001/api
+```
+
+Start the development server:
+
+```bash
+npm run dev
+```
+
+Open `http://localhost:3000` in your browser.
+
+---
+
+### Pre-Configured Test Accounts
+
+The included seeder (`npm run seed`) provisions the following ready-to-use testing accounts:
+
+| Role | Email Address | Password | Intended Test Flows |
+|:---|:---|:---|:---|
+| **Student** | `student@gurukul.com` | `password123` | Browsing, enrollment, video progress, community participation |
+| **Creator** | `creator@gurukul.com` | `password123` | Course creation, curriculum management, revenue analytics |
+| **Admin** | `admin@gurukul.com` | `password123` | Platform oversight, administrative permissions |
+
+---
+
+## Key API Endpoints
+
+### Authentication
+- `POST /api/auth/register` — Register a new account (`student` or `creator`)
+- `POST /api/auth/login` — Authenticate and receive a JWT token
+- `GET  /api/auth/me` — Retrieve the authenticated profile
+- `POST /api/auth/logout` — Invalidate the session
+
+### Courses
+- `GET  /api/courses` — Paginated course catalog with server-side query & category filters
+- `POST /api/courses` — Create a new course *(Creator / Admin)*
+- `GET  /api/courses/:id` — Course curriculum and lecture details
+- `POST /api/courses/:id/enroll` — Enroll current student in a course
+
+### Communities & Events
+- `GET  /api/communities` — List active communities
+- `POST /api/communities` — Create a new community space *(Creator / Admin)*
+- `GET  /api/communities/:id/posts` — Retrieve community discussions
+- `POST /api/communities/:id/posts` — Publish a forum post
+- `POST /api/communities/:id/events/:eventId/rsvp` — RSVP for a community event
+
+### Grounded AI Assistant
+- `POST /api/chat` — Submit a natural language prompt for role-filtered, grounded answers
+
+---
+
+## Contributing
+
+Contributions are welcome! Please follow these steps to propose improvements:
+
+1. Fork the repository.
+2. Create a feature branch: `git checkout -b feature/your-feature-name`.
+3. Commit your changes: `git commit -m "feat: describe your change"`.
+4. Push to your branch: `git push origin feature/your-feature-name`.
+5. Open a Pull Request detailing your enhancements and test coverage.
+
+---
+
+## License
+
+This project is licensed under the [MIT License](https://opensource.org/licenses/MIT).

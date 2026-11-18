@@ -237,12 +237,12 @@ api.interceptors.response.use(
       const { status, data } = error.response;
 
       // ── Cold-start silent failure ──────────────────────────────────────────
-      // If server hasn't warmed up yet AND this is a server-side error (5xx),
-      // fail silently so the user can retry without scary error messages.
-      // Auth/validation errors (4xx) always show immediately.
-      if (!isServerWarm() && status >= 500) {
+      // If server hasn't warmed up yet AND this is a gateway timeout/bad gateway (502, 503, 504),
+      // fail silently so the user can retry without scary error messages while cloud container spins up.
+      // Notice: 500 is Internal Server Error (server is reachable and warm, but threw an application exception).
+      if (!isServerWarm() && (status === 502 || status === 503 || status === 504)) {
         console.warn(
-          'First request failed (server warming up), suppressing error silently:',
+          'First request received gateway error (server cold start), suppressing error silently:',
           error.config?.url,
         );
         return Promise.reject({
@@ -250,6 +250,10 @@ api.interceptors.response.use(
           status,
           message: 'Server warming up, please retry.',
         });
+      }
+
+      if (status >= 500) {
+        markServerWarm();
       }
 
       if (status === 401) {

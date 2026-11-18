@@ -3,6 +3,7 @@
 import React, { createContext, useCallback, useContext, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { authAPI, refreshAccessSession } from '@/services/api';
+import { warmUpBackendClient } from '@/lib/warmup';
 import {
   clearCredentials,
   setCredentials,
@@ -45,6 +46,10 @@ const restoreSession = async () => {
 export const AuthProvider = ({ children }) => {
   const dispatch = useDispatch();
   const { user, accessToken, csrfToken, initialized } = useSelector((state) => state.auth);
+
+  useEffect(() => {
+    warmUpBackendClient();
+  }, []);
 
   useEffect(() => {
     let active = true;
