@@ -2,7 +2,7 @@
 
 <img src="docs/assets/logo.png" alt="Gurukul Logo" width="130" />
 
-# Gurukul Learning Platform
+# Gurukul - Create what you love, and start earning
 
 **A full-stack, open-source educational platform uniting video learning, community discussions, creator monetization, and grounded AI assistance.**
 
