@@ -79,7 +79,7 @@ flowchart TD
 
 - **Query Tokenization**: Incoming queries are analyzed to detect intent (courses, communities, events, profile) and extract relevant keywords.
 - **Data Grounding**: Queries run directly against MongoDB Atlas, scoping retrieval to the user's role permissions.
-- **Synthesis**: The Gemini model receives the verified context to construct a clear, friendly summary containing clickable application paths.
+- **Synthesis**: The LLM receives the verified context to construct a clear, friendly summary containing clickable application paths.
 
 ---
 
